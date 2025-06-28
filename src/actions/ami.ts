@@ -5,8 +5,7 @@ import type { AsteriskEndpoint, AsteriskQueue } from '@/lib/types';
 
 // This is a CommonJS module. We configure Next.js to treat it as an external
 // package on the server via `serverComponentsExternalPackages` in next.config.ts.
-// We also need to require it inside the function to avoid build-time resolution issues.
-// const Ami = require('asterisk-manager'); // Moved inside runAmiCommand
+const Ami = require('asterisk-manager');
 
 const AmiConnectionSchema = z.object({
   host: z.string().min(1, 'Host is required'),
@@ -17,95 +16,68 @@ const AmiConnectionSchema = z.object({
 
 type AmiConnection = z.infer<typeof AmiConnectionSchema>;
 
-function runAmiCommand<T>(
+function runAmiCommand<T extends Record<string, any>>(
   connection: AmiConnection,
-  action: object,
-  responseEvents: string[],
+  action: Record<string, string>,
   completionEvent: string
 ): Promise<T[]> {
   return new Promise((resolve, reject) => {
-    let Ami;
-    try {
-      // This require is intentionally inside the try block to shield it from
-      // the Next.js bundler's static analysis, which can fail on old CommonJS packages.
-      Ami = require('asterisk-manager');
-    } catch (e) {
-      // This error will be thrown if the 'asterisk-manager' package is not
-      // available in the node_modules directory at runtime.
-      return reject(
-        new Error(
-          "Failed to load 'asterisk-manager'. The package may not be installed correctly or is not accessible in the server environment.",
-          { cause: e }
-        )
-      );
-    }
+    let ami: any;
+    const timeout = setTimeout(() => {
+        if (ami) ami.disconnect();
+        reject(new Error('AMI command timed out after 10 seconds.'));
+    }, 10000);
 
     try {
       const validatedConnection = AmiConnectionSchema.parse(connection);
-      const { host, port, username, password } = validatedConnection;
 
-      const ami = new Ami(parseInt(port, 10), host, username, password, true);
-      let results: T[] = [];
-      let isDone = false;
+      ami = new Ami(
+        Number(validatedConnection.port),
+        validatedConnection.host,
+        validatedConnection.username,
+        validatedConnection.password,
+        true // Enable events
+      );
 
-      const cleanup = () => {
-        if (!isDone) {
-          isDone = true;
-          try {
-            ami.disconnect();
-          } catch (e) {
-            // ignore errors on disconnect
-          }
-        }
-      };
-      
-      ami.on('error', (err: Error) => {
-        if (!isDone) {
-          cleanup();
-          reject(new Error(`AMI connection error: ${err.message}`));
+      const results: T[] = [];
+      let commandSent = false;
+
+      // Make sure to remove all listeners on disconnect
+      ami.on('disconnect', () => {
+          clearTimeout(timeout);
+          ami.removeAllListeners();
+      });
+
+      ami.on('managerevent', (event: T) => {
+        if (event.event === completionEvent) {
+          ami.disconnect();
+          resolve(results);
+        } else {
+          results.push(event);
         }
       });
       
-      ami.on('disconnect', () => {
-        if (!isDone) {
-           cleanup();
-           // Avoid rejecting on expected disconnects
-           // reject(new Error('AMI disconnected unexpectedly.'));
-        }
+      ami.on('error', (err: Error) => {
+          ami.disconnect();
+          reject(err);
       });
 
       ami.on('connect', () => {
-        ami.action(action, (err: Error | null, res: { response: string; message: string; }) => {
-          if (err) {
-            cleanup();
-            reject(new Error(`AMI action execution error: ${err.message}`));
-          } else if (res?.response === 'Error') {
-            cleanup();
-            reject(new Error(`AMI action failed: ${res.message}`));
-          }
-        });
-      });
-
-      ami.on('managerevent', (evt: any) => {
-        if (responseEvents.includes(evt.event)) {
-          results.push(evt as T);
-        }
-
-        if (evt.event === completionEvent) {
-          cleanup();
-          resolve(results);
+        if (!commandSent) {
+          ami.action(action, (err: Error | null) => {
+            if (err) {
+              ami.disconnect();
+              reject(err);
+            }
+          });
+          commandSent = true;
         }
       });
-
-      // Timeout
-      setTimeout(() => {
-        if (!isDone) {
-          cleanup();
-          reject(new Error('AMI command timed out after 10 seconds.'));
-        }
-      }, 10000);
+      
+      ami.keepConnected();
 
     } catch (e) {
+      clearTimeout(timeout);
       if (e instanceof z.ZodError) {
         reject(new Error(`Invalid input: ${e.errors.map((err) => err.message).join(', ')}`));
       } else if (e instanceof Error) {
@@ -121,18 +93,19 @@ export async function getAmiEndpoints(
   connection: AmiConnection
 ): Promise<{ success: boolean; data?: AsteriskEndpoint[]; error?: string }> {
   try {
-    const action = { action: 'PJSIPShowEndpoints' };
-    const rawEndpoints = await runAmiCommand<any>(
+    const action = { Action: 'PJSIPShowEndpoints' };
+    const rawEvents = await runAmiCommand<any>(
       connection,
       action,
-      ['EndpointList'],
       'EndpointListComplete'
     );
+    
+    const rawEndpoints = rawEvents.filter(e => e.event === 'EndpointList');
 
     const data = rawEndpoints.map((e) => ({
       technology: 'PJSIP',
       resource: e.objectname,
-      state: e.devicestate.toLowerCase(),
+      state: e.devicestate?.toLowerCase() || 'unknown',
       channel_ids: e.channel ? [e.channel] : [],
     }));
 
@@ -148,13 +121,14 @@ export async function getAmiQueues(
   connection: AmiConnection
 ): Promise<{ success: boolean; data?: AsteriskQueue[]; error?: string }> {
   try {
-    const action = { action: 'QueueStatus' };
-    const rawQueues = await runAmiCommand<any>(
+    const action = { Action: 'QueueStatus' };
+    const rawEvents = await runAmiCommand<any>(
       connection,
       action,
-      ['QueueParams'],
       'QueueStatusComplete'
     );
+
+    const rawQueues = rawEvents.filter(q => q.event === 'QueueParams');
 
     const data = rawQueues.map((q) => ({
       name: q.queue,
