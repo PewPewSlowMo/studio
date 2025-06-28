@@ -72,7 +72,7 @@ export function CallHistoryTable({ calls }: { calls: Call[] }) {
           <TableBody>
             {filteredCalls.length > 0 ? (
               filteredCalls.map((call) => (
-                <TableRow key={call.id}>
+                <TableRow key={call.id + call.startTime}>
                   <TableCell className="font-medium">{call.callerNumber}</TableCell>
                   <TableCell>{call.operatorName || 'N/A'}</TableCell>
                   <TableCell>
