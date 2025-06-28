@@ -23,7 +23,6 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { Eye, EyeOff } from 'lucide-react';
-import { Separator } from '@/components/ui/separator';
 
 const formSchema = z.object({
   email: z.string().email('Неверный формат email'),
@@ -112,6 +111,17 @@ export function LoginForm() {
             </Button>
           </form>
         </Form>
+        <div className="mt-8 text-center">
+          <p className="text-sm text-muted-foreground">
+            Демо-аккаунты для тестирования:
+          </p>
+          <div className="mt-4 grid grid-cols-2 gap-3">
+            <Button variant="outline">Администратор</Button>
+            <Button variant="outline">Менеджер</Button>
+            <Button variant="outline">Супервайзер</Button>
+            <Button variant="outline">Оператор</Button>
+          </div>
+        </div>
       </CardContent>
     </Card>
   );
