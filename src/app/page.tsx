@@ -82,6 +82,8 @@ export default function DashboardPage() {
     if (!data) return null;
 
     const { endpoints, queues, users, calls } = data;
+    
+    const userMap = new Map(users.filter((u) => u.extension).map((u) => [u.extension, u]));
 
     const callVolumeData = Array.from({ length: 24 }, (_, i) => {
       const d = new Date();
@@ -109,6 +111,23 @@ export default function DashboardPage() {
     const totalQueues = queues.length;
     const activeCallEndpoints = endpoints.filter((e) => e.state === 'in use' || e.state === 'busy' || e.state === 'ringing');
 
+    const operatorDetails = endpoints.map(endpoint => {
+        const user = userMap.get(endpoint.resource);
+        return {
+            name: user?.name || `Extension ${endpoint.resource}`,
+            state: endpoint.state,
+        }
+    }).sort((a, b) => a.name.localeCompare(b.name));
+
+    const onlineOperatorDetails = operatorDetails.filter(op => op.state !== 'unavailable');
+    
+    const onCallOperatorDetails = operatorDetails.filter(op => ['in use', 'busy'].includes(op.state));
+
+    const queueDetails = queues.map(queue => ({
+        name: queue.name
+    })).sort((a,b) => a.name.localeCompare(b.name));
+
+
     return {
       callVolumeChartData: Array.from(hourlyMap.values()),
       operatorsOnCall,
@@ -118,6 +137,10 @@ export default function DashboardPage() {
       activeCallEndpoints,
       endpoints,
       users,
+      operatorDetails,
+      onlineOperatorDetails,
+      onCallOperatorDetails,
+      queueDetails,
     };
   }, [data]);
 
@@ -166,7 +189,11 @@ export default function DashboardPage() {
       totalQueues,
       activeCallEndpoints,
       endpoints,
-      users
+      users,
+      operatorDetails,
+      onlineOperatorDetails,
+      onCallOperatorDetails,
+      queueDetails
   } = dashboardData;
 
   return (
@@ -177,24 +204,32 @@ export default function DashboardPage() {
           value={totalOperators.toString()}
           icon={Users}
           description="All configured PJSIP endpoints."
+          detailsTitle="All Operators"
+          details={operatorDetails}
         />
         <KpiCard
           title="Operators Online"
           value={operatorsOnline.toString()}
           icon={PhoneForwarded}
           description="Operators not in 'unavailable' state."
+          detailsTitle="Online Operators"
+          details={onlineOperatorDetails}
         />
         <KpiCard
           title="Operators on Call"
           value={operatorsOnCall.toString()}
           icon={Phone}
           description="Operators in 'in use' or 'busy' state."
+          detailsTitle="Operators on Call"
+          details={onCallOperatorDetails}
         />
         <KpiCard
           title="Active Queues"
           value={totalQueues.toString()}
           icon={LayoutDashboard}
           description="Total configured call queues."
+          detailsTitle="All Queues"
+          details={queueDetails}
         />
       </div>
       <div className="grid gap-6 lg:grid-cols-3">
