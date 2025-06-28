@@ -32,13 +32,15 @@ export interface Call {
   operatorId?: string;
   operatorName?: string;
   operatorExtension?: string;
-  queueId?: string;
+  queue?: string;
   status: string; // From 'ANSWERED', 'NO ANSWER', 'BUSY' etc.
   startTime: string;
   answerTime?: string;
   endTime?: string;
   duration?: number;
+  waitTime?: number;
   recordingUrl?: string;
+  reason?: string;
 }
 
 export interface AsteriskEndpoint {

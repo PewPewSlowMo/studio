@@ -13,11 +13,13 @@ import {
 } from '@/components/ui/sidebar';
 import {
   LayoutDashboard,
-  BarChart3,
+  Users,
   Settings,
-  BrainCircuit,
+  BarChart3,
   Phone,
-  LogIn
+  PhoneOff,
+  LogOut,
+  Moon,
 } from 'lucide-react';
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
@@ -40,21 +42,37 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
   }
 
   const menuItems = [
-    { href: '/', label: 'Dashboard', icon: LayoutDashboard },
-    { href: '/reports', label: 'Reports', icon: BarChart3 },
-    { href: '/summarization', label: 'Summarization', icon: BrainCircuit },
-    { href: '/admin', label: 'Admin', icon: Settings },
+    { href: '/', label: 'Дашборд', icon: LayoutDashboard },
+    { href: '/reports', label: 'Отчет по операторам', icon: Users },
+    { href: '#', label: 'Отчет по очередям', icon: Phone },
+    { href: '/missed-calls', label: 'Пропущенные звонки', icon: PhoneOff },
+    { href: '#', label: 'Аналитика', icon: BarChart3 },
+    { href: '/admin', label: 'Настройки', icon: Settings },
   ];
 
-  const currentPage = menuItems.find((item) => pathname.startsWith(item.href) && (item.href === '/' || pathname !== '/'))?.label || 'Dashboard';
-
+  const getPageTitle = () => {
+     for (const item of menuItems) {
+        if (pathname === item.href) {
+            return item.label;
+        }
+    }
+    // Handle nested routes or default
+    if (pathname.startsWith('/reports')) return 'Отчет по операторам';
+    if (pathname.startsWith('/missed-calls')) return 'Пропущенные звонки';
+    if (pathname.startsWith('/admin')) return 'Настройки';
+    return 'Дашборд';
+  }
+  
+  const currentPage = getPageTitle();
 
   return (
     <SidebarProvider>
       <Sidebar>
         <SidebarHeader className="p-4">
           <Link href="/" className="flex items-center gap-3">
-            <Phone className="size-8 text-primary" />
+            <div className="p-2 rounded-lg bg-gradient-to-br from-blue-500 to-purple-600">
+                <BarChart3 className="size-6 text-white" />
+            </div>
             <div className="group-data-[collapsible=icon]:hidden">
               <h1 className="text-xl font-bold text-primary">CallSync Central</h1>
             </div>
@@ -78,12 +96,28 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
             ))}
           </SidebarMenu>
         </SidebarContent>
-        <SidebarFooter>
+        <SidebarFooter className="p-2 flex flex-col gap-1">
+           <SidebarMenu>
+              <SidebarMenuItem>
+                <SidebarMenuButton tooltip="Темная тема">
+                  <Moon />
+                  <span>Темная тема</span>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+               <SidebarMenuItem>
+                  <SidebarMenuButton asChild tooltip="Выйти">
+                    <Link href="/login" className="text-destructive hover:!text-destructive focus:!text-destructive">
+                      <LogOut />
+                      <span>Выйти</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+           </SidebarMenu>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button
                 variant="ghost"
-                className="h-auto w-full justify-start p-2"
+                className="h-auto w-full justify-start p-2 mt-2 border-t pt-3"
               >
                 <div className="flex w-full items-center gap-3">
                   <Avatar className="h-9 w-9">
@@ -91,9 +125,9 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
                     <AvatarFallback>AD</AvatarFallback>
                   </Avatar>
                   <div className="text-left group-data-[collapsible=icon]:hidden">
-                    <p className="font-semibold">Admin User</p>
+                    <p className="font-semibold">Администратор</p>
                     <p className="text-xs text-muted-foreground">
-                      admin@callsync.app
+                      Администратор
                     </p>
                   </div>
                 </div>
@@ -109,11 +143,11 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
                 </div>
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
-              <DropdownMenuItem>Profile</DropdownMenuItem>
-              <DropdownMenuItem>Settings</DropdownMenuItem>
+              <DropdownMenuItem>Профиль</DropdownMenuItem>
+              <DropdownMenuItem>Биллинг</DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem asChild>
-                <Link href="/login">Log out</Link>
+                <Link href="/login">Выйти</Link>
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>

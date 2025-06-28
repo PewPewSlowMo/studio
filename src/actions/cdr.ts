@@ -92,3 +92,43 @@ export async function getCallHistory(connection: CdrConnection): Promise<{ succe
         }
     }
 }
+
+export async function getMissedCalls(connection: CdrConnection): Promise<{ success: boolean; data?: Call[], error?: string }> {
+    let dbConnection;
+    try {
+        dbConnection = await createCdrConnection(connection);
+        
+        const [rows] = await dbConnection.execute(
+            `SELECT 
+                calldate, clid, src, dst, dcontext, channel, dstchannel, 
+                lastapp, lastdata, duration, billsec, disposition, uniqueid 
+             FROM cdr 
+             WHERE disposition != 'ANSWERED' AND calldate >= NOW() - INTERVAL 1 DAY
+             ORDER BY calldate DESC`
+        );
+
+        const calls = (rows as any[]).map((row): Call => {
+            return {
+                id: row.uniqueid,
+                callerNumber: row.src,
+                calledNumber: row.dst,
+                queue: row.dcontext, 
+                status: row.disposition, // 'NO ANSWER', 'BUSY', 'FAILED'
+                startTime: row.calldate.toISOString(),
+                duration: row.billsec, // Should be 0
+                waitTime: row.duration, // Wait time for missed calls
+            }
+        });
+
+        return { success: true, data: calls };
+
+    } catch (e) {
+        const message = e instanceof Error ? e.message : 'An unknown error occurred.';
+        console.error('getMissedCalls failed:', message);
+        return { success: false, error: message };
+    } finally {
+        if (dbConnection) {
+            await dbConnection.end();
+        }
+    }
+}
