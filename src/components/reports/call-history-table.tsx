@@ -13,8 +13,9 @@ import { Input } from '@/components/ui/input';
 import type { Call } from '@/lib/types';
 import { Badge } from '@/components/ui/badge';
 import { format, parseISO, isValid } from 'date-fns';
+import { Skeleton } from '../ui/skeleton';
 
-export function CallHistoryTable({ calls }: { calls: Call[] }) {
+export function CallHistoryTable({ calls, isLoading }: { calls: Call[], isLoading: boolean }) {
   const [filter, setFilter] = React.useState('');
   const [isClient, setIsClient] = React.useState(false);
 
@@ -33,14 +34,37 @@ export function CallHistoryTable({ calls }: { calls: Call[] }) {
   }, [calls, filter]);
 
   const formatDate = (dateString: string) => {
-    // On the server or before the component has mounted on the client,
-    // return a placeholder to avoid hydration mismatch due to timezones.
     if (!isClient) {
       return '...';
     }
     const date = parseISO(dateString);
     return isValid(date) ? format(date, 'Pp') : 'Invalid Date';
   };
+  
+  const TableSkeleton = () => (
+     <Table>
+      <TableHeader>
+        <TableRow>
+          <TableHead>Caller</TableHead>
+          <TableHead>Operator</TableHead>
+          <TableHead>Status</TableHead>
+          <TableHead>Start Time</TableHead>
+          <TableHead>Talk Time (s)</TableHead>
+        </TableRow>
+      </TableHeader>
+      <TableBody>
+        {[...Array(5)].map((_, i) => (
+          <TableRow key={i}>
+            <TableCell><Skeleton className="h-4 w-24" /></TableCell>
+            <TableCell><Skeleton className="h-4 w-32" /></TableCell>
+            <TableCell><Skeleton className="h-6 w-20 rounded-full" /></TableCell>
+            <TableCell><Skeleton className="h-4 w-40" /></TableCell>
+            <TableCell><Skeleton className="h-4 w-12" /></TableCell>
+          </TableRow>
+        ))}
+      </TableBody>
+    </Table>
+  );
 
   return (
     <div>
@@ -53,47 +77,49 @@ export function CallHistoryTable({ calls }: { calls: Call[] }) {
         />
       </div>
       <div className="rounded-md border">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Caller</TableHead>
-              <TableHead>Operator</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Start Time</TableHead>
-              <TableHead>Talk Time (s)</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {filteredCalls.length > 0 ? (
-              filteredCalls.map((call) => (
-                <TableRow key={call.id + call.startTime}>
-                  <TableCell className="font-medium">{call.callerNumber}</TableCell>
-                  <TableCell>{call.operatorName || 'N/A'}</TableCell>
-                  <TableCell>
-                    <Badge
-                      variant={
-                        call.status.toLowerCase() !== 'answered' ? 'destructive' : 'secondary'
-                      }
-                      className="capitalize"
-                    >
-                      {call.status}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    {formatDate(call.startTime)}
-                  </TableCell>
-                  <TableCell>{call.billsec ?? 'N/A'}</TableCell>
+        {isLoading ? <TableSkeleton /> : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Caller</TableHead>
+                  <TableHead>Operator</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Start Time</TableHead>
+                  <TableHead>Talk Time (s)</TableHead>
                 </TableRow>
-              ))
-            ) : (
-              <TableRow>
-                <TableCell colSpan={5} className="h-24 text-center">
-                  No call history data found for the selected period.
-                </TableCell>
-              </TableRow>
-            )}
-          </TableBody>
-        </Table>
+              </TableHeader>
+              <TableBody>
+                {filteredCalls.length > 0 ? (
+                  filteredCalls.map((call) => (
+                    <TableRow key={call.id + call.startTime}>
+                      <TableCell className="font-medium">{call.callerNumber}</TableCell>
+                      <TableCell>{call.operatorName || 'N/A'}</TableCell>
+                      <TableCell>
+                        <Badge
+                          variant={
+                            call.status.toLowerCase() !== 'answered' ? 'destructive' : 'secondary'
+                          }
+                          className="capitalize"
+                        >
+                          {call.status}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        {formatDate(call.startTime)}
+                      </TableCell>
+                      <TableCell>{call.billsec ?? 'N/A'}</TableCell>
+                    </TableRow>
+                  ))
+                ) : (
+                  <TableRow>
+                    <TableCell colSpan={5} className="h-24 text-center">
+                      No call history data found for the selected period.
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+        )}
       </div>
     </div>
   );

@@ -11,9 +11,11 @@ import {
 import { Badge } from '@/components/ui/badge';
 import type { QueueReportData } from '@/lib/types';
 import { BarChart, Clock, Phone, PhoneMissed, Percent, ShieldCheck } from 'lucide-react';
+import { Skeleton } from '../ui/skeleton';
 
 interface QueueReportTableProps {
   data: QueueReportData[];
+  isLoading: boolean;
 }
 
 const formatTime = (seconds: number) => {
@@ -22,10 +24,50 @@ const formatTime = (seconds: number) => {
     return `${minutes}м ${secs.toString().padStart(2, '0')}с`;
 };
 
-export function QueueReportTable({ data }: QueueReportTableProps) {
+export function QueueReportTable({ data, isLoading }: QueueReportTableProps) {
+  
+  const TableSkeleton = () => (
+    <Table>
+      <TableHeader>
+        <TableRow>
+          <TableHead>Очередь</TableHead>
+          <TableHead className="text-center">Всего звонков</TableHead>
+          <TableHead className="text-center">Отвечено</TableHead>
+          <TableHead className="text-center">Потеряно</TableHead>
+          <TableHead className="text-center">Уровень потерянных</TableHead>
+          <TableHead className="text-center">SLA (%)</TableHead>
+          <TableHead className="text-center">Ср. время ожидания</TableHead>
+          <TableHead className="text-center">Ср. время обработки</TableHead>
+        </TableRow>
+      </TableHeader>
+      <TableBody>
+        {[...Array(3)].map((_, i) => (
+          <TableRow key={i}>
+            <TableCell><Skeleton className="h-4 w-24" /></TableCell>
+            <TableCell><Skeleton className="h-4 w-12 mx-auto" /></TableCell>
+            <TableCell><Skeleton className="h-4 w-12 mx-auto" /></TableCell>
+            <TableCell><Skeleton className="h-4 w-12 mx-auto" /></TableCell>
+            <TableCell><Skeleton className="h-4 w-12 mx-auto" /></TableCell>
+            <TableCell className="text-center"><Skeleton className="h-6 w-16 mx-auto rounded-full" /></TableCell>
+            <TableCell><Skeleton className="h-4 w-16 mx-auto" /></TableCell>
+            <TableCell><Skeleton className="h-4 w-16 mx-auto" /></TableCell>
+          </TableRow>
+        ))}
+      </TableBody>
+    </Table>
+  );
+
+  if (isLoading) {
+    return (
+      <div className="rounded-md border">
+        <TableSkeleton />
+      </div>
+    );
+  }
+
   if (!data || data.length === 0) {
     return (
-      <div className="flex items-center justify-center h-48 text-muted-foreground">
+      <div className="flex items-center justify-center h-48 text-muted-foreground rounded-md border">
         Нет данных для отображения.
       </div>
     );

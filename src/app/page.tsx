@@ -1,3 +1,6 @@
+'use client';
+
+import { useState, useEffect, useMemo } from 'react';
 import {
   LayoutDashboard,
   Phone,
@@ -14,59 +17,82 @@ import { getUsers } from '@/actions/users';
 import { getConfig } from '@/actions/config';
 import { getCallHistory } from '@/actions/cdr';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Skeleton } from '@/components/ui/skeleton';
 import { format, parseISO, isValid } from 'date-fns';
-import type { Call } from '@/lib/types';
+import type { Call, User, AsteriskEndpoint, AsteriskQueue } from '@/lib/types';
 
-export default async function DashboardPage() {
-  const config = await getConfig();
+function KpiCardSkeleton() {
+  return (
+    <div className="p-6 border rounded-lg shadow-sm bg-card">
+      <div className="flex flex-row items-center justify-between pb-2 space-y-0">
+        <Skeleton className="h-4 w-24" />
+        <Skeleton className="h-4 w-4" />
+      </div>
+      <div>
+        <Skeleton className="h-8 w-12 mt-1" />
+        <Skeleton className="h-3 w-40 mt-2" />
+      </div>
+    </div>
+  );
+}
 
-  // Fetch all data in parallel
-  const [endpointsResult, queuesResult, users, callsResult] = await Promise.all([
-    getAmiEndpoints(config.ami),
-    getAmiQueues(config.ami),
-    getUsers(),
-    getCallHistory(config.cdr),
-  ]);
+export default function DashboardPage() {
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [data, setData] = useState<{
+    endpoints: AsteriskEndpoint[];
+    queues: AsteriskQueue[];
+    users: User[];
+    calls: Call[];
+  } | null>(null);
 
-  if (!endpointsResult.success) {
-    return (
-      <Alert variant="destructive">
-        <AlertTriangle className="h-4 w-4" />
-        <AlertTitle>Could not connect to Asterisk</AlertTitle>
-        <AlertDescription>
-          <p>
-            There was an error connecting to the Asterisk Management Interface
-            (AMI). Please check your connection settings in the Admin page.
-          </p>
-          <p className="mt-2 font-mono text-xs">
-            Error: {endpointsResult.error}
-          </p>
-        </AlertDescription>
-      </Alert>
-    );
-  }
+  useEffect(() => {
+    const fetchData = async () => {
+      setIsLoading(true);
+      setError(null);
+      try {
+        const config = await getConfig();
+        const [endpointsResult, queuesResult, users, callsResult] = await Promise.all([
+          getAmiEndpoints(config.ami),
+          getAmiQueues(config.ami),
+          getUsers(),
+          getCallHistory(config.cdr),
+        ]);
 
-  const endpoints = endpointsResult.data || [];
-  const queues = queuesResult.data || [];
+        if (!endpointsResult.success) throw new Error(endpointsResult.error || 'Failed to fetch endpoints');
+        if (!queuesResult.success) throw new Error(queuesResult.error || 'Failed to fetch queues');
+        if (!callsResult.success) throw new Error(callsResult.error || 'Failed to fetch call history');
+        
+        setData({
+          endpoints: endpointsResult.data || [],
+          queues: queuesResult.data || [],
+          users: users,
+          calls: callsResult.data || [],
+        });
+      } catch (e) {
+        setError(e instanceof Error ? e.message : 'An unknown error occurred');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchData();
+  }, []);
 
-  let callVolumeData: { hour: string; calls: number }[] | null = null;
-  if (callsResult.success && callsResult.data) {
-    const calls: Call[] = callsResult.data || [];
+  const dashboardData = useMemo(() => {
+    if (!data) return null;
 
-    callVolumeData = Array.from({ length: 24 }, (_, i) => {
+    const { endpoints, queues, users, calls } = data;
+
+    const callVolumeData = Array.from({ length: 24 }, (_, i) => {
       const d = new Date();
       d.setHours(d.getHours() - i);
       return {
-        hour: format(
-          new Date(d.getFullYear(), d.getMonth(), d.getDate(), d.getHours()),
-          'HH:00'
-        ),
+        hour: format(new Date(d.getFullYear(), d.getMonth(), d.getDate(), d.getHours()), 'HH:00'),
         calls: 0,
       };
     }).reverse();
 
     const hourlyMap = new Map(callVolumeData.map((d) => [d.hour, d]));
-
     calls.forEach((call) => {
       const callDate = parseISO(call.startTime);
       if (isValid(callDate)) {
@@ -77,21 +103,71 @@ export default async function DashboardPage() {
       }
     });
 
-    callVolumeData = Array.from(hourlyMap.values());
+    const operatorsOnCall = endpoints.filter((e) => e.state === 'in use' || e.state === 'busy').length;
+    const operatorsOnline = endpoints.filter((e) => e.state !== 'unavailable').length;
+    const totalOperators = endpoints.length;
+    const totalQueues = queues.length;
+    const activeCallEndpoints = endpoints.filter((e) => e.state === 'in use' || e.state === 'busy' || e.state === 'ringing');
+
+    return {
+      callVolumeChartData: Array.from(hourlyMap.values()),
+      operatorsOnCall,
+      operatorsOnline,
+      totalOperators,
+      totalQueues,
+      activeCallEndpoints,
+      endpoints,
+      users,
+    };
+  }, [data]);
+
+  if (error) {
+    return (
+      <Alert variant="destructive">
+        <AlertTriangle className="h-4 w-4" />
+        <AlertTitle>Could not load Dashboard</AlertTitle>
+        <AlertDescription>
+          <p>There was an error fetching the data needed for the dashboard.</p>
+          <p className="mt-2 font-mono text-xs">Error: {error}</p>
+        </AlertDescription>
+      </Alert>
+    );
   }
 
-  const operatorsOnCall = endpoints.filter(
-    (e) => e.state === 'in use' || e.state === 'busy'
-  ).length;
-  const operatorsOnline = endpoints.filter(
-    (e) => e.state !== 'unavailable'
-  ).length;
-  const totalOperators = endpoints.length;
-  const totalQueues = queues.length;
-
-  const activeCallEndpoints = endpoints.filter(
-    (e) => e.state === 'in use' || e.state === 'busy' || e.state === 'ringing'
-  );
+  if (isLoading || !dashboardData) {
+    return (
+        <div className="flex flex-col gap-6">
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+                <KpiCardSkeleton />
+                <KpiCardSkeleton />
+                <KpiCardSkeleton />
+                <KpiCardSkeleton />
+            </div>
+            <div className="grid gap-6 lg:grid-cols-3">
+                <div className="lg:col-span-2">
+                    <Skeleton className="h-[380px] w-full" />
+                </div>
+                <div className="lg:col-span-1">
+                    <Skeleton className="h-[380px] w-full" />
+                </div>
+            </div>
+            <div>
+                 <Skeleton className="h-[200px] w-full" />
+            </div>
+        </div>
+    );
+  }
+  
+  const {
+      callVolumeChartData,
+      operatorsOnCall,
+      operatorsOnline,
+      totalOperators,
+      totalQueues,
+      activeCallEndpoints,
+      endpoints,
+      users
+  } = dashboardData;
 
   return (
     <div className="flex flex-col gap-6">
@@ -123,7 +199,7 @@ export default async function DashboardPage() {
       </div>
       <div className="grid gap-6 lg:grid-cols-3">
         <div className="lg:col-span-2">
-          <CallVolumeChart data={callVolumeData} />
+          <CallVolumeChart data={callVolumeChartData} />
         </div>
         <div className="lg:col-span-1">
           <OperatorStatusList endpoints={endpoints} users={users} />

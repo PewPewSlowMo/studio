@@ -1,3 +1,7 @@
+'use client';
+
+import { useState, useEffect, useMemo } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { Download, PhoneOff, Clock, AlertTriangle, TrendingUp } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -8,7 +12,8 @@ import { MissedCallsTable } from '@/components/reports/missed-calls-table';
 import { MissedCallKpiCard } from '@/components/reports/missed-kpi-card';
 import type { Call } from '@/lib/types';
 import { DateRangePicker } from '@/components/shared/date-range-picker';
-import { subDays, format } from 'date-fns';
+import { Skeleton } from '@/components/ui/skeleton';
+import { subDays, format, parseISO, isValid } from 'date-fns';
 
 function getMissedReason(call: Call): string {
     if (call.status === 'BUSY') return 'Все операторы заняты';
@@ -17,57 +22,96 @@ function getMissedReason(call: Call): string {
     return 'Системная ошибка';
 }
 
-export default async function MissedCallsPage({ searchParams }: { searchParams?: { [key: string]: string | string[] | undefined } }) {
-    const config = await getConfig();
+function KpiCardSkeleton() {
+    return (
+        <Card>
+            <CardContent className="p-4 flex items-center gap-4">
+                <Skeleton className="h-8 w-8" />
+                <div>
+                    <Skeleton className="h-4 w-32 mb-2" />
+                    <Skeleton className="h-7 w-20" />
+                </div>
+            </CardContent>
+        </Card>
+    );
+}
 
-    const toParam = searchParams?.to as string | undefined;
-    const fromParam = searchParams?.from as string | undefined;
-
-    const to = toParam ? new Date(toParam) : new Date();
-    const from = fromParam ? new Date(fromParam) : subDays(to, 0); // Default to today
-    const dateRange: DateRangeParams = { from: format(from, 'yyyy-MM-dd'), to: format(to, 'yyyy-MM-dd') };
+export default function MissedCallsPage() {
+    const searchParams = useSearchParams();
+    const [isLoading, setIsLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
+    const [calls, setCalls] = useState<Call[]>([]);
     
-    const missedCallsResult = await getMissedCalls(config.cdr, dateRange);
+    useEffect(() => {
+        const fetchData = async () => {
+            setIsLoading(true);
+            setError(null);
+            try {
+                const toParam = searchParams.get('to');
+                const fromParam = searchParams.get('from');
 
-    if (!missedCallsResult.success) {
-        return (
-            <Alert variant="destructive">
-                <AlertTriangle className="h-4 w-4" />
-                <AlertTitle>Could not connect to CDR Database</AlertTitle>
-                <AlertDescription>
-                    <p>There was an error connecting to the Call Detail Record database. Please check your connection settings in the Admin page.</p>
-                    <p className="mt-2 font-mono text-xs">Error: {missedCallsResult.error}</p>
-                </AlertDescription>
-            </Alert>
-        )
-    }
+                const to = toParam && isValid(parseISO(toParam)) ? parseISO(toParam) : new Date();
+                const from = fromParam && isValid(parseISO(fromParam)) ? parseISO(fromParam) : subDays(to, 0); // Default to today
+                const dateRange: DateRangeParams = { from: format(from, 'yyyy-MM-dd'), to: format(to, 'yyyy-MM-dd') };
 
-    const calls: Call[] = missedCallsResult.data || [];
-    
-    const callsWithReason = calls.map(call => ({
-        ...call,
-        reason: getMissedReason(call)
-    }));
+                const config = await getConfig();
+                const missedCallsResult = await getMissedCalls(config.cdr, dateRange);
 
-    const totalMissed = calls.length;
-    const totalWaitTime = calls.reduce((acc, call) => acc + (call.waitTime || 0), 0);
-    const averageWaitTime = totalMissed > 0 ? totalWaitTime / totalMissed : 0;
-    const maxWaitTime = Math.max(0, ...calls.map(call => call.waitTime || 0));
+                if (!missedCallsResult.success) {
+                    throw new Error(missedCallsResult.error || 'Failed to fetch missed calls');
+                }
+                setCalls(missedCallsResult.data || []);
+            } catch (e) {
+                setError(e instanceof Error ? e.message : 'An unknown error occurred');
+            } finally {
+                setIsLoading(false);
+            }
+        };
 
-    const reasonCounts = callsWithReason.reduce((acc, call) => {
-        acc[call.reason!] = (acc[call.reason!] || 0) + 1;
-        return acc;
-    }, {} as Record<string, number>);
+        fetchData();
+    }, [searchParams]);
 
-    const mainReason = Object.keys(reasonCounts).length > 0
-        ? Object.entries(reasonCounts).reduce((a, b) => a[1] > b[1] ? a : b)[0]
-        : 'N/A';
+    const analyticsData = useMemo(() => {
+        const callsWithReason = calls.map(call => ({
+            ...call,
+            reason: getMissedReason(call)
+        }));
+
+        const totalMissed = calls.length;
+        const totalWaitTime = calls.reduce((acc, call) => acc + (call.waitTime || 0), 0);
+        const averageWaitTime = totalMissed > 0 ? totalWaitTime / totalMissed : 0;
+        const maxWaitTime = Math.max(0, ...calls.map(call => call.waitTime || 0));
+
+        const reasonCounts = callsWithReason.reduce((acc, call) => {
+            acc[call.reason!] = (acc[call.reason!] || 0) + 1;
+            return acc;
+        }, {} as Record<string, number>);
+
+        const mainReason = Object.keys(reasonCounts).length > 0
+            ? Object.entries(reasonCounts).reduce((a, b) => a[1] > b[1] ? a : b)[0]
+            : 'N/A';
+        
+        return { callsWithReason, totalMissed, averageWaitTime, maxWaitTime, mainReason };
+    }, [calls]);
     
     const formatTime = (seconds: number) => {
         const minutes = Math.floor(seconds / 60);
         const secs = Math.floor(seconds % 60);
         return `${minutes}:${secs.toString().padStart(2, '0')}`;
     };
+
+    if (error) {
+        return (
+            <Alert variant="destructive">
+                <AlertTriangle className="h-4 w-4" />
+                <AlertTitle>Could not load missed calls</AlertTitle>
+                <AlertDescription>
+                    <p>There was an error connecting to the Call Detail Record database. Please check your connection settings in the Admin page.</p>
+                    <p className="mt-2 font-mono text-xs">Error: {error}</p>
+                </AlertDescription>
+            </Alert>
+        )
+    }
 
     return (
         <div className="space-y-6">
@@ -84,22 +128,31 @@ export default async function MissedCallsPage({ searchParams }: { searchParams?:
                 </div>
             </div>
 
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-                <MissedCallKpiCard icon={PhoneOff} title="Пропущенные звонки" value={totalMissed.toString()} />
-                <MissedCallKpiCard icon={Clock} title="Среднее время ожидания" value={formatTime(averageWaitTime)} />
-                <MissedCallKpiCard icon={AlertTriangle} title="Максимальное ожидание" value={formatTime(maxWaitTime)} />
-                <MissedCallKpiCard icon={TrendingUp} title="Основная причина" value={mainReason} />
-            </div>
+            {isLoading ? (
+                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+                    <KpiCardSkeleton />
+                    <KpiCardSkeleton />
+                    <KpiCardSkeleton />
+                    <KpiCardSkeleton />
+                </div>
+            ) : (
+                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+                    <MissedCallKpiCard icon={PhoneOff} title="Пропущенные звонки" value={analyticsData.totalMissed.toString()} />
+                    <MissedCallKpiCard icon={Clock} title="Среднее время ожидания" value={formatTime(analyticsData.averageWaitTime)} />
+                    <MissedCallKpiCard icon={AlertTriangle} title="Максимальное ожидание" value={formatTime(analyticsData.maxWaitTime)} />
+                    <MissedCallKpiCard icon={TrendingUp} title="Основная причина" value={analyticsData.mainReason} />
+                </div>
+            )}
 
             <Card>
                 <CardHeader>
                     <CardTitle>Детальный список пропущенных звонков</CardTitle>
                     <CardDescription>
-                        Показано {callsWithReason.length} из {callsWithReason.length} пропущенных звонков
+                        {isLoading ? 'Загрузка...' : `Показано ${analyticsData.callsWithReason.length} из ${analyticsData.callsWithReason.length} пропущенных звонков`}
                     </CardDescription>
                 </CardHeader>
                 <CardContent>
-                    <MissedCallsTable calls={callsWithReason} />
+                    <MissedCallsTable calls={analyticsData.callsWithReason} isLoading={isLoading} />
                 </CardContent>
             </Card>
         </div>

@@ -1,3 +1,7 @@
+'use client';
+
+import { useState, useEffect, useMemo } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { AlertTriangle } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -7,28 +11,84 @@ import { getAmiQueues } from '@/actions/ami';
 import type { AsteriskQueue, Call } from '@/lib/types';
 import { QueueReportTable } from '@/components/reports/queue-report-table';
 import { DateRangePicker } from '@/components/shared/date-range-picker';
-import { subDays, format } from 'date-fns';
-
+import { subDays, format, parseISO, isValid } from 'date-fns';
 
 const SLA_TARGET_SECONDS = 30;
 
-export default async function QueueReportsPage({ searchParams }: { searchParams?: { [key: string]: string | string[] | undefined } }) {
-    const config = await getConfig();
+export default function QueueReportsPage() {
+    const searchParams = useSearchParams();
+    const [isLoading, setIsLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
+    const [queues, setQueues] = useState<AsteriskQueue[]>([]);
+    const [calls, setCalls] = useState<Call[]>([]);
 
-    const toParam = searchParams?.to as string | undefined;
-    const fromParam = searchParams?.from as string | undefined;
+    useEffect(() => {
+        const fetchData = async () => {
+            setIsLoading(true);
+            setError(null);
+            try {
+                const toParam = searchParams.get('to');
+                const fromParam = searchParams.get('from');
 
-    const to = toParam ? new Date(toParam) : new Date();
-    const from = fromParam ? new Date(fromParam) : subDays(to, 6);
-    const dateRange: DateRangeParams = { from: format(from, 'yyyy-MM-dd'), to: format(to, 'yyyy-MM-dd') };
+                const to = toParam && isValid(parseISO(toParam)) ? parseISO(toParam) : new Date();
+                const from = fromParam && isValid(parseISO(fromParam)) ? parseISO(fromParam) : subDays(to, 6);
+                const dateRange: DateRangeParams = { from: format(from, 'yyyy-MM-dd'), to: format(to, 'yyyy-MM-dd') };
 
-    const [queuesResult, callsResult] = await Promise.all([
-        getAmiQueues(config.ami),
-        getCallHistory(config.cdr, dateRange)
-    ]);
+                const config = await getConfig();
+                const [queuesResult, callsResult] = await Promise.all([
+                    getAmiQueues(config.ami),
+                    getCallHistory(config.cdr, dateRange)
+                ]);
 
-    if (!queuesResult.success || !callsResult.success) {
-        const error = !queuesResult.success ? queuesResult.error : callsResult.error;
+                if (!queuesResult.success) throw new Error(queuesResult.error || 'Failed to fetch queues');
+                if (!callsResult.success) throw new Error(callsResult.error || 'Failed to fetch call history');
+                
+                setQueues(queuesResult.data || []);
+                setCalls(callsResult.data || []);
+            } catch (e) {
+                setError(e instanceof Error ? e.message : 'An unknown error occurred');
+            } finally {
+                setIsLoading(false);
+            }
+        };
+        fetchData();
+    }, [searchParams]);
+
+    const queueReportData = useMemo(() => {
+        if (!queues.length) return [];
+        return queues.map(queue => {
+            const queueCalls = calls.filter(c => c.queue === queue.name);
+            const answeredCalls = queueCalls.filter(c => c.status === 'ANSWERED' && c.waitTime !== undefined && c.billsec !== undefined);
+            const missedCalls = queueCalls.filter(c => c.status !== 'ANSWERED');
+
+            const totalCalls = queueCalls.length;
+            const totalAnswered = answeredCalls.length;
+
+            const callsAnsweredWithinSla = answeredCalls.filter(c => c.waitTime! <= SLA_TARGET_SECONDS).length;
+            const sla = totalAnswered > 0 ? (callsAnsweredWithinSla / totalAnswered) * 100 : 0;
+
+            const totalWaitTime = answeredCalls.reduce((acc, c) => acc + c.waitTime!, 0);
+            const avgWaitTime = totalAnswered > 0 ? totalWaitTime / totalAnswered : 0;
+
+            const totalHandleTime = answeredCalls.reduce((acc, c) => acc + c.billsec!, 0);
+            const avgHandleTime = totalAnswered > 0 ? totalHandleTime / totalAnswered : 0;
+
+            const abandonmentRate = totalCalls > 0 ? (missedCalls.length / totalCalls) * 100 : 0;
+
+            return {
+                queueName: queue.name,
+                totalCalls: totalCalls,
+                answeredCalls: totalAnswered,
+                missedCalls: missedCalls.length,
+                abandonmentRate: abandonmentRate,
+                sla: sla,
+                avgWaitTime: avgWaitTime,
+                avgHandleTime: avgHandleTime,
+            }
+        }).sort((a, b) => b.totalCalls - a.totalCalls);
+    }, [queues, calls]);
+  
+    if (error) {
         return (
             <div className="space-y-6">
                  <div className="flex justify-between items-start">
@@ -49,61 +109,27 @@ export default async function QueueReportsPage({ searchParams }: { searchParams?
             </div>
         )
     }
-    
-    const queues: AsteriskQueue[] = queuesResult.data || [];
-    const calls: Call[] = callsResult.data || [];
 
-    const queueReportData = queues.map(queue => {
-        const queueCalls = calls.filter(c => c.queue === queue.name);
-        const answeredCalls = queueCalls.filter(c => c.status === 'ANSWERED' && c.waitTime !== undefined && c.billsec !== undefined);
-        const missedCalls = queueCalls.filter(c => c.status !== 'ANSWERED');
-
-        const totalCalls = queueCalls.length;
-        const totalAnswered = answeredCalls.length;
-
-        const callsAnsweredWithinSla = answeredCalls.filter(c => c.waitTime! <= SLA_TARGET_SECONDS).length;
-        const sla = totalAnswered > 0 ? (callsAnsweredWithinSla / totalAnswered) * 100 : 0;
-
-        const totalWaitTime = answeredCalls.reduce((acc, c) => acc + c.waitTime!, 0);
-        const avgWaitTime = totalAnswered > 0 ? totalWaitTime / totalAnswered : 0;
-
-        const totalHandleTime = answeredCalls.reduce((acc, c) => acc + c.billsec!, 0);
-        const avgHandleTime = totalAnswered > 0 ? totalHandleTime / totalAnswered : 0;
-
-        const abandonmentRate = totalCalls > 0 ? (missedCalls.length / totalCalls) * 100 : 0;
-
-        return {
-            queueName: queue.name,
-            totalCalls: totalCalls,
-            answeredCalls: totalAnswered,
-            missedCalls: missedCalls.length,
-            abandonmentRate: abandonmentRate,
-            sla: sla,
-            avgWaitTime: avgWaitTime,
-            avgHandleTime: avgHandleTime,
-        }
-    }).sort((a,b) => b.totalCalls - a.totalCalls); // Sort by most active queues
-  
-  return (
-    <div className="space-y-6">
-        <div className="flex justify-between items-start">
-            <div>
-                <h1 className="text-3xl font-bold">Отчет по очередям</h1>
-                <p className="text-muted-foreground">Детальная аналитика по очередям вызовов</p>
+    return (
+        <div className="space-y-6">
+            <div className="flex justify-between items-start">
+                <div>
+                    <h1 className="text-3xl font-bold">Отчет по очередям</h1>
+                    <p className="text-muted-foreground">Детальная аналитика по очередям вызовов</p>
+                </div>
+                <DateRangePicker />
             </div>
-            <DateRangePicker />
+            <Card>
+                <CardHeader>
+                    <CardTitle>Детализация по очередям</CardTitle>
+                    <CardDescription>
+                        Ключевые показатели для каждой очереди вызовов.
+                    </CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <QueueReportTable data={queueReportData} isLoading={isLoading} />
+                </CardContent>
+            </Card>
         </div>
-        <Card>
-            <CardHeader>
-                <CardTitle>Детализация по очередям</CardTitle>
-                <CardDescription>
-                    Ключевые показатели для каждой очереди вызовов.
-                </CardDescription>
-            </CardHeader>
-            <CardContent>
-                <QueueReportTable data={queueReportData} />
-            </CardContent>
-        </Card>
-    </div>
-  );
+    );
 }
