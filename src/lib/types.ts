@@ -65,3 +65,9 @@ export interface QueueReportData {
   avgWaitTime: number; // In seconds
   avgHandleTime: number; // In seconds
 }
+
+export interface CallState {
+  status: 'offline' | 'available' | 'ringing' | 'on-call' | 'connecting';
+  channel?: string;
+  callerId?: string;
+}

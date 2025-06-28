@@ -20,6 +20,7 @@ import {
   PhoneOff,
   LogOut,
   Moon,
+  Cpu,
 } from 'lucide-react';
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
@@ -42,6 +43,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
   }
 
   const menuItems = [
+    { href: '/operator', label: 'Рабочее место', icon: Cpu },
     { href: '/', label: 'Дашборд', icon: LayoutDashboard },
     { href: '/reports', label: 'Отчет по операторам', icon: Users },
     { href: '/queue-reports', label: 'Отчет по очередям', icon: Phone },
@@ -62,6 +64,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
     if (pathname.startsWith('/admin')) return 'Настройки';
     if (pathname.startsWith('/queue-reports')) return 'Отчет по очередям';
     if (pathname.startsWith('/analytics')) return 'Аналитика';
+    if (pathname.startsWith('/operator')) return 'Рабочее место';
     return 'Дашборд';
   }
   

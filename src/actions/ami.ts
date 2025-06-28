@@ -89,6 +89,144 @@ function runAmiCommand<T extends Record<string, any>>(
   });
 }
 
+/**
+ * Executes a single fire-and-forget action on the AMI.
+ * Connects, sends the action, and disconnects.
+ */
+function runAmiAction(
+  connection: AmiConnection,
+  action: Record<string, string>
+): Promise<{ success: boolean; message?: string }> {
+  return new Promise((resolve, reject) => {
+    let ami: any;
+    const timeout = setTimeout(() => {
+      if (ami) ami.disconnect();
+      reject(new Error('AMI action timed out after 5 seconds.'));
+    }, 5000);
+
+    try {
+      const validatedConnection = AmiConnectionSchema.parse(connection);
+      ami = new Ami(
+        Number(validatedConnection.port),
+        validatedConnection.host,
+        validatedConnection.username,
+        validatedConnection.password,
+        true
+      );
+
+      ami.on('disconnect', () => {
+        clearTimeout(timeout);
+        ami.removeAllListeners();
+      });
+
+      ami.on('error', (err: Error) => {
+        ami.disconnect();
+        reject(err);
+      });
+
+      ami.on('connect', () => {
+        ami.action(action, (err: Error | null, res: any) => {
+          ami.disconnect();
+          if (err) {
+            reject(err);
+          } else {
+            resolve({ success: true, message: res?.message });
+          }
+        });
+      });
+
+      ami.keepConnected();
+    } catch (e) {
+      clearTimeout(timeout);
+      if (e instanceof z.ZodError) {
+        reject(
+          new Error(
+            `Invalid input: ${e.errors.map((err) => err.message).join(', ')}`
+          )
+        );
+      } else if (e instanceof Error) {
+        reject(e);
+      } else {
+        reject(new Error('An unknown error occurred during AMI action execution.'));
+      }
+    }
+  });
+}
+
+export async function originateCall(
+  connection: AmiConnection,
+  fromExtension: string,
+  numberToDial: string,
+  context: string = 'from-internal'
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    const action = {
+      Action: 'Originate',
+      Channel: `PJSIP/${fromExtension}`,
+      Context: context,
+      Exten: numberToDial,
+      Priority: 1,
+      CallerID: `"${fromExtension}" <${fromExtension}>`,
+      Async: 'true',
+      Timeout: 20000, // 20 seconds
+    };
+    const result = await runAmiAction(connection, action);
+    if (result.success && result.message?.toLowerCase().includes('success')) {
+      return { success: true };
+    }
+    return { success: false, error: result.message || 'Origination failed' };
+  } catch (e) {
+    const message = e instanceof Error ? e.message : 'An unknown error occurred.';
+    console.error('originateCall failed:', message);
+    return { success: false, error: message };
+  }
+}
+
+export async function answerCall(
+  connection: AmiConnection,
+  channel: string
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    await runAmiAction(connection, { Action: 'Answer', Channel: channel });
+    return { success: true };
+  } catch (e) {
+    const message = e instanceof Error ? e.message : 'An unknown error occurred.';
+    console.error('answerCall failed:', message);
+    return { success: false, error: message };
+  }
+}
+
+export async function hangupCall(
+  connection: AmiConnection,
+  channel: string
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    await runAmiAction(connection, { Action: 'Hangup', Channel: channel });
+    return { success: true };
+  } catch (e) {
+    const message = e instanceof Error ? e.message : 'An unknown error occurred.';
+    console.error('hangupCall failed:', message);
+    return { success: false, error: message };
+  }
+}
+
+export async function getEndpointDetails(
+  connection: AmiConnection,
+  extension: string
+): Promise<{ success: boolean; data?: AsteriskEndpoint; error?: string }> {
+    const result = await getAmiEndpoints(connection);
+    if (!result.success) {
+        return { success: false, error: result.error };
+    }
+    const endpoint = result.data?.find(e => e.resource === extension);
+    if (endpoint) {
+        // Since PJSIPShowEndpoints does not return callerid, we may need to do another query if call is active
+        // For now, this is sufficient for status check.
+        return { success: true, data: endpoint };
+    }
+    return { success: false, error: `Endpoint ${extension} not found.` };
+}
+
 export async function getAmiEndpoints(
   connection: AmiConnection
 ): Promise<{ success: boolean; data?: AsteriskEndpoint[]; error?: string }> {
