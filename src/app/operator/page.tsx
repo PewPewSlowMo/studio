@@ -26,5 +26,5 @@ export default async function OperatorPage() {
     )
   }
 
-  return <OperatorWorkspace user={operatorUser} connection={config.ami} />;
+  return <OperatorWorkspace user={operatorUser} amiConnection={config.ami} ariConnection={config.ari} />;
 }

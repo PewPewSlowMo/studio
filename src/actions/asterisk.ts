@@ -1,6 +1,7 @@
 'use server';
 
 import { z } from 'zod';
+import type { AsteriskEndpoint, CallState as OperatorCallState } from '@/lib/types';
 
 const AsteriskInfoSchema = z.object({
   system: z.object({
@@ -84,4 +85,83 @@ export async function getAsteriskVersion(
     return { success: true, version: result.data.system.version };
   }
   return { success: false, error: result.error };
+}
+
+// --- Schemas for Operator State ---
+const AriEndpointSchema = z.object({
+  technology: z.string(),
+  resource: z.string(),
+  state: z.string(),
+  channel_ids: z.array(z.string()),
+});
+
+const AriChannelSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  state: z.string(),
+  caller: z.object({ name: z.string(), number: z.string() }),
+  connected: z.object({ name: z.string(), number: z.string() }),
+  dialplan: z.object({
+      context: z.string(),
+      exten: z.string(),
+      priority: z.number()
+  })
+});
+
+export async function getAriEndpointDetails(
+  connection: AsteriskConnection,
+  extension: string
+): Promise<{ success: boolean; data?: AsteriskEndpoint; error?: string }> {
+  const result = await fetchFromAri(connection, `endpoints/PJSIP/${extension}`, AriEndpointSchema);
+  return result;
+}
+
+export async function getOperatorState(
+    connection: AsteriskConnection,
+    extension: string
+): Promise<{
+    success: boolean;
+    data?: {
+        endpointState: string;
+        channelId?: string;
+        channelState?: string;
+        callerId?: string;
+    };
+    error?: string;
+}> {
+    const endpointResult = await getAriEndpointDetails(connection, extension);
+
+    if (!endpointResult.success || !endpointResult.data) {
+        return { success: false, error: endpointResult.error || 'Could not get endpoint details.' };
+    }
+    const endpoint = endpointResult.data;
+    
+    const channelId = endpoint.channel_ids.length > 0 ? endpoint.channel_ids[0] : undefined;
+
+    if (channelId) {
+        const channelResult = await fetchFromAri(
+            connection,
+            `channels/${channelId}`,
+            AriChannelSchema
+        );
+
+        if (channelResult.success && channelResult.data) {
+            return {
+                success: true,
+                data: {
+                    endpointState: endpoint.state,
+                    channelId: channelId,
+                    channelState: channelResult.data.state,
+                    callerId: channelResult.data.caller.number,
+                },
+            };
+        }
+    }
+
+    return { 
+        success: true, 
+        data: { 
+            endpointState: endpoint.state 
+        } 
+    };
 }

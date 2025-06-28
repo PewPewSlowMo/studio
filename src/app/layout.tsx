@@ -13,6 +13,7 @@ const inter = Inter({
 export const metadata: Metadata = {
   title: 'CallSync Central',
   description: 'Войдите в систему аналитики колл-центра',
+  icons: null,
 };
 
 export default function RootLayout({

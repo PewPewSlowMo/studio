@@ -71,3 +71,10 @@ export interface CallState {
   channel?: string;
   callerId?: string;
 }
+
+export interface CrmContact {
+  phoneNumber: string;
+  name: string;
+  address: string;
+  type: string;
+}

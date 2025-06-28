@@ -1,0 +1,57 @@
+'use server';
+
+import fs from 'fs/promises';
+import path from 'path';
+import type { Call, CrmContact } from '@/lib/types';
+import { getConfig } from './config';
+import { getCallHistory } from './cdr';
+import { getUsers } from './users';
+
+const CRM_DB_PATH = path.join(process.cwd(), 'data', 'crm.json');
+
+async function readCrmData(): Promise<CrmContact[]> {
+  try {
+    await fs.mkdir(path.dirname(CRM_DB_PATH), { recursive: true });
+    const data = await fs.readFile(CRM_DB_PATH, 'utf-8');
+    return JSON.parse(data) as CrmContact[];
+  } catch (error: any) {
+    if (error.code === 'ENOENT') {
+      await fs.writeFile(CRM_DB_PATH, JSON.stringify([]), 'utf-8');
+      return [];
+    }
+    console.error('Error reading CRM database:', error);
+    throw new Error('Could not read from the CRM database.');
+  }
+}
+
+export async function findContactByPhone(phoneNumber: string): Promise<{ contact: CrmContact | null, history: Call[] }> {
+    if (!phoneNumber || phoneNumber === 'anonymous') {
+        return { contact: null, history: [] };
+    }
+
+    const [crmData, config, users] = await Promise.all([
+        readCrmData(),
+        getConfig(),
+        getUsers(),
+    ]);
+    
+    const contact = crmData.find(c => c.phoneNumber === phoneNumber) || null;
+    
+    const callHistoryResult = await getCallHistory(config.cdr); // Fetches last 24h by default
+    
+    let history: Call[] = [];
+    if (callHistoryResult.success && callHistoryResult.data) {
+        const userMap = new Map(users.filter(u => u.extension).map(user => [user.extension, user.name]));
+        history = callHistoryResult.data
+            .filter(call => call.callerNumber === phoneNumber)
+            .map(call => ({
+                ...call,
+                operatorName: call.operatorExtension 
+                    ? (userMap.get(call.operatorExtension) || `Ext. ${call.operatorExtension}`) 
+                    : 'N/A',
+            }))
+            .slice(0, 5); // Limit to last 5 calls for the popup
+    }
+
+    return { contact, history };
+}

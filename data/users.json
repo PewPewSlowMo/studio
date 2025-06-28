@@ -9,5 +9,16 @@
     "isActive": true,
     "createdAt": "2025-06-28T16:01:00.590Z",
     "password": "123456"
+  },
+  {
+    "id": "6441dd03-cebf-4abd-8e8b-2f6ed775480a",
+    "name": "operator",
+    "email": "operator@mail.ru",
+    "role": "operator",
+    "extension": "0001",
+    "password": "40538411",
+    "username": "operator",
+    "isActive": true,
+    "createdAt": "2025-06-28T22:05:43.041Z"
   }
 ]
