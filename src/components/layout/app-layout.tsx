@@ -21,6 +21,7 @@ import {
   PhoneOff,
   LogOut,
   Moon,
+  Sun,
   Cpu,
   Loader2,
 } from 'lucide-react';
@@ -38,6 +39,7 @@ import {
 import { Button } from '@/components/ui/button';
 import type { User, UserRole } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
+import { useTheme } from 'next-themes';
 
 const allMenuItems: Array<{ href: string; label: string; icon: React.ElementType; roles: UserRole[] }> = [
     { href: '/operator', label: 'Рабочее место', icon: Cpu, roles: ['operator'] },
@@ -55,6 +57,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
   const { toast } = useToast();
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [isAuthCheckComplete, setIsAuthCheckComplete] = useState(false);
+  const { theme, setTheme } = useTheme();
 
   useEffect(() => {
     const storedUser = localStorage.getItem('loggedInUser');
@@ -153,9 +156,13 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
         <SidebarFooter className="p-2 flex flex-col gap-1">
            <SidebarMenu>
               <SidebarMenuItem>
-                <SidebarMenuButton tooltip="Темная тема">
-                  <Moon />
-                  <span>Темная тема</span>
+                <SidebarMenuButton onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')} tooltip="Сменить тему">
+                  <Sun className="h-[1.2rem] w-[1.2rem] rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
+                  <Moon className="absolute h-[1.2rem] w-[1.2rem] rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
+                  <span className="sr-only">Toggle theme</span>
+                  <span className="group-data-[collapsible=icon]:hidden">
+                    {theme === 'dark' ? 'Светлая тема' : 'Темная тема'}
+                  </span>
                 </SidebarMenuButton>
               </SidebarMenuItem>
                <SidebarMenuItem>
