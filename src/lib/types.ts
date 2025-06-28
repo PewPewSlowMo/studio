@@ -40,3 +40,16 @@ export interface Call {
   duration?: number;
   recordingUrl?: string;
 }
+
+export interface AsteriskEndpoint {
+  technology: string;
+  resource: string;
+  state: string;
+  channel_ids: string[];
+}
+
+export interface AsteriskQueue {
+  name: string;
+  callers: any[];
+  members: any[];
+}
