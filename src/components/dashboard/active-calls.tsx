@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useMemo } from 'react';
 import {
   Card,
   CardContent,
@@ -16,53 +16,39 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import type { Call, CallStatus } from '@/lib/types';
-import { Phone, PhoneOff, PhoneIncoming, PhoneMissed } from 'lucide-react';
+import type { AsteriskEndpoint, User } from '@/lib/types';
+import { Phone, PhoneIncoming, PhoneOff } from 'lucide-react';
 
 interface ActiveCallsProps {
-  calls: Call[];
+  endpoints: AsteriskEndpoint[];
+  users: User[];
 }
 
-export function ActiveCalls({ calls: initialCalls }: ActiveCallsProps) {
-  const [calls, setCalls] = useState(initialCalls);
+const stateInfo: Record<
+  string,
+  {
+    text: string;
+    variant: 'default' | 'destructive' | 'secondary' | 'outline';
+    icon: React.ElementType;
+  }
+> = {
+  ringing: { text: 'Ringing', variant: 'default', icon: PhoneIncoming },
+  'in use': { text: 'On Call', variant: 'secondary', icon: Phone },
+  busy: { text: 'Busy', variant: 'destructive', icon: PhoneOff },
+};
 
-  const handleAnswer = (callId: string) => {
-    setCalls(
-      calls.map((c) =>
-        c.id === callId ? { ...c, status: 'answered' } : c
-      )
-    );
-  };
-
-  const handleHangup = (callId: string) => {
-    setCalls(
-      calls.map((c) =>
-        c.id === callId ? { ...c, status: 'completed' } : c
-      )
-    );
-  };
-
-  const statusInfo: Record<
-    CallStatus,
-    {
-      text: string;
-      variant: 'default' | 'destructive' | 'secondary' | 'outline';
-      icon: React.ElementType;
-    }
-  > = {
-    incoming: { text: 'Incoming', variant: 'default', icon: PhoneIncoming },
-    answered: { text: 'Answered', variant: 'secondary', icon: Phone },
-    completed: { text: 'Completed', variant: 'outline', icon: PhoneOff },
-    missed: { text: 'Missed', variant: 'destructive', icon: PhoneMissed },
-  };
+export function ActiveCalls({ endpoints, users }: ActiveCallsProps) {
+  const userMap = useMemo(
+    () => new Map(users.filter((u) => u.extension).map((u) => [u.extension, u])),
+    [users]
+  );
 
   return (
     <Card>
       <CardHeader>
         <CardTitle>Live Calls</CardTitle>
         <CardDescription>
-          Calls currently being handled or waiting.
+          A real-time view of extensions that are currently active.
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -70,49 +56,38 @@ export function ActiveCalls({ calls: initialCalls }: ActiveCallsProps) {
           <TableHeader>
             <TableRow>
               <TableHead>Status</TableHead>
-              <TableHead>From</TableHead>
               <TableHead>Operator</TableHead>
-              <TableHead>Duration</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
+              <TableHead>Extension</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {calls.map((call) => {
-              const info = statusInfo[call.status];
-              return (
-                <TableRow key={call.id}>
-                  <TableCell>
-                    <Badge variant={info.variant} className="capitalize">
-                      <info.icon className="mr-2 h-4 w-4" />
-                      {info.text}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>{call.callerNumber}</TableCell>
-                  <TableCell>{call.operatorName || 'Unassigned'}</TableCell>
-                  <TableCell>{call.duration ? `${call.duration}s` : '-'}</TableCell>
-                  <TableCell className="text-right">
-                    {call.status === 'incoming' && (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleAnswer(call.id)}
-                      >
-                        <Phone className="mr-2 h-4 w-4" /> Answer
-                      </Button>
-                    )}
-                    {call.status === 'answered' && (
-                      <Button
-                        variant="destructive"
-                        size="sm"
-                        onClick={() => handleHangup(call.id)}
-                      >
-                        <PhoneOff className="mr-2 h-4 w-4" /> Hang Up
-                      </Button>
-                    )}
-                  </TableCell>
-                </TableRow>
-              );
-            })}
+            {endpoints.length > 0 ? (
+              endpoints.map((endpoint) => {
+                const info =
+                  stateInfo[endpoint.state.toLowerCase()] ||
+                  stateInfo['in use'];
+                const user = userMap.get(endpoint.resource);
+                const name = user?.name || 'Unassigned';
+                return (
+                  <TableRow key={endpoint.resource}>
+                    <TableCell>
+                      <Badge variant={info.variant} className="capitalize">
+                        <info.icon className="mr-2 h-4 w-4" />
+                        {info.text}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>{name}</TableCell>
+                    <TableCell>{endpoint.resource}</TableCell>
+                  </TableRow>
+                );
+              })
+            ) : (
+              <TableRow>
+                <TableCell colSpan={3} className="h-24 text-center">
+                  No active calls at the moment.
+                </TableCell>
+              </TableRow>
+            )}
           </TableBody>
         </Table>
       </CardContent>

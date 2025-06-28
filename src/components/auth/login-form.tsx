@@ -50,11 +50,6 @@ export function LoginForm() {
     router.push('/');
   }
 
-  const handleDemoLogin = (creds: Partial<FormData>) => {
-    form.setValue('email', creds.email || '');
-    form.setValue('password', creds.password || '');
-  };
-
   return (
     <Card className="w-full">
       <CardHeader className="text-center">
@@ -117,25 +112,6 @@ export function LoginForm() {
             </Button>
           </form>
         </Form>
-        <Separator className="my-6" />
-        <div className="space-y-4 text-center">
-          <p className="text-sm text-muted-foreground">
-            Демо-аккаунт для тестирования:
-          </p>
-          <div className="flex justify-center">
-            <Button
-              variant="outline"
-              onClick={() =>
-                handleDemoLogin({
-                  email: 'admin@callcenter.com',
-                  password: 'password',
-                })
-              }
-            >
-              Администратор
-            </Button>
-          </div>
-        </div>
       </CardContent>
     </Card>
   );
