@@ -37,7 +37,7 @@ export default function AdminPage() {
   const [amiStatus, setAmiStatus] = useState<ConnectionStatus>('Unknown');
   
   // State for CDR DB connection
-  const [cdrHost, setCdrHost] = useState('localhost');
+  const [cdrHost, setCdrHost] = useState('92.46.62.34');
   const [cdrPort, setCdrPort] = useState('3306');
   const [cdrUsername, setCdrUsername] = useState('freepbxuser');
   const [cdrPassword, setCdrPassword] = useState('42e09f1b23ced2f4cc474a04b4505313');

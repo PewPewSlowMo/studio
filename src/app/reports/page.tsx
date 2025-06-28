@@ -8,7 +8,7 @@ import type { Call } from '@/lib/types';
 
 function getCdrConnection() {
     return {
-        host: process.env.CDR_DB_HOST || 'localhost',
+        host: process.env.CDR_DB_HOST || '92.46.62.34',
         port: process.env.CDR_DB_PORT || '3306',
         username: process.env.CDR_DB_USERNAME || 'freepbxuser',
         password: process.env.CDR_DB_PASSWORD || '42e09f1b23ced2f4cc474a04b4505313',
