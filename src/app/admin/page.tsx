@@ -8,6 +8,7 @@ import { SystemSettings } from '@/components/admin/system-settings';
 import { ConnectionStatusCard } from '@/components/admin/connection-status-card';
 import { getAsteriskVersion } from '@/actions/asterisk';
 import { getAmiQueues } from '@/actions/ami';
+import { testCdrConnection } from '@/actions/cdr';
 import { toast } from '@/hooks/use-toast';
 import type { User } from '@/lib/types';
 import { getUsers } from '@/actions/users';
@@ -35,9 +36,19 @@ export default function AdminPage() {
   const [isTestingAmi, setIsTestingAmi] = useState(false);
   const [amiStatus, setAmiStatus] = useState<ConnectionStatus>('Unknown');
   
+  // State for CDR DB connection
+  const [cdrHost, setCdrHost] = useState('localhost');
+  const [cdrPort, setCdrPort] = useState('5432');
+  const [cdrUsername, setCdrUsername] = useState('asterisk');
+  const [cdrPassword, setCdrPassword] = useState('asterisk');
+  const [cdrDatabase, setCdrDatabase] = useState('asteriskcdrdb');
+  const [isTestingCdr, setIsTestingCdr] = useState(false);
+  const [cdrStatus, setCdrStatus] = useState<ConnectionStatus>('Unknown');
+
   // Memoize connection objects
   const ariConnection = useMemo(() => ({ host: ariHost, port: ariPort, username: ariUsername, password: ariPassword }), [ariHost, ariPort, ariUsername, ariPassword]);
   const amiConnection = useMemo(() => ({ host: amiHost, port: amiPort, username: amiUsername, password: amiPassword }), [amiHost, amiPort, amiUsername, amiPassword]);
+  const cdrConnection = useMemo(() => ({ host: cdrHost, port: cdrPort, username: cdrUsername, password: cdrPassword, database: cdrDatabase }), [cdrHost, cdrPort, cdrUsername, cdrPassword, cdrDatabase]);
 
   const handleTestAri = async () => {
     setIsTestingAri(true);
@@ -67,6 +78,20 @@ export default function AdminPage() {
     setIsTestingAmi(false);
   };
   
+  const handleTestCdr = async () => {
+    setIsTestingCdr(true);
+    setCdrStatus('Unknown');
+    const result = await testCdrConnection(cdrConnection);
+    if (result.success) {
+      setCdrStatus('Connected');
+      toast({ title: 'CDR DB Connection Test Successful', description: 'Connection details are valid. Ready for data retrieval.' });
+    } else {
+      setCdrStatus('Failed');
+      toast({ variant: 'destructive', title: 'CDR DB Connection Test Failed', description: result.error });
+    }
+    setIsTestingCdr(false);
+  };
+
   const fetchUsers = useCallback(async () => {
     setIsFetchingUsers(true);
     try {
@@ -92,23 +117,27 @@ export default function AdminPage() {
     const checkConnections = async () => {
       setIsTestingAri(true);
       setIsTestingAmi(true);
+      setIsTestingCdr(true);
 
-      const [ariResult, amiResult] = await Promise.all([
+      const [ariResult, amiResult, cdrResult] = await Promise.all([
         getAsteriskVersion(ariConnection),
         getAmiQueues(amiConnection),
+        testCdrConnection(cdrConnection),
       ]);
 
       setAriStatus(ariResult.success ? 'Connected' : 'Failed');
       setAmiStatus(amiResult.success ? 'Connected' : 'Failed');
+      setCdrStatus(cdrResult.success ? 'Connected' : 'Failed');
       
       setIsTestingAri(false);
       setIsTestingAmi(false);
+      setIsTestingCdr(false);
     };
 
-    if (ariConnection.host && amiConnection.host) {
+    if (ariConnection.host && amiConnection.host && cdrConnection.host) {
         checkConnections();
     }
-  }, [ariConnection, amiConnection]);
+  }, [ariConnection, amiConnection, cdrConnection]);
 
 
   return (
@@ -156,19 +185,20 @@ export default function AdminPage() {
                 />
                 <ConnectionStatusCard
                     icon={Database}
-                    title="База данных"
-                    status="Connected"
-                    port="Local JSON"
-                    onTest={() => toast({ title: 'Database Test', description: 'Connection is handled locally via JSON file.' })}
-                    isTesting={false}
-                    isDb
+                    title="CDR База данных"
+                    status={cdrStatus}
+                    port={cdrPort}
+                    onTest={handleTestCdr}
+                    isTesting={isTestingCdr}
                 />
             </div>
             <SystemSettings
                 ariConnection={ariConnection}
                 amiConnection={amiConnection}
+                cdrConnection={cdrConnection}
                 onAriChange={{ setHost: setAriHost, setPort: setAriPort, setUsername: setAriUsername, setPassword: setAriPassword }}
                 onAmiChange={{ setHost: setAmiHost, setPort: setAmiPort, setUsername: setAmiUsername, setPassword: setAmiPassword }}
+                onCdrChange={{ setHost: setCdrHost, setPort: setCdrPort, setUsername: setCdrUsername, setPassword: setCdrPassword, setDatabase: setCdrDatabase }}
             />
         </TabsContent>
         <TabsContent value="users" className="mt-6">

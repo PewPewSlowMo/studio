@@ -11,7 +11,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Link } from 'lucide-react';
+import { Link, Database } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
 import {
   Select,
@@ -22,6 +22,7 @@ import {
 } from '@/components/ui/select';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { cn } from '@/lib/utils';
+import { Separator } from '@/components/ui/separator';
 
 interface ConnectionProps {
     host: string;
@@ -37,16 +38,34 @@ interface OnChangeProps {
     setPassword: (password: string) => void;
 }
 
+interface CdrConnectionProps {
+    host: string;
+    port: string;
+    username: string;
+    password: string;
+    database: string;
+}
+
+interface OnCdrChangeProps {
+    setHost: (host: string) => void;
+    setPort: (port: string) => void;
+    setUsername: (username: string) => void;
+    setPassword: (password: string) => void;
+    setDatabase: (database: string) => void;
+}
+
 interface SystemSettingsProps {
   ariConnection: ConnectionProps;
   amiConnection: ConnectionProps;
+  cdrConnection: CdrConnectionProps;
   onAriChange: OnChangeProps;
   onAmiChange: OnChangeProps;
+  onCdrChange: OnCdrChangeProps;
 }
 
 type InterfaceType = 'ami' | 'ari';
 
-export function SystemSettings({ ariConnection, amiConnection, onAriChange, onAmiChange }: SystemSettingsProps) {
+export function SystemSettings({ ariConnection, amiConnection, cdrConnection, onAriChange, onAmiChange, onCdrChange }: SystemSettingsProps) {
   const [interfaceType, setInterfaceType] = useState<InterfaceType>('ami');
   
   const connection = interfaceType === 'ami' ? amiConnection : ariConnection;
@@ -58,18 +77,18 @@ export function SystemSettings({ ariConnection, amiConnection, onAriChange, onAm
         <div className="flex items-center gap-4">
             <Link className="h-8 w-8 text-muted-foreground" />
             <div>
-                <CardTitle>Конфигурация Asterisk</CardTitle>
+                <CardTitle>Конфигурация подключений</CardTitle>
                 <CardDescription>
-                Настройки подключения к серверу Asterisk PBX
+                Настройки подключения к Asterisk PBX и базе данных CDR.
                 </CardDescription>
             </div>
         </div>
       </CardHeader>
       <CardContent className="space-y-6">
-        <div className="space-y-2">
-            <Label>Тип интерфейса</Label>
+        <div>
+            <Label>Тип интерфейса Asterisk</Label>
             <Select value={interfaceType} onValueChange={(value) => setInterfaceType(value as InterfaceType)}>
-                <SelectTrigger>
+                <SelectTrigger className="mt-2">
                     <SelectValue placeholder="Выберите тип интерфейса" />
                 </SelectTrigger>
                 <SelectContent>
@@ -126,12 +145,49 @@ export function SystemSettings({ ariConnection, amiConnection, onAriChange, onAm
                 <span className='font-bold'>AMI преимущества:</span> Более стабильное подключение, нет проблем с HTTP/HTTPS, реальное время событий, лучше подходит для колл-центра.
             </AlertDescription>
         </Alert>
+        
+        <Separator className="my-8" />
+        
+        <div className="space-y-4">
+            <div className="flex items-center gap-4">
+                <Database className="h-8 w-8 text-muted-foreground" />
+                <div>
+                    <h3 className="text-lg font-semibold">Конфигурация CDR базы данных</h3>
+                    <p className="text-sm text-muted-foreground">
+                        Настройки подключения к базе данных Call Detail Record.
+                    </p>
+                </div>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4">
+                <div className="space-y-2">
+                    <Label htmlFor="cdr-host">Хост</Label>
+                    <Input id="cdr-host" value={cdrConnection.host} onChange={(e) => onCdrChange.setHost(e.target.value)} />
+                </div>
+                <div className="space-y-2">
+                    <Label htmlFor="cdr-port">Порт</Label>
+                    <Input id="cdr-port" type="number" value={cdrConnection.port} onChange={(e) => onCdrChange.setPort(e.target.value)} />
+                </div>
+                <div className="space-y-2">
+                    <Label htmlFor="cdr-username">Пользователь</Label>
+                    <Input id="cdr-username" value={cdrConnection.username} onChange={(e) => onCdrChange.setUsername(e.target.value)} />
+                </div>
+                <div className="space-y-2">
+                    <Label htmlFor="cdr-password">Пароль</Label>
+                    <Input id="cdr-password" type="password" value={cdrConnection.password} onChange={(e) => onCdrChange.setPassword(e.target.value)} />
+                </div>
+                <div className="space-y-2 md:col-span-2">
+                    <Label htmlFor="cdr-database">Имя базы данных</Label>
+                    <Input id="cdr-database" value={cdrConnection.database} onChange={(e) => onCdrChange.setDatabase(e.target.value)} />
+                </div>
+            </div>
+        </div>
+
 
       </CardContent>
       <CardFooter className="border-t bg-card px-6 py-4 flex items-center justify-between">
         <div className="flex items-center space-x-2">
             <Switch id="asterisk-enabled" defaultChecked />
-            <Label htmlFor="asterisk-enabled">Включить интеграцию с Asterisk</Label>
+            <Label htmlFor="asterisk-enabled">Включить все интеграции</Label>
         </div>
       </CardFooter>
     </Card>

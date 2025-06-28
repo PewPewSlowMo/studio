@@ -15,7 +15,6 @@ interface ConnectionStatusCardProps {
   onTest: () => void;
   isTesting: boolean;
   variant?: 'default' | 'success';
-  isDb?: boolean;
 }
 
 const statusMap: Record<ConnectionStatusCardProps['status'], { text: string, variant: 'secondary' | 'success' | 'destructive' }> = {
@@ -32,7 +31,6 @@ export function ConnectionStatusCard({
   onTest,
   isTesting,
   variant = 'default',
-  isDb = false,
 }: ConnectionStatusCardProps) {
     const statusInfo = statusMap[status];
 
@@ -47,13 +45,13 @@ export function ConnectionStatusCard({
           <Badge variant={statusInfo.variant} className="capitalize">{statusInfo.text}</Badge>
         </div>
         <div className="flex items-baseline justify-between text-sm text-muted-foreground mb-4">
-          <span>{isDb ? "Тип:" : "Порт:"}</span>
+          <span>Порт:</span>
           <span className="font-mono text-foreground">{port}</span>
         </div>
         <div className="mt-auto">
             <Button onClick={onTest} disabled={isTesting} className={cn("w-full", variant === 'success' ? 'bg-green-600 hover:bg-green-700 text-white' : '')}>
             {isTesting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            {isTesting ? 'Проверка...' : (isDb ? 'Тест БД' : `Тест ${title.split(' ')[0]}`)}
+            {isTesting ? 'Проверка...' : `Тест ${title.split(' ')[0]}`}
             </Button>
         </div>
       </CardContent>
