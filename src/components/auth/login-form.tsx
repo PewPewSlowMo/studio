@@ -52,13 +52,14 @@ export function LoginForm() {
     setIsLoading(true);
     try {
       const result = await loginUser(values);
-      if (result.success) {
+      if (result.success && result.user) {
+        localStorage.setItem('loggedInUser', JSON.stringify(result.user));
         toast({
             title: 'Вход выполнен',
             description: `Добро пожаловать, ${result.user?.name}!`,
         });
-        // In a real app, we would set a session cookie here.
-        // For now, just redirecting.
+        
+        // Redirect to default page, AppLayout will handle role-based redirection
         router.push('/');
       } else {
         toast({

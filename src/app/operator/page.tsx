@@ -1,30 +1,82 @@
+'use client';
+
+import { useState, useEffect } from 'react';
 import { OperatorWorkspace } from '@/components/operator/operator-workspace';
-import { getConfig } from '@/actions/config';
-import { getUsers } from '@/actions/users';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { AlertTriangle } from 'lucide-react';
+import { getConfig, type AppConfig } from '@/actions/config';
+import { AlertTriangle, Loader2 } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import type { User } from '@/lib/types';
 
-export default async function OperatorPage() {
-  const config = await getConfig();
-  // In a real app, you would get the currently logged-in user.
-  // For this prototype, we'll find the first user with the 'operator' role.
-  const users = await getUsers();
-  const operatorUser = users.find(u => u.role === 'operator' && u.extension);
+export default function OperatorPage() {
+    const [config, setConfig] = useState<AppConfig | null>(null);
+    const [user, setUser] = useState<User | null>(null);
+    const [isLoading, setIsLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
 
-  if (!operatorUser) {
-    return (
-        <div className="container mx-auto max-w-lg mt-10">
-            <Alert variant="destructive">
-                <AlertTriangle className="h-4 w-4" />
-                <AlertTitle>No Operator Found</AlertTitle>
-                <AlertDescription>
-                    There is no user configured with the 'operator' role and an assigned extension. Please configure an operator in the Admin &gt; User Management panel.
-                </AlertDescription>
-            </Alert>
-        </div>
-    )
-  }
+    useEffect(() => {
+        const initialize = async () => {
+            try {
+                const storedUser = localStorage.getItem('loggedInUser');
+                if (storedUser) {
+                    const parsedUser: User = JSON.parse(storedUser);
+                    if (parsedUser.role === 'operator' && parsedUser.extension) {
+                        setUser(parsedUser);
+                    } else {
+                         setError('Вы не авторизованы как оператор или у вашей учетной записи не задан внутренний номер.');
+                    }
+                } else {
+                    setError('Пользователь не авторизован.');
+                }
+                
+                const appConfig = await getConfig();
+                setConfig(appConfig);
 
-  return <OperatorWorkspace user={operatorUser} amiConnection={config.ami} ariConnection={config.ari} />;
+            } catch (e) {
+                const message = e instanceof Error ? e.message : 'An unknown error occurred';
+                console.error("Failed to initialize operator page", message);
+                setError(message)
+            } finally {
+                setIsLoading(false);
+            }
+        };
+        initialize();
+    }, []);
+
+    if (isLoading) {
+        return (
+            <div className="flex justify-center items-center h-64">
+                <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+            </div>
+        );
+    }
+
+    if (error || !user) {
+        return (
+            <div className="container mx-auto max-w-lg mt-10">
+                <Alert variant="destructive">
+                    <AlertTriangle className="h-4 w-4" />
+                    <AlertTitle>Ошибка доступа</AlertTitle>
+                    <AlertDescription>
+                        {error || 'Не удалось загрузить данные пользователя.'}
+                    </AlertDescription>
+                </Alert>
+            </div>
+        );
+    }
+    
+    if (!config) {
+         return (
+            <div className="container mx-auto max-w-lg mt-10">
+                <Alert variant="destructive">
+                    <AlertTriangle className="h-4 w-4" />
+                    <AlertTitle>Ошибка конфигурации</AlertTitle>
+                    <AlertDescription>
+                        Не удалось загрузить конфигурацию приложения.
+                    </AlertDescription>
+                </Alert>
+            </div>
+        );
+    }
+
+    return <OperatorWorkspace user={user} amiConnection={config.ami} ariConnection={config.ari} />;
 }

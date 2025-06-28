@@ -1,4 +1,5 @@
 'use client';
+import { useState, useEffect, useMemo } from 'react';
 import {
   SidebarProvider,
   Sidebar,
@@ -21,8 +22,9 @@ import {
   LogOut,
   Moon,
   Cpu,
+  Loader2,
 } from 'lucide-react';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
@@ -34,31 +36,66 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
+import type { User, UserRole } from '@/lib/types';
+import { useToast } from '@/hooks/use-toast';
+
+const allMenuItems: Array<{ href: string; label: string; icon: React.ElementType; roles: UserRole[] }> = [
+    { href: '/operator', label: 'Рабочее место', icon: Cpu, roles: ['operator'] },
+    { href: '/', label: 'Дашборд', icon: LayoutDashboard, roles: ['admin', 'supervisor', 'manager'] },
+    { href: '/reports', label: 'Отчет по операторам', icon: Users, roles: ['admin', 'supervisor', 'manager'] },
+    { href: '/queue-reports', label: 'Отчет по очередям', icon: Phone, roles: ['admin', 'supervisor', 'manager'] },
+    { href: '/missed-calls', label: 'Пропущенные звонки', icon: PhoneOff, roles: ['admin', 'supervisor', 'manager'] },
+    { href: '/analytics', label: 'Аналитика', icon: BarChart3, roles: ['admin', 'supervisor', 'manager'] },
+    { href: '/admin', label: 'Настройки', icon: Settings, roles: ['admin'] },
+];
 
 export function AppLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const router = useRouter();
+  const { toast } = useToast();
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const [isAuthCheckComplete, setIsAuthCheckComplete] = useState(false);
 
-  if (pathname === '/login') {
-    return <>{children}</>;
-  }
+  useEffect(() => {
+    const storedUser = localStorage.getItem('loggedInUser');
+    if (storedUser) {
+        const user: User = JSON.parse(storedUser);
+        setCurrentUser(user);
 
-  const menuItems = [
-    { href: '/operator', label: 'Рабочее место', icon: Cpu },
-    { href: '/', label: 'Дашборд', icon: LayoutDashboard },
-    { href: '/reports', label: 'Отчет по операторам', icon: Users },
-    { href: '/queue-reports', label: 'Отчет по очередям', icon: Phone },
-    { href: '/missed-calls', label: 'Пропущенные звонки', icon: PhoneOff },
-    { href: '/analytics', label: 'Аналитика', icon: BarChart3 },
-    { href: '/admin', label: 'Настройки', icon: Settings },
-  ];
-
-  const getPageTitle = () => {
-     for (const item of menuItems) {
-        if (pathname === item.href) {
-            return item.label;
+        const allowedRoutes = allMenuItems.filter(i => i.roles.includes(user.role));
+        const hasAccess = allowedRoutes.some(route => route.href === '/' ? pathname === '/' : pathname.startsWith(route.href));
+        
+        if (!hasAccess && pathname !== '/login') {
+             const defaultPath = user.role === 'operator' ? '/operator' : '/';
+             router.replace(defaultPath);
+             toast({
+                variant: 'destructive',
+                title: 'Доступ запрещен',
+                description: 'У вас нет прав для просмотра этой страницы.',
+            });
+        }
+    } else {
+        if (pathname !== '/login') {
+            router.replace('/login');
         }
     }
-    // Handle nested routes or default
+    setIsAuthCheckComplete(true);
+  }, [pathname, router, toast]);
+
+  const handleLogout = () => {
+    localStorage.removeItem('loggedInUser');
+    router.push('/login');
+  };
+
+  const menuItems = useMemo(() => {
+    if (!currentUser) return [];
+    return allMenuItems.filter(item => item.roles.includes(currentUser.role));
+  }, [currentUser]);
+
+  const getPageTitle = () => {
+     for (const item of allMenuItems) { // Use all items for title lookup
+        if (pathname === item.href) return item.label;
+    }
     if (pathname.startsWith('/reports')) return 'Отчет по операторам';
     if (pathname.startsWith('/missed-calls')) return 'Пропущенные звонки';
     if (pathname.startsWith('/admin')) return 'Настройки';
@@ -69,6 +106,18 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
   }
   
   const currentPage = getPageTitle();
+  
+  if (pathname === '/login') {
+    return <>{children}</>;
+  }
+
+  if (!isAuthCheckComplete) {
+    return (
+        <div className="flex h-screen items-center justify-center">
+            <Loader2 className="h-12 w-12 animate-spin text-primary" />
+        </div>
+    );
+  }
 
   return (
     <SidebarProvider>
@@ -88,7 +137,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
             {menuItems.map((item) => (
               <SidebarMenuItem key={item.label}>
                 <SidebarMenuButton
-                  isActive={pathname === item.href}
+                  isActive={pathname === item.href || (item.href !== '/' && pathname.startsWith(item.href))}
                   tooltip={item.label}
                   asChild
                 >
@@ -110,11 +159,9 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
                 </SidebarMenuButton>
               </SidebarMenuItem>
                <SidebarMenuItem>
-                  <SidebarMenuButton asChild tooltip="Выйти">
-                    <Link href="/login" className="text-destructive hover:!text-destructive focus:!text-destructive">
-                      <LogOut />
-                      <span>Выйти</span>
-                    </Link>
+                  <SidebarMenuButton onClick={handleLogout} tooltip="Выйти" className="text-destructive hover:!text-destructive focus:!text-destructive">
+                    <LogOut />
+                    <span>Выйти</span>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
            </SidebarMenu>
@@ -126,13 +173,13 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
               >
                 <div className="flex w-full items-center gap-3">
                   <Avatar className="h-9 w-9">
-                    <AvatarImage src="https://placehold.co/100x100.png" alt="@admin" data-ai-hint="user avatar" />
-                    <AvatarFallback>AD</AvatarFallback>
+                    <AvatarImage src="https://placehold.co/100x100.png" alt={currentUser?.name} data-ai-hint="user avatar" />
+                    <AvatarFallback>{currentUser?.name?.charAt(0) || 'U'}</AvatarFallback>
                   </Avatar>
                   <div className="text-left group-data-[collapsible=icon]:hidden">
-                    <p className="font-semibold">Администратор</p>
-                    <p className="text-xs text-muted-foreground">
-                      Администратор
+                    <p className="font-semibold">{currentUser?.name}</p>
+                    <p className="text-xs text-muted-foreground capitalize">
+                      {currentUser?.role}
                     </p>
                   </div>
                 </div>
@@ -141,9 +188,9 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
             <DropdownMenuContent className="w-56" side="top" align="start">
               <DropdownMenuLabel className="font-normal">
                 <div className="flex flex-col space-y-1">
-                  <p className="text-sm font-medium leading-none">Admin User</p>
+                  <p className="text-sm font-medium leading-none">{currentUser?.name}</p>
                   <p className="text-xs leading-none text-muted-foreground">
-                    admin@callsync.app
+                    {currentUser?.email}
                   </p>
                 </div>
               </DropdownMenuLabel>
@@ -151,8 +198,8 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
               <DropdownMenuItem>Профиль</DropdownMenuItem>
               <DropdownMenuItem>Биллинг</DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem asChild>
-                <Link href="/login">Выйти</Link>
+              <DropdownMenuItem onClick={handleLogout} className="cursor-pointer">
+                Выйти
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
