@@ -22,7 +22,10 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import { Eye, EyeOff } from 'lucide-react';
+import { Eye, EyeOff, Loader2 } from 'lucide-react';
+import { loginUser } from '@/actions/auth';
+import { useToast } from '@/hooks/use-toast';
+
 
 const formSchema = z.object({
   email: z.string().email('Неверный формат email'),
@@ -33,7 +36,9 @@ type FormData = z.infer<typeof formSchema>;
 
 export function LoginForm() {
   const [showPassword, setShowPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
+  const { toast } = useToast();
 
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
@@ -43,10 +48,34 @@ export function LoginForm() {
     },
   });
 
-  function onSubmit(values: FormData) {
-    console.log(values);
-    // Redirect to dashboard on successful login
-    router.push('/');
+  async function onSubmit(values: FormData) {
+    setIsLoading(true);
+    try {
+      const result = await loginUser(values);
+      if (result.success) {
+        toast({
+            title: 'Вход выполнен',
+            description: `Добро пожаловать, ${result.user?.name}!`,
+        });
+        // In a real app, we would set a session cookie here.
+        // For now, just redirecting.
+        router.push('/');
+      } else {
+        toast({
+            variant: 'destructive',
+            title: 'Ошибка входа',
+            description: result.error,
+        });
+      }
+    } catch (error) {
+       toast({
+        variant: 'destructive',
+        title: 'Неизвестная ошибка',
+        description: 'Произошла ошибка при попытке входа. Пожалуйста, попробуйте еще раз.',
+      });
+    } finally {
+      setIsLoading(false);
+    }
   }
 
   return (
@@ -67,7 +96,7 @@ export function LoginForm() {
                 <FormItem>
                   <FormLabel>Email</FormLabel>
                   <FormControl>
-                    <Input placeholder="user@callcenter.com" {...field} />
+                    <Input placeholder="user@callcenter.com" {...field} disabled={isLoading} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -85,11 +114,13 @@ export function LoginForm() {
                         type={showPassword ? 'text' : 'password'}
                         placeholder="••••••••"
                         {...field}
+                        disabled={isLoading}
                       />
                       <button
                         type="button"
                         onClick={() => setShowPassword(!showPassword)}
-                        className="absolute inset-y-0 right-0 flex items-center pr-3 text-muted-foreground"
+                        className="absolute inset-y-0 right-0 flex items-center pr-3 text-muted-foreground disabled:opacity-50"
+                        disabled={isLoading}
                       >
                         {showPassword ? (
                           <EyeOff className="h-5 w-5" />
@@ -106,8 +137,10 @@ export function LoginForm() {
             <Button
               type="submit"
               className="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:opacity-90"
+              disabled={isLoading}
             >
-              Войти
+              {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              {isLoading ? 'Вход...' : 'Войти'}
             </Button>
           </form>
         </Form>
