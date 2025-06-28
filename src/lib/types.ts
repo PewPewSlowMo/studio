@@ -78,3 +78,15 @@ export interface CrmContact {
   address: string;
   type: string;
 }
+
+export interface Appeal {
+  id: string;
+  callId: string; // Will use channel ID for now
+  operatorId: string;
+  operatorName: string;
+  callerNumber: string;
+  appealType: 'complaint' | 'service' | 'other';
+  description: string;
+  resolution: string;
+  createdAt: string;
+}

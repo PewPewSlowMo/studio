@@ -20,6 +20,7 @@ import { originateCall, answerCall, hangupCall } from '@/actions/ami';
 import { findContactByPhone } from '@/actions/crm';
 import { cn } from '@/lib/utils';
 import { CallerInfoCard } from './caller-info-card';
+import { AppealForm } from './appeal-form';
 
 // --- Prop Types ---
 interface OperatorWorkspaceProps {
@@ -47,6 +48,7 @@ function Dialpad({ onDial, disabled }: { onDial: (number: string) => void, disab
     <Card>
       <CardHeader>
         <CardTitle>Новый звонок</CardTitle>
+        <CardDescription>Введите номер для совершения исходящего вызова.</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="relative">
@@ -108,10 +110,10 @@ function CallStatus({ state, onAnswer, onHangup, user, isProcessing, isDialogOpe
             </div>
         </div>
 
-        {state.status === 'on-call' && (
+        {state.status === 'on-call' && state.callerId && (
             <div className="p-4 text-center rounded-lg border">
                 <p className="text-lg font-bold">Вы на линии с:</p>
-                <p className="text-3xl font-mono my-2">{state.callerId || 'Неизвестный номер'}</p>
+                <p className="text-3xl font-mono my-2">{state.callerId}</p>
             </div>
         )}
         
@@ -119,7 +121,7 @@ function CallStatus({ state, onAnswer, onHangup, user, isProcessing, isDialogOpe
             <Button onClick={onAnswer} disabled={state.status !== 'ringing' || isProcessing} className="h-16 bg-green-600 hover:bg-green-700 text-white text-lg">
                 <PhoneIncoming className="mr-2" /> Ответить
             </Button>
-            <Button onClick={onHangup} disabled={!['on-call', 'connecting'].includes(state.status) || isProcessing} className="h-16 bg-red-600 hover:bg-red-700 text-white text-lg">
+            <Button onClick={onHangup} disabled={!['on-call', 'connecting', 'ringing'].includes(state.status) || isProcessing} className="h-16 bg-red-600 hover:bg-red-700 text-white text-lg">
                 {isProcessing ? <Loader2 className="mr-2 animate-spin" /> : <PhoneOff className="mr-2" />}
                 {isProcessing ? 'Завершение...' : 'Завершить'}
             </Button>
@@ -228,6 +230,17 @@ export function OperatorWorkspace({ user, amiConnection, ariConnection }: Operat
     setIsProcessing(false);
   };
 
+  const RightPanel = () => {
+    if (state.status === 'on-call' && state.channel && state.callerId) {
+        return <AppealForm 
+            callId={state.channel} 
+            callerNumber={state.callerId} 
+            operator={user} 
+        />;
+    }
+    return <Dialpad onDial={handleDial} disabled={state.status !== 'available' || isProcessing} />;
+  };
+
   return (
     <>
       <CallerInfoCard 
@@ -251,7 +264,7 @@ export function OperatorWorkspace({ user, amiConnection, ariConnection }: Operat
           />
         </div>
         <div>
-          <Dialpad onDial={handleDial} disabled={state.status !== 'available' || isProcessing} />
+          <RightPanel />
         </div>
       </div>
     </>
