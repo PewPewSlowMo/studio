@@ -32,23 +32,27 @@ import {
 } from '@/components/ui/select';
 import { Loader2 } from 'lucide-react';
 
-const userFormSchema = z.object({
-  name: z.string().min(1, 'Name is required'),
-  email: z.string().email('Invalid email address'),
-  role: z.enum(['admin', 'manager', 'supervisor', 'operator']),
-  extension: z.string().optional(),
-}).refine(data => {
-    if (data.role === 'operator' && !data.extension) {
+export const userFormSchema = z
+  .object({
+    name: z.string().min(1, 'Name is required'),
+    email: z.string().email('Invalid email address'),
+    role: z.enum(['admin', 'manager', 'supervisor', 'operator']),
+    extension: z.string().optional(),
+  })
+  .refine(
+    (data) => {
+      if (data.role === 'operator' && !data.extension) {
         return false;
+      }
+      return true;
+    },
+    {
+      message: 'Extension is required for operators.',
+      path: ['extension'],
     }
-    return true;
-}, {
-    message: "Extension is required for operators.",
-    path: ["extension"],
-});
+  );
 
-
-type UserFormData = z.infer<typeof userFormSchema>;
+export type UserFormData = z.infer<typeof userFormSchema>;
 
 interface UserFormDialogProps {
   isOpen: boolean;
@@ -74,26 +78,26 @@ export function UserFormDialog({
       email: '',
       role: 'operator',
       extension: '',
-    }
+    },
   });
 
   useEffect(() => {
     if (isOpen) {
-        if (user) {
-            form.reset({
-                name: user.name,
-                email: user.email,
-                role: user.role,
-                extension: user.extension || '',
-            });
-        } else {
-            form.reset({
-                name: '',
-                email: '',
-                role: 'operator',
-                extension: '',
-            });
-        }
+      if (user) {
+        form.reset({
+          name: user.name,
+          email: user.email,
+          role: user.role,
+          extension: user.extension || '',
+        });
+      } else {
+        form.reset({
+          name: '',
+          email: '',
+          role: 'operator',
+          extension: '',
+        });
+      }
     }
   }, [isOpen, user, form]);
 
@@ -116,7 +120,10 @@ export function UserFormDialog({
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 py-4">
+          <form
+            onSubmit={form.handleSubmit(onSubmit)}
+            className="space-y-4 py-4"
+          >
             <FormField
               control={form.control}
               name="name"
@@ -149,7 +156,10 @@ export function UserFormDialog({
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Role</FormLabel>
-                   <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <Select
+                    onValueChange={field.onChange}
+                    defaultValue={field.value}
+                  >
                     <FormControl>
                       <SelectTrigger>
                         <SelectValue placeholder="Select a role" />
@@ -166,7 +176,7 @@ export function UserFormDialog({
                 </FormItem>
               )}
             />
-            
+
             {role === 'operator' && (
               <FormField
                 control={form.control}
@@ -174,22 +184,32 @@ export function UserFormDialog({
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Asterisk Extension</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value || ''} disabled={isLoadingEndpoints}>
-                       <FormControl>
+                    <Select
+                      onValueChange={field.onChange}
+                      value={field.value || ''}
+                      disabled={isLoadingEndpoints}
+                    >
+                      <FormControl>
                         <SelectTrigger>
-                            {isLoadingEndpoints && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                            <SelectValue placeholder="Select an extension" />
+                          {isLoadingEndpoints && (
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          )}
+                          <SelectValue placeholder="Select an extension" />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
                         {isLoadingEndpoints ? (
-                           <div className="flex items-center justify-center p-4">
-                            <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Loading...
+                          <div className="flex items-center justify-center p-4">
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />{' '}
+                            Loading...
                           </div>
                         ) : (
                           <>
                             {endpoints.map((endpoint) => (
-                              <SelectItem key={endpoint.resource} value={endpoint.resource}>
+                              <SelectItem
+                                key={endpoint.resource}
+                                value={endpoint.resource}
+                              >
                                 {endpoint.resource} ({endpoint.state})
                               </SelectItem>
                             ))}
@@ -204,7 +224,11 @@ export function UserFormDialog({
             )}
 
             <DialogFooter>
-              <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => onOpenChange(false)}
+              >
                 Cancel
               </Button>
               <Button type="submit">Save User</Button>

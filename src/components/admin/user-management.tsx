@@ -25,7 +25,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { UserFormDialog } from './user-form-dialog';
+import { UserFormDialog, type UserFormData } from './user-form-dialog';
 import { getAmiEndpoints } from '@/actions/ami';
 import { useToast } from '@/hooks/use-toast';
 
@@ -40,7 +40,11 @@ interface UserManagementProps {
   };
 }
 
-export function UserManagement({ users, setUsers, connection }: UserManagementProps) {
+export function UserManagement({
+  users,
+  setUsers,
+  connection,
+}: UserManagementProps) {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [endpoints, setEndpoints] = useState<AsteriskEndpoint[]>([]);
@@ -66,18 +70,16 @@ export function UserManagement({ users, setUsers, connection }: UserManagementPr
     setIsLoadingEndpoints(false);
   };
 
-  const handleSaveUser = (data: any) => {
-    // In a real application, you would call a server action here to save the user
-    // and then update the local state `setUsers(...)` to reflect the changes.
-    console.log('Saving user:', data);
-    toast({
-      title: 'User Saved',
-      description: `Details for ${data.name} have been saved successfully.`,
-    });
-    // This now updates the state in the parent component
+  const handleSaveUser = (data: UserFormData) => {
     if (selectedUser) {
       // Editing existing user
-      setUsers(currentUsers => currentUsers.map(u => u.id === selectedUser.id ? { ...u, ...data, extension: data.extension || undefined } : u));
+      setUsers((currentUsers) =>
+        currentUsers.map((u) =>
+          u.id === selectedUser.id
+            ? { ...u, ...data, extension: data.extension || undefined }
+            : u
+        )
+      );
     } else {
       // Creating new user
       const newUser: User = {
@@ -88,8 +90,13 @@ export function UserManagement({ users, setUsers, connection }: UserManagementPr
         ...data,
         extension: data.extension || undefined,
       };
-      setUsers(currentUsers => [...currentUsers, newUser]);
+      setUsers((currentUsers) => [...currentUsers, newUser]);
     }
+
+    toast({
+      title: 'User Saved',
+      description: `Details for ${data.name} have been saved successfully.`,
+    });
   };
 
   return (
@@ -141,9 +148,9 @@ export function UserManagement({ users, setUsers, connection }: UserManagementPr
                         {user.role}
                       </Badge>
                     </TableCell>
-                     <TableCell>
+                    <TableCell>
                       {user.extension ? (
-                         <Badge variant="secondary">{user.extension}</Badge>
+                        <Badge variant="secondary">{user.extension}</Badge>
                       ) : (
                         <span className="text-muted-foreground">N/A</span>
                       )}
@@ -162,9 +169,15 @@ export function UserManagement({ users, setUsers, connection }: UserManagementPr
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
-                          <DropdownMenuItem onClick={() => handleOpenDialog(user)}>Edit</DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={() => handleOpenDialog(user)}
+                          >
+                            Edit
+                          </DropdownMenuItem>
                           <DropdownMenuItem>Deactivate</DropdownMenuItem>
-                          <DropdownMenuItem className="text-destructive hover:!text-destructive-foreground">Delete</DropdownMenuItem>
+                          <DropdownMenuItem className="text-destructive hover:!text-destructive-foreground">
+                            Delete
+                          </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </TableCell>
