@@ -51,7 +51,7 @@ export default function MissedCallsPage() {
                 const fromParam = searchParams.get('from');
 
                 const to = toParam && isValid(parseISO(toParam)) ? parseISO(toParam) : new Date();
-                const from = fromParam && isValid(parseISO(fromParam)) ? parseISO(fromParam) : subDays(to, 0); // Default to today
+                const from = fromParam && isValid(parseISO(fromParam)) ? parseISO(fromParam) : subDays(to, 6); // Default to last 7 days
                 const dateRange: DateRangeParams = { from: format(from, 'yyyy-MM-dd'), to: format(to, 'yyyy-MM-dd') };
 
                 const config = await getConfig();
@@ -117,7 +117,7 @@ export default function MissedCallsPage() {
         <div className="space-y-6">
             <div className="flex justify-between items-start">
                 <div>
-                    <h1 className="text-3xl font-bold text-destructive-foreground">Пропущенные звонки</h1>
+                    <h1 className="text-3xl font-bold text-destructive">Пропущенные звонки</h1>
                     <p className="text-muted-foreground">Анализ пропущенных звонков и их причин</p>
                 </div>
                 <div className="flex items-center gap-2">
