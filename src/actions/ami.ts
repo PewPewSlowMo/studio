@@ -3,6 +3,10 @@
 import { z } from 'zod';
 import type { AsteriskEndpoint, AsteriskQueue } from '@/lib/types';
 
+// This is a CommonJS module. We configure Next.js to treat it as an external
+// package on the server via `serverComponentsExternalPackages` in next.config.ts.
+const Ami = require('asterisk-manager');
+
 const AmiConnectionSchema = z.object({
   host: z.string().min(1, 'Host is required'),
   port: z.string().min(1, 'Port is required'),
@@ -18,7 +22,6 @@ function runAmiCommand<T>(
   responseEvents: string[],
   completionEvent: string
 ): Promise<T[]> {
-  const Ami = (eval)('require')('asterisk-manager');
   return new Promise((resolve, reject) => {
     try {
       const validatedConnection = AmiConnectionSchema.parse(connection);
@@ -39,7 +42,7 @@ function runAmiCommand<T>(
         }
       };
 
-      ami.on('error', (err) => {
+      ami.on('error', (err: Error) => {
         if (!isDone) {
           cleanup();
           reject(new Error(`AMI connection error: ${err.message}`));
@@ -54,7 +57,7 @@ function runAmiCommand<T>(
       });
 
       ami.on('connect', () => {
-        ami.action(action, (err, res) => {
+        ami.action(action, (err: Error | null, res: { response: string; message: string; }) => {
           if (err) {
             cleanup();
             reject(new Error(`AMI action execution error: ${err.message}`));

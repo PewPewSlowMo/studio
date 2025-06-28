@@ -18,6 +18,9 @@ const nextConfig: NextConfig = {
       },
     ],
   },
+  experimental: {
+    serverComponentsExternalPackages: ['asterisk-manager'],
+  },
 };
 
 export default nextConfig;
