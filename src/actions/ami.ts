@@ -25,8 +25,8 @@ function runAmiCommand<T extends Record<string, any>>(
     let ami: any;
     const timeout = setTimeout(() => {
         if (ami) ami.disconnect();
-        reject(new Error('AMI command timed out after 10 seconds.'));
-    }, 10000);
+        reject(new Error('AMI command timed out after 5 seconds.'));
+    }, 5000); // Shortened timeout
 
     try {
       const validatedConnection = AmiConnectionSchema.parse(connection);
@@ -40,7 +40,6 @@ function runAmiCommand<T extends Record<string, any>>(
       );
 
       const results: T[] = [];
-      let commandSent = false;
 
       // Make sure to remove all listeners on disconnect
       ami.on('disconnect', () => {
@@ -62,15 +61,12 @@ function runAmiCommand<T extends Record<string, any>>(
           reject(err);
       });
 
-      ami.on('connect', () => {
-        if (!commandSent) {
-          ami.action(action, (err: Error | null) => {
-            if (err) {
-              ami.disconnect();
-              reject(err);
-            }
-          });
-          commandSent = true;
+      // The library queues the action until login is complete.
+      // No need for a 'connect' handler.
+      ami.action(action, (err: Error | null) => {
+        if (err) {
+          ami.disconnect();
+          reject(err);
         }
       });
       
@@ -123,16 +119,16 @@ function runAmiAction(
         ami.disconnect();
         reject(err);
       });
-
-      ami.on('connect', () => {
-        ami.action(action, (err: Error | null, res: any) => {
-          ami.disconnect();
-          if (err) {
-            reject(err);
-          } else {
-            resolve({ success: true, message: res?.message });
-          }
-        });
+      
+      // The library queues the action until login is complete.
+      // The callback handles success/failure.
+      ami.action(action, (err: Error | null, res: any) => {
+        ami.disconnect();
+        if (err) {
+          reject(err);
+        } else {
+          resolve({ success: true, message: res?.message });
+        }
       });
 
       ami.keepConnected();
