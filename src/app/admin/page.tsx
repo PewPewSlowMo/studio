@@ -8,15 +8,13 @@ import { SystemSettings } from '@/components/admin/system-settings';
 import { ConnectionStatusCard } from '@/components/admin/connection-status-card';
 import { getAsteriskVersion } from '@/actions/asterisk';
 import { getAmiQueues } from '@/actions/ami';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from '@/hooks/use-toast';
 import type { User } from '@/lib/types';
 import { getUsers } from '@/actions/users';
 
 type ConnectionStatus = 'Unknown' | 'Connected' | 'Failed';
 
 export default function AdminPage() {
-  const { toast } = useToast();
-  
   // State for users
   const [users, setUsers] = useState<User[]>([]);
   const [isFetchingUsers, setIsFetchingUsers] = useState(true);
@@ -83,7 +81,7 @@ export default function AdminPage() {
     } finally {
         setIsFetchingUsers(false);
     }
-  }, [toast]);
+  }, []);
 
   useEffect(() => {
     fetchUsers();
@@ -137,7 +135,7 @@ export default function AdminPage() {
                     icon={Database}
                     title="База данных"
                     status="Connected"
-                    port="MongoDB"
+                    port="Local JSON"
                     onTest={() => toast({ title: 'Database Test', description: 'Connection is handled locally via JSON file.' })}
                     isTesting={false}
                     isDb
