@@ -70,7 +70,7 @@ function runAmiCommand<T extends Record<string, any>>(
         }
       });
       
-      ami.keepConnected();
+      // Removed ami.keepConnected(); it's not suitable for request-response patterns.
 
     } catch (e) {
       clearTimeout(timeout);
@@ -131,7 +131,7 @@ function runAmiAction(
         }
       });
 
-      ami.keepConnected();
+      // Removed ami.keepConnected(); it's not suitable for request-response patterns.
     } catch (e) {
       clearTimeout(timeout);
       if (e instanceof z.ZodError) {
