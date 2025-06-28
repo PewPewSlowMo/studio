@@ -11,7 +11,7 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: 'Smart Колл Центр',
+  title: 'CallSync Central',
   description: 'Войдите в систему аналитики колл-центра',
 };
 

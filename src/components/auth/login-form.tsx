@@ -111,17 +111,6 @@ export function LoginForm() {
             </Button>
           </form>
         </Form>
-        <div className="mt-8 text-center">
-          <p className="text-sm text-muted-foreground">
-            Демо-аккаунты для тестирования:
-          </p>
-          <div className="mt-4 grid grid-cols-2 gap-3">
-            <Button variant="outline">Администратор</Button>
-            <Button variant="outline">Менеджер</Button>
-            <Button variant="outline">Супервайзер</Button>
-            <Button variant="outline">Оператор</Button>
-          </div>
-        </div>
       </CardContent>
     </Card>
   );

@@ -56,7 +56,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
           <Link href="/" className="flex items-center gap-3">
             <Phone className="size-8 text-primary" />
             <div className="group-data-[collapsible=icon]:hidden">
-              <h1 className="text-2xl font-bold text-primary">CallSync</h1>
+              <h1 className="text-xl font-bold text-primary">CallSync Central</h1>
             </div>
           </Link>
         </SidebarHeader>
