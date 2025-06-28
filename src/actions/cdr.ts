@@ -65,9 +65,9 @@ export async function getCallHistory(connection: CdrConnection): Promise<{ succe
         );
 
         const calls = (rows as any[]).map((row): Call => {
-            // Example of getting operator from dstchannel: 'PJSIP/101-00000001' -> '101'
             const operatorExtMatch = row.dstchannel?.match(/PJSIP\/(\d+)/);
             const operatorExtension = operatorExtMatch ? operatorExtMatch[1] : undefined;
+            const waitTime = row.duration - row.billsec;
 
             return {
                 id: row.uniqueid,
@@ -76,7 +76,9 @@ export async function getCallHistory(connection: CdrConnection): Promise<{ succe
                 operatorExtension: operatorExtension,
                 status: row.disposition, // 'ANSWERED', 'NO ANSWER', 'BUSY'
                 startTime: row.calldate.toISOString(),
-                duration: row.billsec, // billsec is talk time
+                duration: row.duration, // Full duration from dial to hangup
+                billsec: row.billsec, // Talk time
+                waitTime: waitTime >= 0 ? waitTime : 0, // wait time before answer
             }
         });
 
@@ -115,8 +117,9 @@ export async function getMissedCalls(connection: CdrConnection): Promise<{ succe
                 queue: row.dcontext, 
                 status: row.disposition, // 'NO ANSWER', 'BUSY', 'FAILED'
                 startTime: row.calldate.toISOString(),
-                duration: row.billsec, // Should be 0
-                waitTime: row.duration, // Wait time for missed calls
+                duration: row.duration,
+                billsec: row.billsec, // Should be 0
+                waitTime: row.duration, // Wait time for missed calls is the full duration
             }
         });
 

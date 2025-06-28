@@ -37,7 +37,8 @@ export interface Call {
   startTime: string;
   answerTime?: string;
   endTime?: string;
-  duration?: number;
+  duration?: number; // Total call duration
+  billsec?: number; // Talk time
   waitTime?: number;
   recordingUrl?: string;
   reason?: string;

@@ -66,7 +66,7 @@ export function CallHistoryTable({ calls }: { calls: Call[] }) {
               <TableHead>Operator</TableHead>
               <TableHead>Status</TableHead>
               <TableHead>Start Time</TableHead>
-              <TableHead>Duration (s)</TableHead>
+              <TableHead>Talk Time (s)</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -88,7 +88,7 @@ export function CallHistoryTable({ calls }: { calls: Call[] }) {
                   <TableCell>
                     {formatDate(call.startTime)}
                   </TableCell>
-                  <TableCell>{call.duration || 'N/A'}</TableCell>
+                  <TableCell>{call.billsec ?? 'N/A'}</TableCell>
                 </TableRow>
               ))
             ) : (
