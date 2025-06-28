@@ -1,19 +1,27 @@
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { AlertTriangle, BarChart, Clock, Percent, PhoneIncoming, PhoneMissed } from 'lucide-react';
+import { AlertTriangle } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { getConfig } from '@/actions/config';
-import { getCallHistory } from '@/actions/cdr';
+import { getCallHistory, type DateRangeParams } from '@/actions/cdr';
 import { getAmiQueues } from '@/actions/ami';
-import type { Call, AsteriskQueue, QueueReportData } from '@/lib/types';
+import type { AsteriskQueue, Call } from '@/lib/types';
 import { QueueReportTable } from '@/components/reports/queue-report-table';
+import { DateRangePicker } from '@/components/shared/date-range-picker';
+import { subDays, format } from 'date-fns';
+
 
 const SLA_TARGET_SECONDS = 30;
 
-export default async function QueueReportsPage() {
+export default async function QueueReportsPage({ searchParams }: { searchParams?: { [key: string]: string | string[] | undefined } }) {
     const config = await getConfig();
+
+    const to = searchParams?.to ? new Date(searchParams.to as string) : new Date();
+    const from = searchParams?.from ? new Date(searchParams.from as string) : subDays(to, 6);
+    const dateRange: DateRangeParams = { from: format(from, 'yyyy-MM-dd'), to: format(to, 'yyyy-MM-dd') };
+
     const [queuesResult, callsResult] = await Promise.all([
         getAmiQueues(config.ami),
-        getCallHistory(config.cdr)
+        getCallHistory(config.cdr, dateRange)
     ]);
 
     if (!queuesResult.success || !callsResult.success) {
@@ -25,6 +33,7 @@ export default async function QueueReportsPage() {
                         <h1 className="text-3xl font-bold">Отчет по очередям</h1>
                         <p className="text-muted-foreground">Детальная аналитика по очередям вызовов</p>
                     </div>
+                     <DateRangePicker />
                 </div>
                 <Alert variant="destructive">
                     <AlertTriangle className="h-4 w-4" />
@@ -77,8 +86,9 @@ export default async function QueueReportsPage() {
         <div className="flex justify-between items-start">
             <div>
                 <h1 className="text-3xl font-bold">Отчет по очередям</h1>
-                <p className="text-muted-foreground">Детальная аналитика по очередям вызовов за последние 24 часа</p>
+                <p className="text-muted-foreground">Детальная аналитика по очередям вызовов</p>
             </div>
+            <DateRangePicker />
         </div>
         <Card>
             <CardHeader>

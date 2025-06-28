@@ -1,14 +1,14 @@
-import { Filter, Download, PhoneOff, Clock, AlertTriangle, TrendingUp } from 'lucide-react';
+import { Download, PhoneOff, Clock, AlertTriangle, TrendingUp } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { getMissedCalls } from '@/actions/cdr';
+import { getMissedCalls, type DateRangeParams } from '@/actions/cdr';
 import { getConfig } from '@/actions/config';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { MissedCallsTable } from '@/components/reports/missed-calls-table';
 import { MissedCallKpiCard } from '@/components/reports/missed-kpi-card';
 import type { Call } from '@/lib/types';
+import { DateRangePicker } from '@/components/shared/date-range-picker';
+import { subDays, format } from 'date-fns';
 
 function getMissedReason(call: Call): string {
     if (call.status === 'BUSY') return 'Все операторы заняты';
@@ -17,9 +17,14 @@ function getMissedReason(call: Call): string {
     return 'Системная ошибка';
 }
 
-export default async function MissedCallsPage() {
+export default async function MissedCallsPage({ searchParams }: { searchParams?: { [key: string]: string | string[] | undefined } }) {
     const config = await getConfig();
-    const missedCallsResult = await getMissedCalls(config.cdr);
+
+    const to = searchParams?.to ? new Date(searchParams.to as string) : new Date();
+    const from = searchParams?.from ? new Date(searchParams.from as string) : subDays(to, 0); // Default to today
+    const dateRange: DateRangeParams = { from: format(from, 'yyyy-MM-dd'), to: format(to, 'yyyy-MM-dd') };
+    
+    const missedCallsResult = await getMissedCalls(config.cdr, dateRange);
 
     if (!missedCallsResult.success) {
         return (
@@ -68,45 +73,13 @@ export default async function MissedCallsPage() {
                     <h1 className="text-3xl font-bold text-destructive-foreground">Пропущенные звонки</h1>
                     <p className="text-muted-foreground">Анализ пропущенных звонков и их причин</p>
                 </div>
-                <div className="flex gap-2">
+                <div className="flex items-center gap-2">
+                    <DateRangePicker />
                     <Button variant="outline">
                         <Download className="mr-2 h-4 w-4" /> CSV
                     </Button>
-                    <Button variant="outline">
-                        <Download className="mr-2 h-4 w-4" /> PDF
-                    </Button>
                 </div>
             </div>
-
-            <Card>
-                <CardHeader>
-                    <CardTitle className="flex items-center gap-2 text-base font-semibold">
-                        <Filter className="h-5 w-5" />
-                        Фильтры и поиск
-                    </CardTitle>
-                </CardHeader>
-                <CardContent className="grid md:grid-cols-3 gap-4">
-                    <Input placeholder="Поиск по номеру, очереди или причине..." />
-                    <Select>
-                        <SelectTrigger>
-                            <SelectValue placeholder="Все очереди" />
-                        </SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value="all">Все очереди</SelectItem>
-                        </SelectContent>
-                    </Select>
-                     <Select>
-                        <SelectTrigger>
-                            <SelectValue placeholder="Сегодня" />
-                        </SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value="today">Сегодня</SelectItem>
-                            <SelectItem value="yesterday">Вчера</SelectItem>
-                            <SelectItem value="week">За неделю</SelectItem>
-                        </SelectContent>
-                    </Select>
-                </CardContent>
-            </Card>
 
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
                 <MissedCallKpiCard icon={PhoneOff} title="Пропущенные звонки" value={totalMissed.toString()} />

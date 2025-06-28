@@ -10,8 +10,6 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
-import { Download } from 'lucide-react';
 import type { Call } from '@/lib/types';
 import { Badge } from '@/components/ui/badge';
 import { format, parseISO, isValid } from 'date-fns';
@@ -53,10 +51,6 @@ export function CallHistoryTable({ calls }: { calls: Call[] }) {
           onChange={(e) => setFilter(e.target.value)}
           className="max-w-sm"
         />
-        <Button variant="outline">
-          <Download className="mr-2 h-4 w-4" />
-          Export
-        </Button>
       </div>
       <div className="rounded-md border">
         <Table>
@@ -94,7 +88,7 @@ export function CallHistoryTable({ calls }: { calls: Call[] }) {
             ) : (
               <TableRow>
                 <TableCell colSpan={5} className="h-24 text-center">
-                  No call history data found.
+                  No call history data found for the selected period.
                 </TableCell>
               </TableRow>
             )}

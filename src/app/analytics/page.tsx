@@ -4,18 +4,25 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { AlertTriangle } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { getConfig } from '@/actions/config';
-import { getCallHistory } from '@/actions/cdr';
+import { getCallHistory, type DateRangeParams } from '@/actions/cdr';
 import type { Call } from '@/lib/types';
 import { OperatorPerformanceChart } from '@/components/analytics/operator-performance-chart';
 import { QueueDistributionChart } from '@/components/analytics/queue-distribution-chart';
 import { getUsers } from '@/actions/users';
+import { DateRangePicker } from '@/components/shared/date-range-picker';
+import { subDays, format } from 'date-fns';
 
 const SLA_TARGET_SECONDS = 30;
 
-export default async function AnalyticsPage() {
+export default async function AnalyticsPage({ searchParams }: { searchParams?: { [key: string]: string | string[] | undefined } }) {
     const config = await getConfig();
+
+    const to = searchParams?.to ? new Date(searchParams.to as string) : new Date();
+    const from = searchParams?.from ? new Date(searchParams.from as string) : subDays(to, 6);
+    const dateRange: DateRangeParams = { from: format(from, 'yyyy-MM-dd'), to: format(to, 'yyyy-MM-dd') };
+
     const [callsResult, users] = await Promise.all([
-        getCallHistory(config.cdr),
+        getCallHistory(config.cdr, dateRange),
         getUsers()
     ]);
 
@@ -27,6 +34,7 @@ export default async function AnalyticsPage() {
                         <h1 className="text-3xl font-bold">Аналитика</h1>
                         <p className="text-muted-foreground">Ключевые показатели эффективности колл-центра</p>
                     </div>
+                    <DateRangePicker />
                 </div>
                 <Alert variant="destructive">
                     <AlertTriangle className="h-4 w-4" />
@@ -105,8 +113,9 @@ export default async function AnalyticsPage() {
             <div className="flex justify-between items-start">
                 <div>
                     <h1 className="text-3xl font-bold">Аналитика</h1>
-                    <p className="text-muted-foreground">Ключевые показатели эффективности колл-центра (за последние 24 часа)</p>
+                    <p className="text-muted-foreground">Ключевые показатели эффективности колл-центра</p>
                 </div>
+                 <DateRangePicker />
             </div>
 
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">

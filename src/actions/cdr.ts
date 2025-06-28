@@ -14,6 +14,11 @@ const CdrConnectionSchema = z.object({
 
 type CdrConnection = z.infer<typeof CdrConnectionSchema>;
 
+export interface DateRangeParams {
+    from: string; // ISO string date
+    to: string;   // ISO string date
+}
+
 async function createCdrConnection(connection: CdrConnection) {
     const validatedConnection = CdrConnectionSchema.parse(connection);
     return await mysql.createConnection({
@@ -49,20 +54,34 @@ export async function testCdrConnection(
   }
 }
 
-export async function getCallHistory(connection: CdrConnection): Promise<{ success: boolean; data?: Call[], error?: string }> {
+export async function getCallHistory(connection: CdrConnection, dateRange?: DateRangeParams): Promise<{ success: boolean; data?: Call[], error?: string }> {
     let dbConnection;
     try {
         dbConnection = await createCdrConnection(connection);
         
-        // This query is a standard FreePBX CDR query.
-        const [rows] = await dbConnection.execute(
-            `SELECT 
+        let sql = `SELECT 
                 calldate, clid, src, dst, dcontext, channel, dstchannel, 
                 lastapp, lastdata, duration, billsec, disposition, uniqueid 
-             FROM cdr 
-             WHERE calldate >= NOW() - INTERVAL 1 DAY
-             ORDER BY calldate DESC`
-        );
+             FROM cdr`;
+        
+        const params: any[] = [];
+        
+        if (dateRange?.from && dateRange?.to) {
+            sql += ` WHERE calldate BETWEEN ? AND ?`;
+            const fromDate = new Date(dateRange.from);
+            fromDate.setHours(0, 0, 0, 0);
+
+            const toDate = new Date(dateRange.to);
+            toDate.setHours(23, 59, 59, 999);
+
+            params.push(fromDate, toDate);
+        } else {
+             sql += ` WHERE calldate >= NOW() - INTERVAL 1 DAY`;
+        }
+
+        sql += ` ORDER BY calldate DESC`;
+        
+        const [rows] = await dbConnection.execute(sql, params);
 
         const calls = (rows as any[]).map((row): Call => {
             const operatorExtMatch = row.dstchannel?.match(/PJSIP\/(\d+)/);
@@ -96,19 +115,35 @@ export async function getCallHistory(connection: CdrConnection): Promise<{ succe
     }
 }
 
-export async function getMissedCalls(connection: CdrConnection): Promise<{ success: boolean; data?: Call[], error?: string }> {
+export async function getMissedCalls(connection: CdrConnection, dateRange?: DateRangeParams): Promise<{ success: boolean; data?: Call[], error?: string }> {
     let dbConnection;
     try {
         dbConnection = await createCdrConnection(connection);
         
-        const [rows] = await dbConnection.execute(
-            `SELECT 
+        let sql = `SELECT 
                 calldate, clid, src, dst, dcontext, channel, dstchannel, 
                 lastapp, lastdata, duration, billsec, disposition, uniqueid 
              FROM cdr 
-             WHERE disposition != 'ANSWERED' AND calldate >= NOW() - INTERVAL 1 DAY
-             ORDER BY calldate DESC`
-        );
+             WHERE disposition != 'ANSWERED'`;
+        
+        const params: any[] = [];
+        
+        if (dateRange?.from && dateRange?.to) {
+            sql += ` AND calldate BETWEEN ? AND ?`;
+             const fromDate = new Date(dateRange.from);
+            fromDate.setHours(0, 0, 0, 0);
+
+            const toDate = new Date(dateRange.to);
+            toDate.setHours(23, 59, 59, 999);
+
+            params.push(fromDate, toDate);
+        } else {
+             sql += ` AND calldate >= NOW() - INTERVAL 1 DAY`;
+        }
+        
+        sql += ` ORDER BY calldate DESC`;
+
+        const [rows] = await dbConnection.execute(sql, params);
 
         const calls = (rows as any[]).map((row): Call => {
             return {

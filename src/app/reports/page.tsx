@@ -1,18 +1,24 @@
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Database, AlertTriangle } from 'lucide-react';
 import { CallHistoryTable } from '@/components/reports/call-history-table';
-import { getCallHistory } from '@/actions/cdr';
+import { getCallHistory, type DateRangeParams } from '@/actions/cdr';
 import { getUsers } from '@/actions/users';
 import { getConfig } from '@/actions/config';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import type { Call } from '@/lib/types';
+import { DateRangePicker } from '@/components/shared/date-range-picker';
+import { subDays, format } from 'date-fns';
 
-export default async function ReportsPage() {
+export default async function ReportsPage({ searchParams }: { searchParams?: { [key: string]: string | string[] | undefined } }) {
     const config = await getConfig();
+
+    const to = searchParams?.to ? new Date(searchParams.to as string) : new Date();
+    const from = searchParams?.from ? new Date(searchParams.from as string) : subDays(to, 6);
+    const dateRange: DateRangeParams = { from: format(from, 'yyyy-MM-dd'), to: format(to, 'yyyy-MM-dd') };
 
     // Fetch calls and users in parallel
     const [callsResult, users] = await Promise.all([
-        getCallHistory(config.cdr),
+        getCallHistory(config.cdr, dateRange),
         getUsers(),
     ]);
 
@@ -44,7 +50,13 @@ export default async function ReportsPage() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-3xl font-bold">Call Reports</h1>
+      <div className="flex flex-wrap items-center justify-between gap-4">
+        <div>
+            <h1 className="text-3xl font-bold">Call History Reports</h1>
+            <p className="text-muted-foreground">A log of all calls from the selected period.</p>
+        </div>
+        <DateRangePicker />
+      </div>
 
       <Card>
         <CardHeader>
@@ -53,7 +65,7 @@ export default async function ReportsPage() {
             <div>
               <CardTitle>Call History</CardTitle>
               <CardDescription>
-                A log of calls from the last 24 hours.
+                A log of calls from the selected time period.
               </CardDescription>
             </div>
           </div>
