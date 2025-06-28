@@ -44,9 +44,9 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
   const menuItems = [
     { href: '/', label: 'Дашборд', icon: LayoutDashboard },
     { href: '/reports', label: 'Отчет по операторам', icon: Users },
-    { href: '#', label: 'Отчет по очередям', icon: Phone },
+    { href: '/queue-reports', label: 'Отчет по очередям', icon: Phone },
     { href: '/missed-calls', label: 'Пропущенные звонки', icon: PhoneOff },
-    { href: '#', label: 'Аналитика', icon: BarChart3 },
+    { href: '/analytics', label: 'Аналитика', icon: BarChart3 },
     { href: '/admin', label: 'Настройки', icon: Settings },
   ];
 
@@ -60,6 +60,8 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
     if (pathname.startsWith('/reports')) return 'Отчет по операторам';
     if (pathname.startsWith('/missed-calls')) return 'Пропущенные звонки';
     if (pathname.startsWith('/admin')) return 'Настройки';
+    if (pathname.startsWith('/queue-reports')) return 'Отчет по очередям';
+    if (pathname.startsWith('/analytics')) return 'Аналитика';
     return 'Дашборд';
   }
   
