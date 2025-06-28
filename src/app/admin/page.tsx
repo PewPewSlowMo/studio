@@ -32,7 +32,7 @@ export default function AdminPage() {
         <TabsTrigger value="queues">Asterisk Queues</TabsTrigger>
       </TabsList>
       <TabsContent value="users" className="mt-6">
-        <UserManagement users={mockUsers} />
+        <UserManagement users={mockUsers} connection={amiConnection} />
       </TabsContent>
       <TabsContent value="settings" className="mt-6">
         <SystemSettings
