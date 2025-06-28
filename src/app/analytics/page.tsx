@@ -7,6 +7,7 @@ import { getConfig } from '@/actions/config';
 import { getCallHistory } from '@/actions/cdr';
 import type { Call } from '@/lib/types';
 import { OperatorPerformanceChart } from '@/components/analytics/operator-performance-chart';
+import { QueueDistributionChart } from '@/components/analytics/queue-distribution-chart';
 import { getUsers } from '@/actions/users';
 
 const SLA_TARGET_SECONDS = 30;
@@ -60,8 +61,8 @@ export default async function AnalyticsPage() {
     // Abandonment Rate
     const abandonmentRate = totalCalls > 0 ? (missedCalls.length / totalCalls) * 100 : 0;
 
+    // Operator Performance Data
     const userMap = new Map(users.filter(u => u.extension).map(u => [u.extension!, u.name]));
-
     const operatorPerformanceData = answeredCalls.reduce((acc, call) => {
         if (call.operatorExtension) {
             const name = userMap.get(call.operatorExtension) || `Ext. ${call.operatorExtension}`;
@@ -74,12 +75,24 @@ export default async function AnalyticsPage() {
         return acc;
     }, {} as Record<string, { answered: number; totalTalkTime: number }>);
     
-    const chartData = Object.entries(operatorPerformanceData).map(([name, data]) => ({
+    const operatorChartData = Object.entries(operatorPerformanceData).map(([name, data]) => ({
         operator: name,
         answered: data.answered,
         avgHandleTime: data.answered > 0 ? data.totalTalkTime / data.answered : 0
     })).sort((a,b) => b.answered - a.answered);
-    
+
+    // Queue Distribution Data
+    const queueDistribution = calls.reduce((acc, call) => {
+        const queueName = call.queue || 'Без очереди';
+        if (queueName) {
+            acc[queueName] = (acc[queueName] || 0) + 1;
+        }
+        return acc;
+    }, {} as Record<string, number>);
+
+    const queueChartData = Object.entries(queueDistribution)
+        .map(([name, value]) => ({ name, value }))
+        .sort((a, b) => b.value - a.value);
 
     const formatTime = (seconds: number) => {
         const minutes = Math.floor(seconds / 60);
@@ -136,23 +149,21 @@ export default async function AnalyticsPage() {
                         </CardDescription>
                     </CardHeader>
                     <CardContent>
-                        <OperatorPerformanceChart data={chartData} />
+                        <OperatorPerformanceChart data={operatorChartData} />
                     </CardContent>
                 </Card>
 
-                <div className="flex flex-1 items-center justify-center rounded-lg border border-dashed shadow-sm h-full">
-                  <div className="flex flex-col items-center gap-1 text-center">
-                     <div className="mx-auto bg-primary/10 text-primary p-3 rounded-full w-fit mb-4">
-                        <BarChart3 className="h-8 w-8" />
-                    </div>
-                    <h3 className="text-2xl font-bold tracking-tight">
-                      Распределение звонков по очередям
-                    </h3>
-                    <p className="text-sm text-muted-foreground">
-                      Этот график скоро появится.
-                    </p>
-                  </div>
-                </div>
+                <Card>
+                    <CardHeader>
+                        <CardTitle>Распределение звонков по очередям</CardTitle>
+                        <CardDescription>
+                           Процентное соотношение общего числа звонков по очередям.
+                        </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        <QueueDistributionChart data={queueChartData} />
+                    </CardContent>
+                </Card>
             </div>
         </div>
     );

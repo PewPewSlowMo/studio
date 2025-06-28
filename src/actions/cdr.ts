@@ -79,6 +79,7 @@ export async function getCallHistory(connection: CdrConnection): Promise<{ succe
                 duration: row.duration, // Full duration from dial to hangup
                 billsec: row.billsec, // Talk time
                 waitTime: waitTime >= 0 ? waitTime : 0, // wait time before answer
+                queue: row.dcontext,
             }
         });
 
