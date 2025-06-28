@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -32,27 +32,16 @@ import {
 } from '@/components/ui/select';
 import { Loader2 } from 'lucide-react';
 
-export const userFormSchema = z
-  .object({
-    name: z.string().min(1, 'Name is required'),
-    email: z.string().email('Invalid email address'),
-    role: z.enum(['admin', 'manager', 'supervisor', 'operator']),
-    extension: z.string().optional(),
-  })
-  .refine(
-    (data) => {
-      if (data.role === 'operator' && !data.extension) {
-        return false;
-      }
-      return true;
-    },
-    {
-      message: 'Extension is required for operators.',
-      path: ['extension'],
-    }
-  );
+const baseUserFormSchema = z.object({
+  name: z.string().min(1, 'Name is required'),
+  email: z.string().email('Invalid email address'),
+  role: z.enum(['admin', 'manager', 'supervisor', 'operator']),
+  extension: z.string().optional(),
+  password: z.string().optional(),
+  confirmPassword: z.string().optional(),
+});
 
-export type UserFormData = z.infer<typeof userFormSchema>;
+export type UserFormData = z.infer<typeof baseUserFormSchema>;
 
 interface UserFormDialogProps {
   isOpen: boolean;
@@ -71,6 +60,45 @@ export function UserFormDialog({
   onSave,
   isLoadingEndpoints,
 }: UserFormDialogProps) {
+  const isEditing = !!user;
+
+  const userFormSchema = useMemo(() => baseUserFormSchema
+      .refine(
+        (data) => {
+          if (data.role === 'operator' && !data.extension) {
+            return false;
+          }
+          return true;
+        },
+        {
+          message: 'Extension is required for operators.',
+          path: ['extension'],
+        }
+      )
+      .superRefine((data, ctx) => {
+        if (!isEditing && (!data.password || data.password.length < 6)) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: 'Password is required and must be at least 6 characters.',
+            path: ['password'],
+          });
+        }
+        if (data.password && data.password.length > 0 && data.password.length < 6) {
+            ctx.addIssue({
+                code: z.ZodIssueCode.custom,
+                message: 'Password must be at least 6 characters.',
+                path: ['password'],
+            });
+        }
+        if (data.password !== data.confirmPassword) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: "Passwords don't match",
+            path: ['confirmPassword'],
+          });
+        }
+      }), [isEditing]);
+
   const form = useForm<UserFormData>({
     resolver: zodResolver(userFormSchema),
     defaultValues: {
@@ -78,6 +106,8 @@ export function UserFormDialog({
       email: '',
       role: 'operator',
       extension: '',
+      password: '',
+      confirmPassword: '',
     },
   });
 
@@ -89,6 +119,8 @@ export function UserFormDialog({
           email: user.email,
           role: user.role,
           extension: user.extension || '',
+          password: '',
+          confirmPassword: '',
         });
       } else {
         form.reset({
@@ -96,8 +128,11 @@ export function UserFormDialog({
           email: '',
           role: 'operator',
           extension: '',
+          password: '',
+          confirmPassword: '',
         });
       }
+      form.clearErrors();
     }
   }, [isOpen, user, form]);
 
@@ -115,7 +150,7 @@ export function UserFormDialog({
           <DialogTitle>{user ? 'Edit User' : 'Create New User'}</DialogTitle>
           <DialogDescription>
             {user
-              ? "Update the user's details and Asterisk extension."
+              ? "Update the user's details. Leave password blank to keep it unchanged."
               : 'Fill in the details for the new user.'}
           </DialogDescription>
         </DialogHeader>
@@ -222,6 +257,43 @@ export function UserFormDialog({
                 )}
               />
             )}
+            
+            <FormField
+              control={form.control}
+              name="password"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Password</FormLabel>
+                  <FormControl>
+                    <Input
+                      type="password"
+                      placeholder={isEditing ? 'Leave blank to keep current' : '••••••••'}
+                      {...field}
+                      value={field.value ?? ''}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="confirmPassword"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Confirm Password</FormLabel>
+                  <FormControl>
+                    <Input 
+                      type="password" 
+                      placeholder="••••••••" 
+                      {...field} 
+                      value={field.value ?? ''}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
             <DialogFooter>
               <Button

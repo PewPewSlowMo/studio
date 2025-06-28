@@ -10,6 +10,7 @@ export interface User {
   isActive: boolean;
   createdAt: string;
   extension?: string;
+  password?: string;
 }
 
 export type CallStatus = 'incoming' | 'answered' | 'completed' | 'missed';

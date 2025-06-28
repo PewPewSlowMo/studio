@@ -44,9 +44,11 @@ export async function getUsers(): Promise<User[]> {
 
 export async function addUser(userData: UserFormData): Promise<User> {
   const users = await readUsers();
+  const { confirmPassword, ...restUserData } = userData;
+
   const newUser: User = {
     id: crypto.randomUUID(),
-    ...userData,
+    ...restUserData,
     username: userData.email.split('@')[0],
     isActive: true,
     createdAt: new Date().toISOString(),
@@ -67,12 +69,19 @@ export async function updateUser(id: string, userData: UserFormData): Promise<vo
   if (userIndex === -1) {
     throw new Error('User not found.');
   }
+  
+  const { password, confirmPassword, ...restUserData } = userData;
 
-  const updatedUser = {
+  const updatedUser: User = {
     ...users[userIndex],
-    ...userData,
+    ...restUserData,
     extension: userData.extension || '',
   };
+
+  if (password) {
+    updatedUser.password = password;
+  }
+
   users[userIndex] = updatedUser;
 
   await writeUsers(users);
