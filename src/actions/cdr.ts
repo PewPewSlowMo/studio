@@ -2,7 +2,7 @@
 
 import { z } from 'zod';
 
-export const CdrConnectionSchema = z.object({
+const CdrConnectionSchema = z.object({
   host: z.string().min(1, 'Host is required'),
   port: z.string().min(1, 'Port is required'),
   username: z.string().min(1, 'Username is required'),
@@ -10,7 +10,7 @@ export const CdrConnectionSchema = z.object({
   database: z.string().min(1, 'Database name is required'),
 });
 
-export type CdrConnection = z.infer<typeof CdrConnectionSchema>;
+type CdrConnection = z.infer<typeof CdrConnectionSchema>;
 
 // This is a placeholder function. A real implementation would require a database
 // driver like 'pg' or 'mysql2' and would attempt a real connection.
