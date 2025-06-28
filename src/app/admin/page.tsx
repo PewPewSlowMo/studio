@@ -8,12 +8,20 @@ import { AsteriskOperators } from '@/components/admin/asterisk-operators';
 import { AsteriskQueues } from '@/components/admin/asterisk-queues';
 
 export default function AdminPage() {
-  const [host, setHost] = useState('92.46.62.34');
-  const [port, setPort] = useState('8088');
-  const [username, setUsername] = useState('smart-call-center');
-  const [password, setPassword] = useState('Almaty20252025');
+  // State for ARI connection
+  const [ariHost, setAriHost] = useState('92.46.62.34');
+  const [ariPort, setAriPort] = useState('8088');
+  const [ariUsername, setAriUsername] = useState('smart-call-center');
+  const [ariPassword, setAriPassword] = useState('Almaty20252025');
 
-  const connection = { host, port, username, password };
+  // State for AMI connection
+  const [amiHost, setAmiHost] = useState('92.46.62.34');
+  const [amiPort, setAmiPort] = useState('5038');
+  const [amiUsername, setAmiUsername] = useState('smart_call_cent');
+  const [amiPassword, setAmiPassword] = useState('Almaty20252025');
+
+  const ariConnection = { host: ariHost, port: ariPort, username: ariUsername, password: ariPassword };
+  const amiConnection = { host: amiHost, port: amiPort, username: amiUsername, password: amiPassword };
 
   return (
     <Tabs defaultValue="users" className="w-full">
@@ -28,20 +36,20 @@ export default function AdminPage() {
       </TabsContent>
       <TabsContent value="settings" className="mt-6">
         <SystemSettings
-          connection={connection}
+          connection={ariConnection}
           onConnectionChange={{
-            setHost,
-            setPort,
-            setUsername,
-            setPassword,
+            setHost: setAriHost,
+            setPort: setAriPort,
+            setUsername: setAriUsername,
+            setPassword: setAriPassword,
           }}
         />
       </TabsContent>
       <TabsContent value="operators" className="mt-6">
-        <AsteriskOperators connection={connection} />
+        <AsteriskOperators connection={amiConnection} />
       </TabsContent>
       <TabsContent value="queues" className="mt-6">
-        <AsteriskQueues connection={connection} />
+        <AsteriskQueues connection={amiConnection} />
       </TabsContent>
     </Tabs>
   );

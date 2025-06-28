@@ -18,7 +18,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { AlertTriangle, Loader2, RefreshCw } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { getAsteriskEndpoints } from '@/actions/asterisk';
+import { getAmiEndpoints } from '@/actions/ami';
 import type { AsteriskEndpoint } from '@/lib/types';
 import { cn } from '@/lib/utils';
 import { Badge } from '../ui/badge';
@@ -32,6 +32,16 @@ interface AsteriskOperatorsProps {
   };
 }
 
+const stateColorMap: { [key: string]: 'default' | 'secondary' | 'destructive' } = {
+  'not in use': 'default',
+  'in use': 'destructive',
+  'busy': 'destructive',
+  'unavailable': 'secondary',
+  'ringing': 'default',
+  'invalid': 'secondary',
+  'unknown': 'secondary',
+};
+
 export function AsteriskOperators({ connection }: AsteriskOperatorsProps) {
   const [endpoints, setEndpoints] = useState<AsteriskEndpoint[]>([]);
   const [isSyncing, setIsSyncing] = useState(false);
@@ -41,14 +51,20 @@ export function AsteriskOperators({ connection }: AsteriskOperatorsProps) {
     setIsSyncing(true);
     setSyncError(null);
     setEndpoints([]);
-    const result = await getAsteriskEndpoints(connection);
+    
+    const result = await getAmiEndpoints(connection);
     if (result.success && result.data) {
       setEndpoints(result.data);
     } else {
       setSyncError(result.error || 'An unknown error occurred during sync.');
     }
+    
     setIsSyncing(false);
   };
+  
+  const getBadgeVariant = (state: string) => {
+    return stateColorMap[state.toLowerCase()] || 'outline';
+  }
 
   return (
     <Card>
@@ -102,7 +118,7 @@ export function AsteriskOperators({ connection }: AsteriskOperatorsProps) {
                     <TableCell className="font-medium">{endpoint.resource}</TableCell>
                     <TableCell>{endpoint.technology}</TableCell>
                     <TableCell>
-                      <Badge variant={endpoint.state === 'online' ? 'default' : 'secondary'} className='capitalize'>{endpoint.state}</Badge>
+                      <Badge variant={getBadgeVariant(endpoint.state)} className='capitalize'>{endpoint.state}</Badge>
                     </TableCell>
                     <TableCell>{endpoint.channel_ids.length}</TableCell>
                   </TableRow>

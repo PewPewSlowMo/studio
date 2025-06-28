@@ -1,29 +1,12 @@
 'use server';
 
 import { z } from 'zod';
-import type { AsteriskEndpoint, AsteriskQueue } from '@/lib/types';
 
 const AsteriskInfoSchema = z.object({
   system: z.object({
     version: z.string(),
   }),
 });
-
-const AsteriskEndpointSchema = z.array(
-  z.object({
-    technology: z.string(),
-    resource: z.string(),
-    state: z.string(),
-    channel_ids: z.array(z.string()),
-  })
-);
-
-const AsteriskQueueSchema = z.array(
-  z.object({
-    name: z.string(),
-  })
-);
-
 
 const AsteriskConnectionSchema = z.object({
   host: z.string().min(1, 'Host is required'),
@@ -101,16 +84,4 @@ export async function getAsteriskVersion(
     return { success: true, version: result.data.system.version };
   }
   return { success: false, error: result.error };
-}
-
-export async function getAsteriskEndpoints(
-  connection: AsteriskConnection
-): Promise<{ success: boolean; data?: AsteriskEndpoint[]; error?: string }> {
-  return fetchFromAri(connection, 'endpoints', AsteriskEndpointSchema);
-}
-
-export async function getAsteriskQueues(
-  connection: AsteriskConnection
-): Promise<{ success: boolean; data?: AsteriskQueue[]; error?: string }> {
-  return fetchFromAri(connection, 'queues', AsteriskQueueSchema);
 }

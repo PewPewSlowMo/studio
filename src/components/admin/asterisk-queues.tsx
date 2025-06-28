@@ -18,7 +18,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { AlertTriangle, Loader2, RefreshCw } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { getAsteriskQueues } from '@/actions/asterisk';
+import { getAmiQueues } from '@/actions/ami';
 import type { AsteriskQueue } from '@/lib/types';
 import { cn } from '@/lib/utils';
 
@@ -40,12 +40,14 @@ export function AsteriskQueues({ connection }: AsteriskQueuesProps) {
     setIsSyncing(true);
     setSyncError(null);
     setQueues([]);
-    const result = await getAsteriskQueues(connection);
+
+    const result = await getAmiQueues(connection);
     if (result.success && result.data) {
       setQueues(result.data);
     } else {
       setSyncError(result.error || 'An unknown error occurred during sync.');
     }
+    
     setIsSyncing(false);
   };
 
