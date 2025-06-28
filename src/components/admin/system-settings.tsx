@@ -20,7 +20,7 @@ export function SystemSettings() {
   const handleTestConnection = () => {
     toast({
       title: 'Connection Successful',
-      description: 'Successfully connected to Asterisk 18.20.0 (Virtual).',
+      description: 'Successfully connected to 92.46.62.34:8088.',
     });
   };
 
@@ -38,7 +38,7 @@ export function SystemSettings() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-2">
               <Label htmlFor="host">Host</Label>
-              <Input id="host" defaultValue="demo.asterisk.com" />
+              <Input id="host" defaultValue="92.46.62.34" />
             </div>
             <div className="space-y-2">
               <Label htmlFor="port">Port</Label>
@@ -46,14 +46,14 @@ export function SystemSettings() {
             </div>
             <div className="space-y-2">
               <Label htmlFor="username">Username</Label>
-              <Input id="username" defaultValue="asterisk" />
+              <Input id="username" defaultValue="smart-call-center" />
             </div>
             <div className="space-y-2">
               <Label htmlFor="password">Password</Label>
               <Input
                 id="password"
                 type="password"
-                defaultValue="secretpassword"
+                defaultValue="Almaty20252025"
               />
             </div>
           </div>

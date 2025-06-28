@@ -120,9 +120,9 @@ export function LoginForm() {
         <Separator className="my-6" />
         <div className="space-y-4 text-center">
           <p className="text-sm text-muted-foreground">
-            Демо-аккаунты для тестирования:
+            Демо-аккаунт для тестирования:
           </p>
-          <div className="grid grid-cols-2 gap-2">
+          <div className="flex justify-center">
             <Button
               variant="outline"
               onClick={() =>
@@ -133,39 +133,6 @@ export function LoginForm() {
               }
             >
               Администратор
-            </Button>
-            <Button
-              variant="outline"
-              onClick={() =>
-                handleDemoLogin({
-                  email: 'manager@callcenter.com',
-                  password: 'password',
-                })
-              }
-            >
-              Менеджер
-            </Button>
-            <Button
-              variant="outline"
-              onClick={() =>
-                handleDemoLogin({
-                  email: 'supervisor@callcenter.com',
-                  password: 'password',
-                })
-              }
-            >
-              Супервайзер
-            </Button>
-            <Button
-              variant="outline"
-              onClick={() =>
-                handleDemoLogin({
-                  email: 'operator@callcenter.com',
-                  password: 'password',
-                })
-              }
-            >
-              Оператор
             </Button>
           </div>
         </div>
