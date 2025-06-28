@@ -5,7 +5,8 @@ import type { AsteriskEndpoint, AsteriskQueue } from '@/lib/types';
 
 // This is a CommonJS module. We configure Next.js to treat it as an external
 // package on the server via `serverComponentsExternalPackages` in next.config.ts.
-const Ami = require('asterisk-manager');
+// We also need to require it inside the function to avoid build-time resolution issues.
+// const Ami = require('asterisk-manager'); // Moved inside runAmiCommand
 
 const AmiConnectionSchema = z.object({
   host: z.string().min(1, 'Host is required'),
@@ -24,6 +25,7 @@ function runAmiCommand<T>(
 ): Promise<T[]> {
   return new Promise((resolve, reject) => {
     try {
+      const Ami = require('asterisk-manager');
       const validatedConnection = AmiConnectionSchema.parse(connection);
       const { host, port, username, password } = validatedConnection;
 
