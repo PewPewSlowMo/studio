@@ -3,7 +3,7 @@
 import { z } from 'zod';
 
 const AsteriskInfoSchema = z.object({
-  build: z.object({
+  system: z.object({
     version: z.string(),
   }),
 });
@@ -58,7 +58,7 @@ export async function getAsteriskVersion(
       };
     }
 
-    return { success: true, version: parsedData.data.build.version };
+    return { success: true, version: parsedData.data.system.version };
   } catch (e) {
     if (e instanceof z.ZodError) {
         return { success: false, error: `Invalid input: ${e.errors.map(err => err.message).join(', ')}` };
