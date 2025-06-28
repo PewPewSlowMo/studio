@@ -174,7 +174,7 @@ export function UserFormDialog({
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Asterisk Extension</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value} disabled={isLoadingEndpoints}>
+                    <Select onValueChange={field.onChange} value={field.value || ''} disabled={isLoadingEndpoints}>
                        <FormControl>
                         <SelectTrigger>
                             {isLoadingEndpoints && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
@@ -188,7 +188,6 @@ export function UserFormDialog({
                           </div>
                         ) : (
                           <>
-                            <SelectItem value="">None</SelectItem>
                             {endpoints.map((endpoint) => (
                               <SelectItem key={endpoint.resource} value={endpoint.resource}>
                                 {endpoint.resource} ({endpoint.state})
