@@ -24,11 +24,19 @@ export type SummarizeCallInput = z.infer<typeof SummarizeCallInputSchema>;
 const SummarizeCallOutputSchema = z.object({
   categories: z
     .array(z.string())
-    .describe('Categories that the call recording belongs to.'),
+    .describe(
+      'An array of strings for the main topics of the call (e.g., "Billing Inquiry", "Technical Support", "Complaint").'
+    ),
   sentiment: z
     .string()
-    .describe('The overall sentiment of the call recording.'),
-  summary: z.string().describe('A short summary of the call recording.'),
+    .describe(
+      'The overall sentiment of the call. Must be one of: "Positive", "Negative", or "Neutral".'
+    ),
+  summary: z
+    .string()
+    .describe(
+      'A concise, one-paragraph summary of the call, including key points and the outcome.'
+    ),
 });
 export type SummarizeCallOutput = z.infer<typeof SummarizeCallOutputSchema>;
 
@@ -42,14 +50,17 @@ const prompt = ai.definePrompt({
   output: {schema: SummarizeCallOutputSchema},
   prompt: `You are an AI expert in call center quality assurance.
 
-You will use the call transcript and recording to categorize the call, determine the sentiment, and create a short summary.
+Your task is to analyze the provided call transcript and recording to generate a structured analysis.
+
+Based on the content of the call, you must:
+1.  **Categorize the call**: Identify the main topics or reasons for the call.
+2.  **Determine the sentiment**: Analyze the overall sentiment of the conversation.
+3.  **Create a summary**: Write a concise summary of the call, capturing the key points and the final outcome.
+
+Please use the following information for your analysis.
 
 Transcript: {{{transcript}}}
-Recording: {{media url=recordingDataUri}}
-
-Categories: {{categories}}
-Sentiment: {{sentiment}}
-Summary: {{summary}}`,
+Recording: {{media url=recordingDataUri}}`,
 });
 
 const summarizeCallFlow = ai.defineFlow(
