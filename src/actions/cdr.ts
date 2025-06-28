@@ -60,8 +60,8 @@ export async function getCallHistory(connection: CdrConnection): Promise<{ succe
                 calldate, clid, src, dst, dcontext, channel, dstchannel, 
                 lastapp, lastdata, duration, billsec, disposition, uniqueid 
              FROM cdr 
-             ORDER BY calldate DESC 
-             LIMIT 100`
+             WHERE calldate >= NOW() - INTERVAL 1 DAY
+             ORDER BY calldate DESC`
         );
 
         const calls = (rows as any[]).map((row): Call => {

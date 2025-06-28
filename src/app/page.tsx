@@ -12,16 +12,20 @@ import { ActiveCalls } from '@/components/dashboard/active-calls';
 import { getAmiEndpoints, getAmiQueues } from '@/actions/ami';
 import { getUsers } from '@/actions/users';
 import { getConfig } from '@/actions/config';
+import { getCallHistory } from '@/actions/cdr';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { format, parseISO, isValid } from 'date-fns';
+import type { Call } from '@/lib/types';
 
 export default async function DashboardPage() {
   const config = await getConfig();
 
   // Fetch all data in parallel
-  const [endpointsResult, queuesResult, users] = await Promise.all([
+  const [endpointsResult, queuesResult, users, callsResult] = await Promise.all([
     getAmiEndpoints(config.ami),
     getAmiQueues(config.ami),
     getUsers(),
+    getCallHistory(config.cdr),
   ]);
 
   if (!endpointsResult.success) {
@@ -44,6 +48,37 @@ export default async function DashboardPage() {
 
   const endpoints = endpointsResult.data || [];
   const queues = queuesResult.data || [];
+
+  let callVolumeData: { hour: string; calls: number }[] | null = null;
+  if (callsResult.success && callsResult.data) {
+    const calls: Call[] = callsResult.data || [];
+
+    callVolumeData = Array.from({ length: 24 }, (_, i) => {
+      const d = new Date();
+      d.setHours(d.getHours() - i);
+      return {
+        hour: format(
+          new Date(d.getFullYear(), d.getMonth(), d.getDate(), d.getHours()),
+          'HH:00'
+        ),
+        calls: 0,
+      };
+    }).reverse();
+
+    const hourlyMap = new Map(callVolumeData.map((d) => [d.hour, d]));
+
+    calls.forEach((call) => {
+      const callDate = parseISO(call.startTime);
+      if (isValid(callDate)) {
+        const callHour = format(callDate, 'HH:00');
+        if (hourlyMap.has(callHour)) {
+          hourlyMap.get(callHour)!.calls++;
+        }
+      }
+    });
+
+    callVolumeData = Array.from(hourlyMap.values());
+  }
 
   const operatorsOnCall = endpoints.filter(
     (e) => e.state === 'in use' || e.state === 'busy'
@@ -88,7 +123,7 @@ export default async function DashboardPage() {
       </div>
       <div className="grid gap-6 lg:grid-cols-3">
         <div className="lg:col-span-2">
-          <CallVolumeChart />
+          <CallVolumeChart data={callVolumeData} />
         </div>
         <div className="lg:col-span-1">
           <OperatorStatusList endpoints={endpoints} users={users} />

@@ -53,7 +53,7 @@ export default async function ReportsPage() {
             <div>
               <CardTitle>Call History</CardTitle>
               <CardDescription>
-                A log of the most recent 100 calls from the CDR database.
+                A log of calls from the last 24 hours.
               </CardDescription>
             </div>
           </div>
