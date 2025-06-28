@@ -31,6 +31,7 @@ import { useToast } from '@/hooks/use-toast';
 
 interface UserManagementProps {
   users: User[];
+  setUsers: React.Dispatch<React.SetStateAction<User[]>>;
   connection: {
     host: string;
     port: string;
@@ -39,8 +40,7 @@ interface UserManagementProps {
   };
 }
 
-export function UserManagement({ users: initialUsers, connection }: UserManagementProps) {
-  const [users, setUsers] = useState<User[]>(initialUsers);
+export function UserManagement({ users, setUsers, connection }: UserManagementProps) {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [endpoints, setEndpoints] = useState<AsteriskEndpoint[]>([]);
@@ -74,10 +74,10 @@ export function UserManagement({ users: initialUsers, connection }: UserManageme
       title: 'User Saved',
       description: `Details for ${data.name} have been saved successfully.`,
     });
-    // This is a mock implementation to show the UI update.
+    // This now updates the state in the parent component
     if (selectedUser) {
       // Editing existing user
-      setUsers(users.map(u => u.id === selectedUser.id ? { ...u, ...data, extension: data.extension || undefined } : u));
+      setUsers(currentUsers => currentUsers.map(u => u.id === selectedUser.id ? { ...u, ...data, extension: data.extension || undefined } : u));
     } else {
       // Creating new user
       const newUser: User = {
@@ -88,7 +88,7 @@ export function UserManagement({ users: initialUsers, connection }: UserManageme
         ...data,
         extension: data.extension || undefined,
       };
-      setUsers([...users, newUser]);
+      setUsers(currentUsers => [...currentUsers, newUser]);
     }
   };
 
