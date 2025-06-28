@@ -1,4 +1,5 @@
 'use client';
+import { useState } from 'react';
 import {
   Card,
   CardHeader,
@@ -13,14 +14,49 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { useToast } from '@/hooks/use-toast';
 import { Separator } from '@/components/ui/separator';
+import { getAsteriskVersion } from '@/actions/asterisk';
+import { Loader2, Server, AlertTriangle } from 'lucide-react';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 export function SystemSettings() {
   const { toast } = useToast();
+  const [isTesting, setIsTesting] = useState(false);
+  const [connectionResult, setConnectionResult] = useState<{
+    version?: string;
+    error?: string;
+  } | null>(null);
 
-  const handleTestConnection = () => {
+  const [host, setHost] = useState('92.46.62.34');
+  const [port, setPort] = useState('8088');
+  const [username, setUsername] = useState('smart-call-center');
+  const [password, setPassword] = useState('Almaty20252025');
+
+  const handleTestConnection = async () => {
+    setIsTesting(true);
+    setConnectionResult(null);
+    const result = await getAsteriskVersion({ host, port, username, password });
+    if (result.success) {
+      setConnectionResult({ version: result.version });
+      toast({
+        title: 'Connection Successful',
+        description: `Connected to Asterisk version: ${result.version}`,
+      });
+    } else {
+      setConnectionResult({ error: result.error });
+      toast({
+        variant: 'destructive',
+        title: 'Connection Failed',
+        description: result.error,
+        duration: 9000
+      });
+    }
+    setIsTesting(false);
+  };
+
+  const handleSave = () => {
     toast({
-      title: 'Connection Successful',
-      description: 'Successfully connected to 92.46.62.34:8088.',
+      title: 'Settings Saved',
+      description: 'Your Asterisk configuration has been saved.',
     });
   };
 
@@ -38,22 +74,23 @@ export function SystemSettings() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-2">
               <Label htmlFor="host">Host</Label>
-              <Input id="host" defaultValue="92.46.62.34" />
+              <Input id="host" value={host} onChange={(e) => setHost(e.target.value)} />
             </div>
             <div className="space-y-2">
               <Label htmlFor="port">Port</Label>
-              <Input id="port" type="number" defaultValue="8088" />
+              <Input id="port" type="number" value={port} onChange={(e) => setPort(e.target.value)} />
             </div>
             <div className="space-y-2">
               <Label htmlFor="username">Username</Label>
-              <Input id="username" defaultValue="smart-call-center" />
+              <Input id="username" value={username} onChange={(e) => setUsername(e.target.value)} />
             </div>
             <div className="space-y-2">
               <Label htmlFor="password">Password</Label>
               <Input
                 id="password"
                 type="password"
-                defaultValue="Almaty20252025"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
               />
             </div>
           </div>
@@ -62,6 +99,26 @@ export function SystemSettings() {
             <Label htmlFor="asterisk-enabled">Enable Asterisk Integration</Label>
           </div>
         </div>
+        {connectionResult && (
+           <div className="mt-4">
+             {connectionResult.version && (
+               <Alert>
+                 <Server className="h-4 w-4" />
+                 <AlertTitle>Connection Successful!</AlertTitle>
+                 <AlertDescription>
+                   Successfully connected to Asterisk version: <strong>{connectionResult.version}</strong>
+                 </AlertDescription>
+               </Alert>
+             )}
+             {connectionResult.error && (
+               <Alert variant="destructive">
+                 <AlertTriangle className="h-4 w-4" />
+                 <AlertTitle>Connection Failed</AlertTitle>
+                 <AlertDescription>{connectionResult.error}</AlertDescription>
+               </Alert>
+             )}
+           </div>
+         )}
         <Separator />
         <div className="space-y-4">
           <h3 className="text-lg font-medium">Call Settings</h3>
@@ -73,8 +130,11 @@ export function SystemSettings() {
       </CardContent>
       <CardFooter className="border-t bg-secondary/50 px-6 py-4">
         <div className="flex gap-2">
-          <Button>Save Settings</Button>
-          <Button variant="outline" onClick={handleTestConnection}>
+          <Button onClick={handleSave}>Save Settings</Button>
+          <Button variant="outline" onClick={handleTestConnection} disabled={isTesting}>
+            {isTesting && (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            )}
             Test Connection
           </Button>
         </div>
