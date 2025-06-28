@@ -20,8 +20,11 @@ function getMissedReason(call: Call): string {
 export default async function MissedCallsPage({ searchParams }: { searchParams?: { [key: string]: string | string[] | undefined } }) {
     const config = await getConfig();
 
-    const to = searchParams?.to ? new Date(searchParams.to as string) : new Date();
-    const from = searchParams?.from ? new Date(searchParams.from as string) : subDays(to, 0); // Default to today
+    const toParam = searchParams?.to as string | undefined;
+    const fromParam = searchParams?.from as string | undefined;
+
+    const to = toParam ? new Date(toParam) : new Date();
+    const from = fromParam ? new Date(fromParam) : subDays(to, 0); // Default to today
     const dateRange: DateRangeParams = { from: format(from, 'yyyy-MM-dd'), to: format(to, 'yyyy-MM-dd') };
     
     const missedCallsResult = await getMissedCalls(config.cdr, dateRange);
