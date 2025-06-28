@@ -11,8 +11,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Link, Database } from 'lucide-react';
-import { Switch } from '@/components/ui/switch';
+import { Link, Database, Loader2 } from 'lucide-react';
 import {
   Select,
   SelectContent,
@@ -61,11 +60,13 @@ interface SystemSettingsProps {
   onAriChange: OnChangeProps;
   onAmiChange: OnChangeProps;
   onCdrChange: OnCdrChangeProps;
+  onSave: () => Promise<void>;
+  isSaving: boolean;
 }
 
 type InterfaceType = 'ami' | 'ari';
 
-export function SystemSettings({ ariConnection, amiConnection, cdrConnection, onAriChange, onAmiChange, onCdrChange }: SystemSettingsProps) {
+export function SystemSettings({ ariConnection, amiConnection, cdrConnection, onAriChange, onAmiChange, onCdrChange, onSave, isSaving }: SystemSettingsProps) {
   const [interfaceType, setInterfaceType] = useState<InterfaceType>('ami');
   
   const connection = interfaceType === 'ami' ? amiConnection : ariConnection;
@@ -181,14 +182,12 @@ export function SystemSettings({ ariConnection, amiConnection, cdrConnection, on
                 </div>
             </div>
         </div>
-
-
       </CardContent>
-      <CardFooter className="border-t bg-card px-6 py-4 flex items-center justify-between">
-        <div className="flex items-center space-x-2">
-            <Switch id="asterisk-enabled" defaultChecked />
-            <Label htmlFor="asterisk-enabled">Включить все интеграции</Label>
-        </div>
+      <CardFooter className="border-t bg-card px-6 py-4">
+        <Button onClick={onSave} disabled={isSaving}>
+          {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+          {isSaving ? 'Сохранение...' : 'Сохранить изменения'}
+        </Button>
       </CardFooter>
     </Card>
   );

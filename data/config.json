@@ -1,0 +1,21 @@
+{
+  "ari": {
+    "host": "92.46.62.34",
+    "port": "8088",
+    "username": "smart-call-center",
+    "password": "Almaty20252025"
+  },
+  "ami": {
+    "host": "92.46.62.34",
+    "port": "5038",
+    "username": "smart_call_cent",
+    "password": "Almaty20252025"
+  },
+  "cdr": {
+    "host": "92.46.62.34",
+    "port": "3306",
+    "username": "freepbxuser",
+    "password": "42e09f1b23ced2f4cc474a04b4505313",
+    "database": "asterisk"
+  }
+}

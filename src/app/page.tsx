@@ -11,25 +11,16 @@ import { OperatorStatusList } from '@/components/dashboard/operator-status';
 import { ActiveCalls } from '@/components/dashboard/active-calls';
 import { getAmiEndpoints, getAmiQueues } from '@/actions/ami';
 import { getUsers } from '@/actions/users';
+import { getConfig } from '@/actions/config';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
-// Helper function to get connection details from environment variables
-function getAmiConnection() {
-  return {
-    host: process.env.AMI_HOST || '92.46.62.34',
-    port: process.env.AMI_PORT || '5038',
-    username: process.env.AMI_USERNAME || 'smart_call_cent',
-    password: process.env.AMI_PASSWORD || 'Almaty20252025',
-  };
-}
-
 export default async function DashboardPage() {
-  const amiConnection = getAmiConnection();
+  const config = await getConfig();
 
   // Fetch all data in parallel
   const [endpointsResult, queuesResult, users] = await Promise.all([
-    getAmiEndpoints(amiConnection),
-    getAmiQueues(amiConnection),
+    getAmiEndpoints(config.ami),
+    getAmiQueues(config.ami),
     getUsers(),
   ]);
 
@@ -41,8 +32,7 @@ export default async function DashboardPage() {
         <AlertDescription>
           <p>
             There was an error connecting to the Asterisk Management Interface
-            (AMI). Please check your connection settings in the Admin page or
-            your `.env` file.
+            (AMI). Please check your connection settings in the Admin page.
           </p>
           <p className="mt-2 font-mono text-xs">
             Error: {endpointsResult.error}

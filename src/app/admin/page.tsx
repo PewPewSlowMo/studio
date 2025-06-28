@@ -9,6 +9,7 @@ import { ConnectionStatusCard } from '@/components/admin/connection-status-card'
 import { getAsteriskVersion } from '@/actions/asterisk';
 import { getAmiQueues } from '@/actions/ami';
 import { testCdrConnection } from '@/actions/cdr';
+import { getConfig, saveConfig } from '@/actions/config';
 import { toast } from '@/hooks/use-toast';
 import type { User } from '@/lib/types';
 import { getUsers } from '@/actions/users';
@@ -20,35 +21,85 @@ export default function AdminPage() {
   const [users, setUsers] = useState<User[]>([]);
   const [isFetchingUsers, setIsFetchingUsers] = useState(true);
 
-  // State for ARI connection
-  const [ariHost, setAriHost] = useState('92.46.62.34');
-  const [ariPort, setAriPort] = useState('8088');
-  const [ariUsername, setAriUsername] = useState('smart-call-center');
-  const [ariPassword, setAriPassword] = useState('Almaty20252025');
+  // State for connection settings
+  const [ariHost, setAriHost] = useState('');
+  const [ariPort, setAriPort] = useState('');
+  const [ariUsername, setAriUsername] = useState('');
+  const [ariPassword, setAriPassword] = useState('');
+  
+  const [amiHost, setAmiHost] = useState('');
+  const [amiPort, setAmiPort] = useState('');
+  const [amiUsername, setAmiUsername] = useState('');
+  const [amiPassword, setAmiPassword] = useState('');
+  
+  const [cdrHost, setCdrHost] = useState('');
+  const [cdrPort, setCdrPort] = useState('');
+  const [cdrUsername, setCdrUsername] = useState('');
+  const [cdrPassword, setCdrPassword] = useState('');
+  const [cdrDatabase, setCdrDatabase] = useState('');
+  
+  // State for connection testing
   const [isTestingAri, setIsTestingAri] = useState(false);
   const [ariStatus, setAriStatus] = useState<ConnectionStatus>('Unknown');
-
-  // State for AMI connection
-  const [amiHost, setAmiHost] = useState('92.46.62.34');
-  const [amiPort, setAmiPort] = useState('5038');
-  const [amiUsername, setAmiUsername] = useState('smart_call_cent');
-  const [amiPassword, setAmiPassword] = useState('Almaty20252025');
+  
   const [isTestingAmi, setIsTestingAmi] = useState(false);
   const [amiStatus, setAmiStatus] = useState<ConnectionStatus>('Unknown');
   
-  // State for CDR DB connection
-  const [cdrHost, setCdrHost] = useState('92.46.62.34');
-  const [cdrPort, setCdrPort] = useState('3306');
-  const [cdrUsername, setCdrUsername] = useState('freepbxuser');
-  const [cdrPassword, setCdrPassword] = useState('42e09f1b23ced2f4cc474a04b4505313');
-  const [cdrDatabase, setCdrDatabase] = useState('asterisk');
   const [isTestingCdr, setIsTestingCdr] = useState(false);
   const [cdrStatus, setCdrStatus] = useState<ConnectionStatus>('Unknown');
+
+  const [isSaving, setIsSaving] = useState(false);
 
   // Memoize connection objects
   const ariConnection = useMemo(() => ({ host: ariHost, port: ariPort, username: ariUsername, password: ariPassword }), [ariHost, ariPort, ariUsername, ariPassword]);
   const amiConnection = useMemo(() => ({ host: amiHost, port: amiPort, username: amiUsername, password: amiPassword }), [amiHost, amiPort, amiUsername, amiPassword]);
   const cdrConnection = useMemo(() => ({ host: cdrHost, port: cdrPort, username: cdrUsername, password: cdrPassword, database: cdrDatabase }), [cdrHost, cdrPort, cdrUsername, cdrPassword, cdrDatabase]);
+
+  // Load config and perform initial healthcheck on mount
+  useEffect(() => {
+    const initializeAndCheck = async () => {
+      setIsTestingAri(true);
+      setIsTestingAmi(true);
+      setIsTestingCdr(true);
+      setAriStatus('Unknown');
+      setAmiStatus('Unknown');
+      setCdrStatus('Unknown');
+
+      const config = await getConfig();
+      
+      setAriHost(config.ari.host);
+      setAriPort(config.ari.port);
+      setAriUsername(config.ari.username);
+      setAriPassword(config.ari.password);
+
+      setAmiHost(config.ami.host);
+      setAmiPort(config.ami.port);
+      setAmiUsername(config.ami.username);
+      setAmiPassword(config.ami.password);
+      
+      setCdrHost(config.cdr.host);
+      setCdrPort(config.cdr.port);
+      setCdrUsername(config.cdr.username);
+      setCdrPassword(config.cdr.password);
+      setCdrDatabase(config.cdr.database);
+      
+      const [ariResult, amiResult, cdrResult] = await Promise.all([
+        getAsteriskVersion(config.ari),
+        getAmiQueues(config.ami),
+        testCdrConnection(config.cdr),
+      ]);
+
+      setAriStatus(ariResult.success ? 'Connected' : 'Failed');
+      setAmiStatus(amiResult.success ? 'Connected' : 'Failed');
+      setCdrStatus(cdrResult.success ? 'Connected' : 'Failed');
+      
+      setIsTestingAri(false);
+      setIsTestingAmi(false);
+      setIsTestingCdr(false);
+    };
+
+    initializeAndCheck();
+  }, []);
 
   const handleTestAri = async () => {
     setIsTestingAri(true);
@@ -92,6 +143,22 @@ export default function AdminPage() {
     setIsTestingCdr(false);
   };
 
+  const handleSaveSettings = async () => {
+    setIsSaving(true);
+    const newConfig = {
+      ari: ariConnection,
+      ami: amiConnection,
+      cdr: cdrConnection,
+    };
+    const result = await saveConfig(newConfig);
+    if (result.success) {
+      toast({ title: 'Настройки сохранены', description: 'Конфигурация успешно обновлена.' });
+    } else {
+      toast({ variant: 'destructive', title: 'Ошибка сохранения', description: result.error });
+    }
+    setIsSaving(false);
+  };
+
   const fetchUsers = useCallback(async () => {
     setIsFetchingUsers(true);
     try {
@@ -112,34 +179,6 @@ export default function AdminPage() {
     fetchUsers();
   }, [fetchUsers]);
   
-  // Healthcheck for connections on load and when details change
-  useEffect(() => {
-    const checkConnections = async () => {
-      setIsTestingAri(true);
-      setIsTestingAmi(true);
-      setIsTestingCdr(true);
-
-      const [ariResult, amiResult, cdrResult] = await Promise.all([
-        getAsteriskVersion(ariConnection),
-        getAmiQueues(amiConnection),
-        testCdrConnection(cdrConnection),
-      ]);
-
-      setAriStatus(ariResult.success ? 'Connected' : 'Failed');
-      setAmiStatus(amiResult.success ? 'Connected' : 'Failed');
-      setCdrStatus(cdrResult.success ? 'Connected' : 'Failed');
-      
-      setIsTestingAri(false);
-      setIsTestingAmi(false);
-      setIsTestingCdr(false);
-    };
-
-    if (ariConnection.host && amiConnection.host && cdrConnection.host) {
-        checkConnections();
-    }
-  }, [ariConnection, amiConnection, cdrConnection]);
-
-
   return (
     <div className="space-y-8">
       <div className="flex items-center gap-4">
@@ -199,6 +238,8 @@ export default function AdminPage() {
                 onAriChange={{ setHost: setAriHost, setPort: setAriPort, setUsername: setAriUsername, setPassword: setAriPassword }}
                 onAmiChange={{ setHost: setAmiHost, setPort: setAmiPort, setUsername: setAmiUsername, setPassword: setAmiPassword }}
                 onCdrChange={{ setHost: setCdrHost, setPort: setCdrPort, setUsername: setCdrUsername, setPassword: setCdrPassword, setDatabase: setCdrDatabase }}
+                onSave={handleSaveSettings}
+                isSaving={isSaving}
             />
         </TabsContent>
         <TabsContent value="users" className="mt-6">

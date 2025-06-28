@@ -3,25 +3,16 @@ import { Database, AlertTriangle } from 'lucide-react';
 import { CallHistoryTable } from '@/components/reports/call-history-table';
 import { getCallHistory } from '@/actions/cdr';
 import { getUsers } from '@/actions/users';
+import { getConfig } from '@/actions/config';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import type { Call } from '@/lib/types';
 
-function getCdrConnection() {
-    return {
-        host: process.env.CDR_DB_HOST || '92.46.62.34',
-        port: process.env.CDR_DB_PORT || '3306',
-        username: process.env.CDR_DB_USERNAME || 'freepbxuser',
-        password: process.env.CDR_DB_PASSWORD || '42e09f1b23ced2f4cc474a04b4505313',
-        database: process.env.CDR_DB_NAME || 'asterisk',
-    };
-}
-
 export default async function ReportsPage() {
-    const cdrConnection = getCdrConnection();
+    const config = await getConfig();
 
     // Fetch calls and users in parallel
     const [callsResult, users] = await Promise.all([
-        getCallHistory(cdrConnection),
+        getCallHistory(config.cdr),
         getUsers(),
     ]);
 
@@ -31,7 +22,7 @@ export default async function ReportsPage() {
                 <AlertTriangle className="h-4 w-4" />
                 <AlertTitle>Could not connect to CDR Database</AlertTitle>
                 <AlertDescription>
-                    <p>There was an error connecting to the Call Detail Record database. Please check your connection settings in the Admin page or your `.env` file.</p>
+                    <p>There was an error connecting to the Call Detail Record database. Please check your connection settings in the Admin page.</p>
                     <p className="mt-2 font-mono text-xs">Error: {callsResult.error}</p>
                 </AlertDescription>
             </Alert>
