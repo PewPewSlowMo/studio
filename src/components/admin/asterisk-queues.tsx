@@ -80,14 +80,12 @@ export function AsteriskQueues({ connection }: AsteriskQueuesProps) {
             <TableHeader>
               <TableRow>
                 <TableHead>Queue Name</TableHead>
-                <TableHead>Members</TableHead>
-                <TableHead>Callers Waiting</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {isSyncing ? (
                 <TableRow>
-                  <TableCell colSpan={3} className="h-24 text-center">
+                  <TableCell colSpan={1} className="h-24 text-center">
                     <div className="flex justify-center items-center gap-2">
                       <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
                       <span className="text-muted-foreground">Syncing from Asterisk...</span>
@@ -98,13 +96,11 @@ export function AsteriskQueues({ connection }: AsteriskQueuesProps) {
                 queues.map((queue) => (
                   <TableRow key={queue.name}>
                     <TableCell className="font-medium">{queue.name}</TableCell>
-                    <TableCell>{queue.members.length}</TableCell>
-                    <TableCell>{queue.callers.length}</TableCell>
                   </TableRow>
                 ))
               ) : (
                 <TableRow>
-                  <TableCell colSpan={3} className="h-24 text-center">
+                  <TableCell colSpan={1} className="h-24 text-center">
                     No queue data. Click "Sync" to fetch from server.
                   </TableCell>
                 </TableRow>

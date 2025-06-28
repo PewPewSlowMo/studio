@@ -50,6 +50,4 @@ export interface AsteriskEndpoint {
 
 export interface AsteriskQueue {
   name: string;
-  callers: any[];
-  members: any[];
 }

@@ -21,8 +21,6 @@ const AsteriskEndpointSchema = z.array(
 const AsteriskQueueSchema = z.array(
   z.object({
     name: z.string(),
-    callers: z.array(z.any()),
-    members: z.array(z.any()),
   })
 );
 
