@@ -14,7 +14,7 @@ import { QueueDistributionChart } from '@/components/analytics/queue-distributio
 import { getUsers } from '@/actions/users';
 import { DateRangePicker } from '@/components/shared/date-range-picker';
 import { Skeleton } from '@/components/ui/skeleton';
-import { subDays, format, parseISO, isValid } from 'date-fns';
+import { subDays, format, parseISO, isValid, differenceInDays } from 'date-fns';
 
 const SLA_TARGET_SECONDS = 30;
 
@@ -37,7 +37,8 @@ export default function AnalyticsPage() {
     const searchParams = useSearchParams();
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
-    const [calls, setCalls] = useState<Call[]>([]);
+    const [currentCalls, setCurrentCalls] = useState<Call[]>([]);
+    const [previousCalls, setPreviousCalls] = useState<Call[]>([]);
     const [users, setUsers] = useState<User[]>([]);
 
     useEffect(() => {
@@ -50,18 +51,29 @@ export default function AnalyticsPage() {
 
                 const to = toParam && isValid(parseISO(toParam)) ? parseISO(toParam) : new Date();
                 const from = fromParam && isValid(parseISO(fromParam)) ? parseISO(fromParam) : subDays(to, 6);
-                const dateRange: DateRangeParams = { from: format(from, 'yyyy-MM-dd'), to: format(to, 'yyyy-MM-dd') };
+
+                const duration = differenceInDays(to, from);
+                const previousTo = subDays(from, 1);
+                const previousFrom = subDays(previousTo, duration);
+
+                const currentDateRange: DateRangeParams = { from: format(from, 'yyyy-MM-dd'), to: format(to, 'yyyy-MM-dd') };
+                const previousDateRange: DateRangeParams = { from: format(previousFrom, 'yyyy-MM-dd'), to: format(previousTo, 'yyyy-MM-dd') };
 
                 const config = await getConfig();
-                const [callsResult, usersResult] = await Promise.all([
-                    getCallHistory(config.cdr, dateRange),
+                const [currentCallsResult, previousCallsResult, usersResult] = await Promise.all([
+                    getCallHistory(config.cdr, currentDateRange),
+                    getCallHistory(config.cdr, previousDateRange),
                     getUsers()
                 ]);
 
-                if (!callsResult.success) {
-                    throw new Error(callsResult.error || 'Failed to fetch call history');
+                if (!currentCallsResult.success) {
+                    throw new Error(currentCallsResult.error || 'Failed to fetch current call history');
                 }
-                setCalls(callsResult.data || []);
+                 if (!previousCallsResult.success) {
+                    throw new Error(previousCallsResult.error || 'Failed to fetch previous call history');
+                }
+                setCurrentCalls(currentCallsResult.data || []);
+                setPreviousCalls(previousCallsResult.data || []);
                 setUsers(usersResult);
             } catch (e) {
                 setError(e instanceof Error ? e.message : 'An unknown error occurred');
@@ -74,24 +86,48 @@ export default function AnalyticsPage() {
     }, [searchParams]);
 
     const analyticsData = useMemo(() => {
-        const answeredCalls = calls.filter(c => c.status === 'ANSWERED' && c.waitTime !== undefined && c.billsec !== undefined);
-        const missedCalls = calls.filter(c => c.status !== 'ANSWERED');
+        const calculateKpis = (callsToAnalyze: Call[]) => {
+            const answeredCalls = callsToAnalyze.filter(c => c.status === 'ANSWERED' && c.waitTime !== undefined && c.billsec !== undefined);
+            const missedCalls = callsToAnalyze.filter(c => c.status !== 'ANSWERED');
+            const totalCalls = callsToAnalyze.length;
 
-        const totalCalls = calls.length;
+            const callsAnsweredWithinSla = answeredCalls.filter(c => c.waitTime! <= SLA_TARGET_SECONDS).length;
+            const serviceLevel = answeredCalls.length > 0 ? (callsAnsweredWithinSla / answeredCalls.length) * 100 : 0;
 
-        const callsAnsweredWithinSla = answeredCalls.filter(c => c.waitTime! <= SLA_TARGET_SECONDS).length;
-        const serviceLevel = answeredCalls.length > 0 ? (callsAnsweredWithinSla / answeredCalls.length) * 100 : 0;
+            const totalWaitTime = answeredCalls.reduce((acc, c) => acc + c.waitTime!, 0);
+            const averageSpeedOfAnswer = answeredCalls.length > 0 ? totalWaitTime / answeredCalls.length : 0;
 
-        const totalWaitTime = answeredCalls.reduce((acc, c) => acc + c.waitTime!, 0);
-        const averageSpeedOfAnswer = answeredCalls.length > 0 ? totalWaitTime / answeredCalls.length : 0;
+            const totalHandleTime = answeredCalls.reduce((acc, c) => acc + c.billsec!, 0);
+            const averageHandleTime = answeredCalls.length > 0 ? totalHandleTime / answeredCalls.length : 0;
 
-        const totalHandleTime = answeredCalls.reduce((acc, c) => acc + c.billsec!, 0);
-        const averageHandleTime = answeredCalls.length > 0 ? totalHandleTime / answeredCalls.length : 0;
+            const abandonmentRate = totalCalls > 0 ? (missedCalls.length / totalCalls) * 100 : 0;
 
-        const abandonmentRate = totalCalls > 0 ? (missedCalls.length / totalCalls) * 100 : 0;
+            return { serviceLevel, averageSpeedOfAnswer, averageHandleTime, abandonmentRate, missedCallsCount: missedCalls.length, totalCalls };
+        };
+        
+        const calculateTrend = (current: number, previous: number) => {
+            if (previous === 0) {
+                if (current > 0) return { trendValue: '+100.0%', trendDirection: 'up' as const };
+                return { trendValue: '0.0%', trendDirection: 'neutral' as const };
+            }
+            const percentageChange = ((current - previous) / previous) * 100;
+            
+            let trendDirection: 'up' | 'down' | 'neutral' = 'neutral';
+            if (percentageChange > 0.1) trendDirection = 'up';
+            if (percentageChange < -0.1) trendDirection = 'down';
+
+            return {
+                trendValue: `${percentageChange >= 0 ? '+' : ''}${percentageChange.toFixed(1)}%`,
+                trendDirection,
+            };
+        };
+        
+        const currentKpis = calculateKpis(currentCalls);
+        const previousKpis = calculateKpis(previousCalls);
 
         const userMap = new Map(users.filter(u => u.extension).map(u => [u.extension!, u.name]));
-        const operatorPerformanceData = answeredCalls.reduce((acc, call) => {
+        const answeredCallsForCharts = currentCalls.filter(c => c.status === 'ANSWERED' && c.billsec !== undefined);
+        const operatorPerformanceData = answeredCallsForCharts.reduce((acc, call) => {
             if (call.operatorExtension) {
                 const name = userMap.get(call.operatorExtension) || `Ext. ${call.operatorExtension}`;
                 if (!acc[name]) {
@@ -109,7 +145,7 @@ export default function AnalyticsPage() {
             avgHandleTime: data.answered > 0 ? data.totalTalkTime / data.answered : 0
         })).sort((a, b) => b.answered - a.answered);
 
-        const queueDistribution = calls.reduce((acc, call) => {
+        const queueDistribution = currentCalls.reduce((acc, call) => {
             const queueName = call.queue || 'Без очереди';
             if (queueName) {
                 acc[queueName] = (acc[queueName] || 0) + 1;
@@ -121,9 +157,18 @@ export default function AnalyticsPage() {
             .map(([name, value]) => ({ name, value }))
             .sort((a, b) => b.value - a.value);
             
-        return { serviceLevel, averageSpeedOfAnswer, averageHandleTime, abandonmentRate, missedCalls, totalCalls, operatorChartData, queueChartData };
+        return { 
+            serviceLevel: { ...calculateTrend(currentKpis.serviceLevel, previousKpis.serviceLevel), value: currentKpis.serviceLevel },
+            averageSpeedOfAnswer: { ...calculateTrend(currentKpis.averageSpeedOfAnswer, previousKpis.averageSpeedOfAnswer), value: currentKpis.averageSpeedOfAnswer },
+            averageHandleTime: { ...calculateTrend(currentKpis.averageHandleTime, previousKpis.averageHandleTime), value: currentKpis.averageHandleTime },
+            abandonmentRate: { ...calculateTrend(currentKpis.abandonmentRate, previousKpis.abandonmentRate), value: currentKpis.abandonmentRate },
+            missedCalls: currentKpis.missedCallsCount, 
+            totalCalls: currentKpis.totalCalls, 
+            operatorChartData, 
+            queueChartData 
+        };
 
-    }, [calls, users]);
+    }, [currentCalls, previousCalls, users]);
 
     const formatTime = (seconds: number) => {
         const minutes = Math.floor(seconds / 60);
@@ -174,31 +219,31 @@ export default function AnalyticsPage() {
                 <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
                     <AnalyticsKpiCard 
                         title="Уровень обслуживания (SLA)"
-                        value={`${analyticsData.serviceLevel.toFixed(1)}%`}
+                        value={`${analyticsData.serviceLevel.value.toFixed(1)}%`}
                         description={`Отвечено за ${SLA_TARGET_SECONDS} сек.`}
-                        trendValue="+2.1%"
-                        trendDirection="up"
+                        trendValue={analyticsData.serviceLevel.trendValue}
+                        trendDirection={analyticsData.serviceLevel.trendDirection}
                     />
                     <AnalyticsKpiCard 
                         title="Среднее время ответа (ASA)"
-                        value={formatTime(analyticsData.averageSpeedOfAnswer)}
+                        value={formatTime(analyticsData.averageSpeedOfAnswer.value)}
                         description="Среднее время до ответа"
-                        trendValue="-3.4%"
-                        trendDirection="down"
+                        trendValue={analyticsData.averageSpeedOfAnswer.trendValue}
+                        trendDirection={analyticsData.averageSpeedOfAnswer.trendDirection}
                     />
                     <AnalyticsKpiCard 
                         title="Среднее время обработки (AHT)"
-                        value={formatTime(analyticsData.averageHandleTime)}
+                        value={formatTime(analyticsData.averageHandleTime.value)}
                         description="Разговор + удержание"
-                        trendValue="+1.2%"
-                        trendDirection="up"
+                        trendValue={analyticsData.averageHandleTime.trendValue}
+                        trendDirection={analyticsData.averageHandleTime.trendDirection}
                     />
                     <AnalyticsKpiCard 
                         title="Процент потерянных"
-                        value={`${analyticsData.abandonmentRate.toFixed(1)}%`}
-                        description={`${analyticsData.missedCalls.length} из ${analyticsData.totalCalls} звонков`}
-                        trendValue="-0.5%"
-                        trendDirection="down"
+                        value={`${analyticsData.abandonmentRate.value.toFixed(1)}%`}
+                        description={`${analyticsData.missedCalls} из ${analyticsData.totalCalls} звонков`}
+                        trendValue={analyticsData.abandonmentRate.trendValue}
+                        trendDirection={analyticsData.abandonmentRate.trendDirection}
                     />
                 </div>
             )}
