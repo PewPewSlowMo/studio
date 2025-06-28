@@ -1,12 +1,4 @@
-import type { User, Operator, Call } from './types';
-
-export const mockUsers: User[] = [
-  { id: 'user-1', username: 'admin', email: 'admin@callsync.app', name: 'Admin User', role: 'admin', isActive: true, createdAt: '2023-10-26T10:00:00Z' },
-  { id: 'user-2', username: 'manager.jane', email: 'jane.d@callsync.app', name: 'Jane Doe', role: 'manager', isActive: true, createdAt: '2023-10-26T10:05:00Z' },
-  { id: 'user-3', username: 'supervisor.john', email: 'john.s@callsync.app', name: 'John Smith', role: 'supervisor', isActive: true, createdAt: '2023-10-26T10:10:00Z' },
-  { id: 'user-4', username: 'op.mike', email: 'mike.r@callsync.app', name: 'Mike Ross', role: 'operator', isActive: true, createdAt: '2023-10-26T11:00:00Z', extension: '1001' },
-  { id: 'user-5', username: 'op.sara', email: 'sara.c@callsync.app', name: 'Sara Connor', role: 'operator', isActive: false, createdAt: '2023-10-26T11:05:00Z', extension: '1002' },
-];
+import type { Operator, Call } from './types';
 
 export const mockOperators: Operator[] = [
   { id: 'op-1', userId: 'user-4', name: 'Mike Ross', extension: '1001', status: 'online', currentCalls: 0, lastActivity: new Date().toISOString() },
