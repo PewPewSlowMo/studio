@@ -18,6 +18,11 @@ import { format, parseISO, isValid } from 'date-fns';
 
 export function CallHistoryTable({ calls }: { calls: Call[] }) {
   const [filter, setFilter] = React.useState('');
+  const [isClient, setIsClient] = React.useState(false);
+
+  React.useEffect(() => {
+    setIsClient(true);
+  }, []);
 
   const filteredCalls = React.useMemo(() => {
     if (!filter) return calls;
@@ -30,6 +35,11 @@ export function CallHistoryTable({ calls }: { calls: Call[] }) {
   }, [calls, filter]);
 
   const formatDate = (dateString: string) => {
+    // On the server or before the component has mounted on the client,
+    // return a placeholder to avoid hydration mismatch due to timezones.
+    if (!isClient) {
+      return '...';
+    }
     const date = parseISO(dateString);
     return isValid(date) ? format(date, 'Pp') : 'Invalid Date';
   };
