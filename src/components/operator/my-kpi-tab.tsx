@@ -1,13 +1,16 @@
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
+import { useSearchParams } from 'next/navigation';
 import type { Call, User } from '@/lib/types';
 import { getConfig } from '@/actions/config';
-import { getCallHistory } from '@/actions/cdr';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { getCallHistory, type DateRangeParams } from '@/actions/cdr';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { AlertTriangle, Phone, Clock, MessageSquare } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
+import { DateRangePicker } from '@/components/shared/date-range-picker';
+import { subDays, format, parseISO, isValid } from 'date-fns';
 
 interface MyKpiTabProps {
     user: User;
@@ -53,6 +56,7 @@ const formatTime = (seconds: number) => {
 };
 
 export function MyKpiTab({ user }: MyKpiTabProps) {
+    const searchParams = useSearchParams();
     const [calls, setCalls] = useState<Call[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -64,9 +68,18 @@ export function MyKpiTab({ user }: MyKpiTabProps) {
                 setIsLoading(false);
                 return;
             }
+            setIsLoading(true);
+            setError(null);
             try {
+                const toParam = searchParams.get('to');
+                const fromParam = searchParams.get('from');
+
+                const to = toParam && isValid(parseISO(toParam)) ? parseISO(toParam) : new Date();
+                const from = fromParam && isValid(parseISO(fromParam)) ? parseISO(fromParam) : subDays(to, 6);
+                const dateRange: DateRangeParams = { from: format(from, 'yyyy-MM-dd'), to: format(to, 'yyyy-MM-dd') };
+
                 const config = await getConfig();
-                const result = await getCallHistory(config.cdr);
+                const result = await getCallHistory(config.cdr, dateRange);
                 if (result.success && result.data) {
                     const filteredCalls = result.data.filter(call => call.operatorExtension === user.extension);
                     setCalls(filteredCalls);
@@ -81,7 +94,7 @@ export function MyKpiTab({ user }: MyKpiTabProps) {
         };
 
         fetchCalls();
-    }, [user]);
+    }, [user, searchParams]);
 
     const kpiData = useMemo(() => {
         const answeredCalls = calls.filter(c => c.status === 'ANSWERED' && c.billsec !== undefined);
@@ -106,21 +119,29 @@ export function MyKpiTab({ user }: MyKpiTabProps) {
         );
     }
     
-    if (isLoading) {
-        return (
-             <div className="grid gap-4 md:grid-cols-3">
-                <KpiSkeleton />
-                <KpiSkeleton />
-                <KpiSkeleton />
-            </div>
-        )
-    }
-
     return (
-        <div className="grid gap-4 md:grid-cols-3">
-            <KpiCard title="Всего отвечено" value={kpiData.totalAnswered.toString()} icon={Phone} />
-            <KpiCard title="Общее время разговора" value={formatTime(kpiData.totalTalkTime)} icon={MessageSquare} />
-            <KpiCard title="Среднее время обработки" value={formatTime(kpiData.avgHandleTime)} icon={Clock} />
+        <div className="space-y-6">
+            <div className="flex justify-between items-start">
+                <div>
+                    <h2 className="text-2xl font-bold">Мои показатели эффективности</h2>
+                    <p className="text-muted-foreground">Ваши KPI за выбранный период.</p>
+                </div>
+                 <DateRangePicker />
+            </div>
+
+            {isLoading ? (
+                 <div className="grid gap-4 md:grid-cols-3">
+                    <KpiSkeleton />
+                    <KpiSkeleton />
+                    <KpiSkeleton />
+                </div>
+            ) : (
+                <div className="grid gap-4 md:grid-cols-3">
+                    <KpiCard title="Всего отвечено" value={kpiData.totalAnswered.toString()} icon={Phone} />
+                    <KpiCard title="Общее время разговора" value={formatTime(kpiData.totalTalkTime)} icon={MessageSquare} />
+                    <KpiCard title="Среднее время обработки" value={formatTime(kpiData.avgHandleTime)} icon={Clock} />
+                </div>
+            )}
         </div>
     );
 }
