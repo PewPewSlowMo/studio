@@ -87,6 +87,29 @@ export default function AdminPage() {
     fetchUsers();
   }, [fetchUsers]);
   
+  // Healthcheck for connections on load and when details change
+  useEffect(() => {
+    const checkConnections = async () => {
+      setIsTestingAri(true);
+      setIsTestingAmi(true);
+
+      const [ariResult, amiResult] = await Promise.all([
+        getAsteriskVersion(ariConnection),
+        getAmiQueues(amiConnection),
+      ]);
+
+      setAriStatus(ariResult.success ? 'Connected' : 'Failed');
+      setAmiStatus(amiResult.success ? 'Connected' : 'Failed');
+      
+      setIsTestingAri(false);
+      setIsTestingAmi(false);
+    };
+
+    if (ariConnection.host && amiConnection.host) {
+        checkConnections();
+    }
+  }, [ariConnection, amiConnection]);
+
 
   return (
     <div className="space-y-8">

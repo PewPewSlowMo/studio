@@ -53,7 +53,7 @@ export function ConnectionStatusCard({
         <div className="mt-auto">
             <Button onClick={onTest} disabled={isTesting} className={cn("w-full", variant === 'success' ? 'bg-green-600 hover:bg-green-700 text-white' : '')}>
             {isTesting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            {isDb ? 'Тест БД' : `Тест ${title.split(' ')[0]}`}
+            {isTesting ? 'Проверка...' : (isDb ? 'Тест БД' : `Тест ${title.split(' ')[0]}`)}
             </Button>
         </div>
       </CardContent>
