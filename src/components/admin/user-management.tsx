@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect, useCallback } from 'react';
+import { useState } from 'react';
 import type { User, AsteriskEndpoint } from '@/lib/types';
 import {
   Card,
@@ -37,7 +37,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { UserFormDialog, type UserFormData } from './user-form-dialog';
 import { getAmiEndpoints } from '@/actions/ami';
-import { getUsers, addUser, updateUser, deleteUser, toggleUserStatus } from '@/actions/users';
+import { addUser, updateUser, deleteUser, toggleUserStatus } from '@/actions/users';
 import { useToast } from '@/hooks/use-toast';
 
 interface UserManagementProps {
@@ -47,11 +47,12 @@ interface UserManagementProps {
     username: string;
     password: string;
   };
+  users: User[];
+  fetchUsers: () => void;
+  isFetchingUsers: boolean;
 }
 
-export function UserManagement({ connection }: UserManagementProps) {
-  const [users, setUsers] = useState<User[]>([]);
-  const [isFetchingUsers, setIsFetchingUsers] = useState(true);
+export function UserManagement({ connection, users, fetchUsers, isFetchingUsers }: UserManagementProps) {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [endpoints, setEndpoints] = useState<AsteriskEndpoint[]>([]);
@@ -59,26 +60,6 @@ export function UserManagement({ connection }: UserManagementProps) {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [userToDelete, setUserToDelete] = useState<User | null>(null);
   const { toast } = useToast();
-
-  const fetchUsers = useCallback(async () => {
-    setIsFetchingUsers(true);
-    try {
-      const fetchedUsers = await getUsers();
-      setUsers(fetchedUsers);
-    } catch (error) {
-      toast({
-        variant: 'destructive',
-        title: 'Failed to fetch users',
-        description: error instanceof Error ? error.message : 'An unknown error occurred.',
-      });
-    } finally {
-      setIsFetchingUsers(false);
-    }
-  }, [toast]);
-
-  useEffect(() => {
-    fetchUsers();
-  }, [fetchUsers]);
 
   const handleOpenDialog = async (user: User | null = null) => {
     setSelectedUser(user);
@@ -282,7 +263,7 @@ export function UserManagement({ connection }: UserManagementProps) {
                               {user.isActive ? 'Deactivate' : 'Activate'}
                             </DropdownMenuItem>
                             <DropdownMenuItem
-                              className="text-destructive hover:!text-destructive focus:text-destructive focus:!bg-destructive/10"
+                              className="text-destructive focus:!bg-destructive/10 hover:!text-destructive"
                               onClick={() => handleOpenDeleteDialog(user)}
                             >
                               Delete
