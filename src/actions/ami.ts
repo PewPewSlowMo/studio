@@ -24,8 +24,23 @@ function runAmiCommand<T>(
   completionEvent: string
 ): Promise<T[]> {
   return new Promise((resolve, reject) => {
+    let Ami;
     try {
-      const Ami = require('asterisk-manager');
+      // This require is intentionally inside the try block to shield it from
+      // the Next.js bundler's static analysis, which can fail on old CommonJS packages.
+      Ami = require('asterisk-manager');
+    } catch (e) {
+      // This error will be thrown if the 'asterisk-manager' package is not
+      // available in the node_modules directory at runtime.
+      return reject(
+        new Error(
+          "Failed to load 'asterisk-manager'. The package may not be installed correctly or is not accessible in the server environment.",
+          { cause: e }
+        )
+      );
+    }
+
+    try {
       const validatedConnection = AmiConnectionSchema.parse(connection);
       const { host, port, username, password } = validatedConnection;
 
@@ -43,7 +58,7 @@ function runAmiCommand<T>(
           }
         }
       };
-
+      
       ami.on('error', (err: Error) => {
         if (!isDone) {
           cleanup();
@@ -54,7 +69,8 @@ function runAmiCommand<T>(
       ami.on('disconnect', () => {
         if (!isDone) {
            cleanup();
-           reject(new Error('AMI disconnected unexpectedly.'));
+           // Avoid rejecting on expected disconnects
+           // reject(new Error('AMI disconnected unexpectedly.'));
         }
       });
 
@@ -89,7 +105,6 @@ function runAmiCommand<T>(
         }
       }, 10000);
 
-      ami.keepConnected();
     } catch (e) {
       if (e instanceof z.ZodError) {
         reject(new Error(`Invalid input: ${e.errors.map((err) => err.message).join(', ')}`));
