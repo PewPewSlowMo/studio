@@ -38,10 +38,10 @@ export default function AdminPage() {
   
   // State for CDR DB connection
   const [cdrHost, setCdrHost] = useState('localhost');
-  const [cdrPort, setCdrPort] = useState('5432');
-  const [cdrUsername, setCdrUsername] = useState('asterisk');
-  const [cdrPassword, setCdrPassword] = useState('asterisk');
-  const [cdrDatabase, setCdrDatabase] = useState('asteriskcdrdb');
+  const [cdrPort, setCdrPort] = useState('3306');
+  const [cdrUsername, setCdrUsername] = useState('freepbxuser');
+  const [cdrPassword, setCdrPassword] = useState('42e09f1b23ced2f4cc474a04b4505313');
+  const [cdrDatabase, setCdrDatabase] = useState('asterisk');
   const [isTestingCdr, setIsTestingCdr] = useState(false);
   const [cdrStatus, setCdrStatus] = useState<ConnectionStatus>('Unknown');
 

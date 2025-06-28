@@ -1,8 +1,56 @@
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Database } from 'lucide-react';
+import { Database, AlertTriangle } from 'lucide-react';
 import { CallHistoryTable } from '@/components/reports/call-history-table';
+import { getCallHistory } from '@/actions/cdr';
+import { getUsers } from '@/actions/users';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import type { Call } from '@/lib/types';
 
-export default function ReportsPage() {
+function getCdrConnection() {
+    return {
+        host: process.env.CDR_DB_HOST || 'localhost',
+        port: process.env.CDR_DB_PORT || '3306',
+        username: process.env.CDR_DB_USERNAME || 'freepbxuser',
+        password: process.env.CDR_DB_PASSWORD || '42e09f1b23ced2f4cc474a04b4505313',
+        database: process.env.CDR_DB_NAME || 'asterisk',
+    };
+}
+
+export default async function ReportsPage() {
+    const cdrConnection = getCdrConnection();
+
+    // Fetch calls and users in parallel
+    const [callsResult, users] = await Promise.all([
+        getCallHistory(cdrConnection),
+        getUsers(),
+    ]);
+
+    if (!callsResult.success) {
+        return (
+             <Alert variant="destructive">
+                <AlertTriangle className="h-4 w-4" />
+                <AlertTitle>Could not connect to CDR Database</AlertTitle>
+                <AlertDescription>
+                    <p>There was an error connecting to the Call Detail Record database. Please check your connection settings in the Admin page or your `.env` file.</p>
+                    <p className="mt-2 font-mono text-xs">Error: {callsResult.error}</p>
+                </AlertDescription>
+            </Alert>
+        )
+    }
+
+    const calls: Call[] = callsResult.data || [];
+    
+    // Create a map of extension -> user name for easy lookup
+    const userMap = new Map(users.filter(u => u.extension).map(user => [user.extension, user.name]));
+
+    // Enrich calls with operator name
+    const enrichedCalls = calls.map(call => ({
+        ...call,
+        operatorName: call.operatorExtension 
+            ? (userMap.get(call.operatorExtension) || `Ext. ${call.operatorExtension}`) 
+            : 'N/A',
+    }));
+
   return (
     <div className="space-y-6">
       <h1 className="text-3xl font-bold">Call Reports</h1>
@@ -14,13 +62,13 @@ export default function ReportsPage() {
             <div>
               <CardTitle>Call History</CardTitle>
               <CardDescription>
-                Historical call data requires a database connection to be configured in the admin panel.
+                A log of the most recent 100 calls from the CDR database.
               </CardDescription>
             </div>
           </div>
         </CardHeader>
         <CardContent>
-           <CallHistoryTable calls={[]} />
+           <CallHistoryTable calls={enrichedCalls} />
         </CardContent>
       </Card>
     </div>

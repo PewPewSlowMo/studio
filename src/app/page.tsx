@@ -16,10 +16,10 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 // Helper function to get connection details from environment variables
 function getAmiConnection() {
   return {
-    host: process.env.AMI_HOST || '',
-    port: process.env.AMI_PORT || '',
-    username: process.env.AMI_USERNAME || '',
-    password: process.env.AMI_PASSWORD || '',
+    host: process.env.AMI_HOST || '92.46.62.34',
+    port: process.env.AMI_PORT || '5038',
+    username: process.env.AMI_USERNAME || 'smart_call_cent',
+    password: process.env.AMI_PASSWORD || 'Almaty20252025',
   };
 }
 

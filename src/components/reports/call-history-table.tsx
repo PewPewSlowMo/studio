@@ -68,7 +68,7 @@ export function CallHistoryTable({ calls }: { calls: Call[] }) {
                   <TableCell>
                     <Badge
                       variant={
-                        call.status === 'missed' ? 'destructive' : 'secondary'
+                        call.status.toLowerCase() !== 'answered' ? 'destructive' : 'secondary'
                       }
                       className="capitalize"
                     >

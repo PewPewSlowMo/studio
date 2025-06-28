@@ -13,7 +13,6 @@ export interface User {
   password?: string;
 }
 
-export type CallStatus = 'incoming' | 'answered' | 'completed' | 'missed';
 export type OperatorStatus = 'online' | 'busy' | 'offline';
 
 export interface Operator {
@@ -28,13 +27,13 @@ export interface Operator {
 
 export interface Call {
   id: string;
-  channelId: string;
   callerNumber: string;
   calledNumber: string;
   operatorId?: string;
   operatorName?: string;
+  operatorExtension?: string;
   queueId?: string;
-  status: CallStatus;
+  status: string; // From 'ANSWERED', 'NO ANSWER', 'BUSY' etc.
   startTime: string;
   answerTime?: string;
   endTime?: string;
