@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -29,21 +30,30 @@ const formSchema = z.object({
   password: z.string().min(1, 'Пароль не может быть пустым'),
 });
 
+type FormData = z.infer<typeof formSchema>;
+
 export function LoginForm() {
   const [showPassword, setShowPassword] = useState(false);
+  const router = useRouter();
 
-  const form = useForm<z.infer<typeof formSchema>>({
+  const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      email: 'user@callcenter.com',
-      password: 'password',
+      email: '',
+      password: '',
     },
   });
 
-  function onSubmit(values: z.infer<typeof formSchema>) {
+  function onSubmit(values: FormData) {
     console.log(values);
-    // Handle login logic here
+    // Redirect to dashboard on successful login
+    router.push('/');
   }
+
+  const handleDemoLogin = (creds: Partial<FormData>) => {
+    form.setValue('email', creds.email || '');
+    form.setValue('password', creds.password || '');
+  };
 
   return (
     <Card className="w-full">
@@ -109,13 +119,55 @@ export function LoginForm() {
         </Form>
         <Separator className="my-6" />
         <div className="space-y-4 text-center">
-            <p className="text-sm text-muted-foreground">Демо-аккаунты для тестирования:</p>
-            <div className="grid grid-cols-2 gap-2">
-                <Button variant="outline">Администратор</Button>
-                <Button variant="outline">Менеджер</Button>
-                <Button variant="outline">Супервайзер</Button>
-                <Button variant="outline">Оператор</Button>
-            </div>
+          <p className="text-sm text-muted-foreground">
+            Демо-аккаунты для тестирования:
+          </p>
+          <div className="grid grid-cols-2 gap-2">
+            <Button
+              variant="outline"
+              onClick={() =>
+                handleDemoLogin({
+                  email: 'admin@callcenter.com',
+                  password: 'password',
+                })
+              }
+            >
+              Администратор
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() =>
+                handleDemoLogin({
+                  email: 'manager@callcenter.com',
+                  password: 'password',
+                })
+              }
+            >
+              Менеджер
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() =>
+                handleDemoLogin({
+                  email: 'supervisor@callcenter.com',
+                  password: 'password',
+                })
+              }
+            >
+              Супервайзер
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() =>
+                handleDemoLogin({
+                  email: 'operator@callcenter.com',
+                  password: 'password',
+                })
+              }
+            >
+              Оператор
+            </Button>
+          </div>
         </div>
       </CardContent>
     </Card>
