@@ -54,3 +54,14 @@ export interface AsteriskEndpoint {
 export interface AsteriskQueue {
   name: string;
 }
+
+export interface QueueReportData {
+  queueName: string;
+  totalCalls: number;
+  answeredCalls: number;
+  missedCalls: number;
+  abandonmentRate: number;
+  sla: number;
+  avgWaitTime: number; // In seconds
+  avgHandleTime: number; // In seconds
+}
