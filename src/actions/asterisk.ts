@@ -176,7 +176,7 @@ export async function getOperatorState(
         ),
         fetchFromAri(
             connection,
-            `channels/${channelId}/variable?variable=UNIQUEID`,
+            `channels/${channelId}/variable?variable=CDR(uniqueid)`,
             AriChannelVarSchema
         ),
     ]);
@@ -196,7 +196,10 @@ export async function getOperatorState(
         effectiveCallerId = operatorChannel.caller.number;
     }
     
-    const uniqueId = uniqueIdVarResult.success ? uniqueIdVarResult.data?.value : undefined;
+    // The CDR uniqueid is the most reliable. If not available, use the channel's own ID as a fallback.
+    const uniqueId = (uniqueIdVarResult.success && uniqueIdVarResult.data?.value)
+        ? uniqueIdVarResult.data.value
+        : operatorChannel.id;
     
     return {
         success: true,
