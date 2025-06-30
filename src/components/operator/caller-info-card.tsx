@@ -33,8 +33,8 @@ interface ActiveCallModalProps {
   history: Call[];
   callState: {
     status: string;
-    callerId?: string;
-    channelId?: string;
+    callerNumber?: string;
+    callId?: string;
     queue?: string;
   };
   operator: User;
@@ -159,7 +159,7 @@ export function CallerInfoCard({ isOpen, onClose, contact, onContactUpdate, hist
           <div className="space-y-4">
             <h3 className="font-semibold text-lg">Информация о звонящем</h3>
             <div className="space-y-3 p-3 bg-muted/50 rounded-lg text-sm">
-                <div className="flex items-center gap-3"><Phone className="h-4 w-4 text-muted-foreground" /> <span>{callState.callerId}</span></div>
+                <div className="flex items-center gap-3"><Phone className="h-4 w-4 text-muted-foreground" /> <span>{callState.callerNumber}</span></div>
                 <div className="flex items-center gap-3"><Building className="h-4 w-4 text-muted-foreground" /> <span>Регион: <span className="text-foreground">Не определен</span></span></div>
                 <div className="flex items-center gap-3"><Clock className="h-4 w-4 text-muted-foreground" /> <span>Время: {format(new Date(), 'dd.MM.yyyy, HH:mm:ss')}</span></div>
                 <div className="flex items-center gap-3"><ChevronsRight className="h-4 w-4 text-muted-foreground" /> <span>Очередь: {callState.queue || 'Основная'}</span></div>
@@ -176,7 +176,7 @@ export function CallerInfoCard({ isOpen, onClose, contact, onContactUpdate, hist
                    <div className="flex items-center gap-3"><BadgeInfo className="h-4 w-4 text-muted-foreground" /> <Badge className="capitalize">{contact.type}</Badge></div>
                 </div>
             ) : (
-                <CrmContactForm form={crmForm} phoneNumber={callState.callerId || ''} onSave={onContactUpdate} />
+                <CrmContactForm form={crmForm} phoneNumber={callState.callerNumber || ''} onSave={onContactUpdate} />
             )}
             
             <Separator />
@@ -207,8 +207,8 @@ export function CallerInfoCard({ isOpen, onClose, contact, onContactUpdate, hist
             <h3 className="font-semibold text-lg">Детали звонка</h3>
             <AppealForm 
                 form={appealForm}
-                callId={callState.channelId || 'n/a'}
-                callerNumber={callState.callerId || 'n/a'}
+                callId={callState.callId || 'n/a'}
+                callerNumber={callState.callerNumber || 'n/a'}
                 operator={operator}
                 isWrapUp={isWrapUp}
                 onFormSubmit={onValidAppealSubmit}
