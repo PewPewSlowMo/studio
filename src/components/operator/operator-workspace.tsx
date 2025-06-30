@@ -1,15 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback, useRef } from 'react';
-import {
-  Phone,
-  PhoneCall,
-  PhoneIncoming,
-  PhoneOff,
-  User as UserIcon,
-  X,
-  Loader2,
-} from 'lucide-react';
+import { Phone, PhoneCall, PhoneIncoming, PhoneOff, User as UserIcon, X, Loader2 } from 'lucide-react';
 import type { User, Call, CrmContact, CallState } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -25,12 +17,12 @@ import { AppealForm } from './appeal-form';
 // --- Prop Types ---
 interface OperatorWorkspaceProps {
   user: User;
-  amiConnection: { host: string; port: string; username: string; password: string; };
-  ariConnection: { host: string; port: string; username: string; password: string; };
+  amiConnection: { host: string; port: string; username: string; password: string };
+  ariConnection: { host: string; port: string; username: string; password: string };
 }
 
 // --- Sub-components ---
-function Dialpad({ onDial, disabled }: { onDial: (number: string) => void, disabled: boolean }) {
+function Dialpad({ onDial, disabled }: { onDial: (number: string) => void; disabled: boolean }) {
   const [number, setNumber] = useState('');
   const buttons = '123456789*0#'.split('');
 
@@ -43,7 +35,7 @@ function Dialpad({ onDial, disabled }: { onDial: (number: string) => void, disab
       setNumber('');
     }
   };
-  
+
   return (
     <Card>
       <CardHeader>
@@ -62,7 +54,7 @@ function Dialpad({ onDial, disabled }: { onDial: (number: string) => void, disab
           />
           {number && (
             <Button variant="ghost" size="icon" className="absolute right-1 top-1/2 -translate-y-1/2 h-9 w-9" onClick={handleBackspace}>
-                <X className="h-5 w-5"/>
+              <X className="h-5 w-5" />
             </Button>
           )}
         </div>
@@ -82,37 +74,39 @@ function Dialpad({ onDial, disabled }: { onDial: (number: string) => void, disab
 }
 
 function OperatorStatusCard({ user, status }: { user: User; status: CallState['status'] | 'wrap-up' }) {
-    const statusConfig = {
-        offline: { text: 'Оффлайн', color: 'bg-gray-500', icon: PhoneOff },
-        available: { text: 'Доступен', color: 'bg-green-500', icon: Phone },
-        ringing: { text: 'Входящий звонок', color: 'bg-yellow-500 animate-pulse', icon: PhoneIncoming },
-        'on-call': { text: 'В разговоре', color: 'bg-red-500', icon: PhoneCall },
-        connecting: { text: 'Соединение...', color: 'bg-blue-500 animate-pulse', icon: Loader2 },
-        'wrap-up': { text: 'Пост-обработка', color: 'bg-blue-500', icon: PhoneCall },
-    };
+  const statusConfig = {
+    offline: { text: 'Оффлайн', color: 'bg-gray-500' },
+    available: { text: 'Доступен', color: 'bg-green-500' },
+    ringing: { text: 'Входящий звонок', color: 'bg-yellow-500 animate-pulse' },
+    'on-call': { text: 'В разговоре', color: 'bg-red-500' },
+    connecting: { text: 'Соединение...', color: 'bg-blue-500' },
+    'wrap-up': { text: 'Пост-обработка', color: 'bg-indigo-500' },
+  };
 
-    const currentStatus = statusConfig[status] || statusConfig.offline;
+  const currentStatus = statusConfig[status] || statusConfig.offline;
 
-    return (
-        <Card>
-            <CardHeader>
-                <CardTitle>Статус оператора</CardTitle>
-                <CardDescription>Ваше текущее состояние в системе.</CardDescription>
-            </CardHeader>
-            <CardContent>
-                <div className="flex items-center justify-between p-4 rounded-lg bg-muted">
-                    <div className="flex items-center gap-3">
-                        <UserIcon className="h-5 w-5 text-muted-foreground" />
-                        <span className="font-semibold">{user.name} (доб. {user.extension})</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                        <div className={cn("h-3 w-3 rounded-full", currentStatus.color, currentStatus.icon === Loader2 && 'animate-spin')} />
-                        <span className="font-medium text-sm">{currentStatus.text}</span>
-                    </div>
-                </div>
-            </CardContent>
-        </Card>
-    );
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Статус оператора</CardTitle>
+        <CardDescription>Ваше текущее состояние в системе.</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <div className="flex items-center justify-between p-4 rounded-lg bg-muted">
+          <div className="flex items-center gap-3">
+            <UserIcon className="h-5 w-5 text-muted-foreground" />
+            <span className="font-semibold">
+              {user.name} (доб. {user.extension})
+            </span>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className={cn('h-3 w-3 rounded-full', currentStatus.color)} />
+            <span className="font-medium text-sm">{currentStatus.text}</span>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
 }
 
 // --- Main component ---
@@ -127,7 +121,7 @@ export function OperatorWorkspace({ user, amiConnection, ariConnection }: Operat
   const [callHistory, setCallHistory] = useState<Call[]>([]);
   const [isCallerInfoOpen, setIsCallerInfoOpen] = useState(false);
   const [lastCheckedCallerId, setLastCheckedCallerId] = useState<string | null>(null);
-  
+
   const previousStatusRef = useRef<CallState['status']>();
 
   const pollStatus = useCallback(async () => {
@@ -142,19 +136,16 @@ export function OperatorWorkspace({ user, amiConnection, ariConnection }: Operat
       newChannelId = channelId;
       newChannelName = channelName;
       newCallerId = callerId;
-      
+
       const stateToUse = channelState || endpointState;
       const normalizedState = stateToUse?.toLowerCase();
-      
+
       switch (normalizedState) {
         case 'ring':
         case 'ringing':
           newStatus = 'ringing';
           break;
-        case 'up':
-        case 'busy':
-        case 'offhook':
-        case 'dialing':
+        case 'up': case 'busy': case 'offhook': case 'dialing':
           newStatus = 'on-call';
           break;
         case 'down': case 'rsrvd': case 'online': case 'not_inuse': case 'not in use':
@@ -169,22 +160,37 @@ export function OperatorWorkspace({ user, amiConnection, ariConnection }: Operat
     } else {
       console.error('Polling failed:', result.error);
     }
-    
-    // State transition logic
-    if (previousStatusRef.current === 'on-call' && newStatus !== 'on-call' && activeCallData) {
-        setIsWrapUp(true);
-    } else if (newStatus === 'on-call' && newChannelId && newCallerId) {
-        setActiveCallData({ callId: newChannelId, callerNumber: newCallerId });
-        setIsWrapUp(false);
-    } else if (newStatus !== 'on-call' && !isWrapUp) {
-        setActiveCallData(null);
-    }
-    
-    setCallState({ status: newStatus, channelId: newChannelId, channelName: newChannelName, callerId: newCallerId });
-    previousStatusRef.current = newStatus;
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user.extension, ariConnection, activeCallData, isWrapUp]);
+    const newState = { status: newStatus, channelId: newChannelId, channelName: newChannelName, callerId: newCallerId };
+    
+    // By using the functional form of setState, we compare with the previous state
+    // and prevent a re-render if the state hasn't changed. This is the fix.
+    setCallState((currentState) => {
+      if (
+        currentState.status === newState.status &&
+        currentState.channelId === newState.channelId &&
+        currentState.callerId === newState.callerId
+      ) {
+        return currentState;
+      }
+      return newState;
+    });
+  }, [user.extension, ariConnection]);
+
+  // This effect handles the logic based on state changes (e.g., entering wrap-up)
+  // It only runs when `callState` has actually been updated.
+  useEffect(() => {
+    if (previousStatusRef.current === 'on-call' && callState.status !== 'on-call' && activeCallData) {
+      setIsWrapUp(true);
+    } else if (callState.status === 'on-call' && callState.channelId && callState.callerId) {
+      setActiveCallData({ callId: callState.channelId, callerNumber: callState.callerId });
+      setIsWrapUp(false);
+    } else if (callState.status !== 'on-call' && !isWrapUp) {
+      setActiveCallData(null);
+    }
+    previousStatusRef.current = callState.status;
+  }, [callState, activeCallData, isWrapUp]);
+
 
   useEffect(() => {
     pollStatus();
@@ -194,57 +200,59 @@ export function OperatorWorkspace({ user, amiConnection, ariConnection }: Operat
 
   useEffect(() => {
     const fetchContact = async (callerId: string) => {
-        setLastCheckedCallerId(callerId);
-        const { contact, history } = await findContactByPhone(callerId);
-        setCrmContact(contact);
-        setCallHistory(history);
-        setIsCallerInfoOpen(true);
+      setLastCheckedCallerId(callerId);
+      const { contact, history } = await findContactByPhone(callerId);
+      setCrmContact(contact);
+      setCallHistory(history);
+      setIsCallerInfoOpen(true);
     };
 
     if (callState.status === 'ringing' && callState.callerId && callState.callerId !== lastCheckedCallerId) {
-        fetchContact(callState.callerId);
+      fetchContact(callState.callerId);
     }
-    
+
     if (callState.status !== 'ringing' && isCallerInfoOpen) {
-        setIsCallerInfoOpen(false);
-        setLastCheckedCallerId(null);
+      setIsCallerInfoOpen(false);
+      setLastCheckedCallerId(null);
     }
   }, [callState.status, callState.callerId, isCallerInfoOpen, lastCheckedCallerId]);
 
   const handleDial = async (number: string) => {
     if (!user.extension) return;
     setIsProcessing(true);
-    setCallState(prev => ({ ...prev, status: 'connecting' }));
+    setCallState((prev) => ({ ...prev, status: 'connecting' }));
     const result = await originateCall(amiConnection, user.extension, number);
     if (!result.success) {
       toast({ variant: 'destructive', title: 'Call Failed', description: result.error });
-      setCallState(prev => ({...prev, status: 'available'}));
+      setCallState((prev) => ({ ...prev, status: 'available' }));
     }
     await pollStatus();
     setIsProcessing(false);
   };
-  
+
   const handleWrapUpEnd = () => {
-      setIsWrapUp(false);
-      setActiveCallData(null);
+    setIsWrapUp(false);
+    setActiveCallData(null);
   };
 
   const RightPanel = () => {
     if (activeCallData) {
-        return <AppealForm 
-            callId={activeCallData.callId} 
-            callerNumber={activeCallData.callerNumber} 
-            operator={user}
-            isWrapUp={isWrapUp}
-            onWrapUpEnd={handleWrapUpEnd}
-        />;
+      return (
+        <AppealForm
+          callId={activeCallData.callId}
+          callerNumber={activeCallData.callerNumber}
+          operator={user}
+          isWrapUp={isWrapUp}
+          onWrapUpEnd={handleWrapUpEnd}
+        />
+      );
     }
     return <Dialpad onDial={handleDial} disabled={callState.status !== 'available' || isProcessing} />;
   };
 
   return (
     <>
-      <CallerInfoCard 
+      <CallerInfoCard
         isOpen={isCallerInfoOpen}
         onOpenChange={setIsCallerInfoOpen}
         contact={crmContact}
@@ -253,7 +261,7 @@ export function OperatorWorkspace({ user, amiConnection, ariConnection }: Operat
       />
       <div className="grid md:grid-cols-2 gap-8 max-w-5xl mx-auto">
         <div>
-           <OperatorStatusCard user={user} status={isWrapUp ? 'wrap-up' : callState.status} />
+          <OperatorStatusCard user={user} status={isWrapUp ? 'wrap-up' : callState.status} />
         </div>
         <div>
           <RightPanel />
