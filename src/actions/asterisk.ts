@@ -108,6 +108,10 @@ const AriChannelSchema = z.object({
   }).optional()
 });
 
+const AriChannelVarSchema = z.object({
+  value: z.string(),
+});
+
 export async function getAriEndpointDetails(
   connection: AsteriskConnection,
   extension: string
@@ -141,13 +145,28 @@ export async function getOperatorState(
     const channelId = endpoint.channel_ids.length > 0 ? endpoint.channel_ids[0] : undefined;
 
     if (channelId) {
-        const channelResult = await fetchFromAri(
-            connection,
-            `channels/${channelId}`,
-            AriChannelSchema
-        );
+        const [channelResult, realCallerIdResult] = await Promise.all([
+             fetchFromAri(
+                connection,
+                `channels/${channelId}`,
+                AriChannelSchema
+            ),
+             fetchFromAri(
+                connection,
+                `channels/${channelId}/variable?variable=REALCALLERIDNUM`,
+                AriChannelVarSchema
+            )
+        ]);
+
 
         if (channelResult.success && channelResult.data) {
+            let effectiveCallerId = channelResult.data.caller.number;
+            
+            // If REALCALLERIDNUM exists and has a value, it's often more reliable, especially with queues.
+            if (realCallerIdResult.success && realCallerIdResult.data?.value) {
+                effectiveCallerId = realCallerIdResult.data.value;
+            }
+
             return {
                 success: true,
                 data: {
@@ -155,7 +174,7 @@ export async function getOperatorState(
                     channelId: channelId,
                     channelName: channelResult.data.name,
                     channelState: channelResult.data.state,
-                    callerId: channelResult.data.caller.number,
+                    callerId: effectiveCallerId,
                     queue: channelResult.data.dialplan?.context
                 },
             };
