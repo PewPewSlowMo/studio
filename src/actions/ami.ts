@@ -86,6 +86,7 @@ function runAmiCommand<T extends Record<string, any>>(
 /**
  * Executes a single action and robustly handles the response from AMI.
  * It differentiates between transport errors and AMI application-level errors.
+ * It now explicitly checks for "Response: Success".
  */
 function runAmiAction(
   connection: AmiConnection,
@@ -123,15 +124,12 @@ function runAmiAction(
         if (err) {
           // This handles transport-level errors (e.g., connection refused)
           reject(err);
+        } else if (res?.response === 'Success') {
+          // Explicitly check for a "Success" response from Asterisk.
+          resolve({ success: true, message: res.message || 'Action was successful.', data: res });
         } else {
-          // This handles AMI application-level responses
-          if (res?.response?.toLowerCase() === 'error') {
-             // Resolve with failure, providing the error message from Asterisk
-             resolve({ success: false, message: res.message || 'AMI returned an unspecified error', data: res });
-          } else {
-             // Resolve with success
-             resolve({ success: true, message: res?.message, data: res });
-          }
+          // Any other response from Asterisk is considered a failure.
+          resolve({ success: false, message: res?.message || 'Action failed: Asterisk did not return "Success".', data: res });
         }
       });
 
@@ -190,7 +188,7 @@ export async function answerCall(
     if (result.success) {
       return { success: true };
     }
-    return { success: false, error: result.message || 'Answer command failed' };
+    return { success: false, error: `Failed to answer channel. Asterisk responded: "${result.message}"` };
   } catch (e) {
     const message = e instanceof Error ? e.message : 'An unknown error occurred.';
     console.error('answerCall failed:', message);
@@ -207,7 +205,7 @@ export async function hangupCall(
     if (result.success) {
       return { success: true };
     }
-    return { success: false, error: result.message || 'Hangup command failed' };
+    return { success: false, error: `Failed to hangup channel. Asterisk responded: "${result.message}"` };
   } catch (e) {
     const message = e instanceof Error ? e.message : 'An unknown error occurred.';
     console.error('hangupCall failed:', message);
