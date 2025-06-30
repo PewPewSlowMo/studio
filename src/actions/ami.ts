@@ -2,26 +2,10 @@
 
 import { z } from 'zod';
 import type { AsteriskEndpoint, AsteriskQueue } from '@/lib/types';
-import fs from 'fs/promises';
-import path from 'path';
 
 // This is a CommonJS module. We configure Next.js to treat it as an external
 // package on the server via `serverComponentsExternalPackages` in next.config.ts.
 const Ami = require('asterisk-manager');
-
-const LOG_FILE_PATH = path.join(process.cwd(), 'data', 'ami_debug.log');
-
-async function logToFile(message: string) {
-  try {
-    const logMessage = `${new Date().toISOString()} | ${message}\n`;
-    await fs.mkdir(path.dirname(LOG_FILE_PATH), { recursive: true });
-    await fs.appendFile(LOG_FILE_PATH, logMessage, 'utf-8');
-  } catch (e) {
-    // Fallback to console if file logging fails
-    console.error('Failed to write to debug log:', e);
-    console.error('Original log message:', message);
-  }
-}
 
 const AmiConnectionSchema = z.object({
   host: z.string().min(1, 'Host is required'),
@@ -41,8 +25,8 @@ function runAmiCommand<T extends Record<string, any>>(
     let ami: any;
     const timeout = setTimeout(() => {
         if (ami) ami.disconnect();
-        reject(new Error('AMI command timed out after 5 seconds.'));
-    }, 5000); // Shortened timeout
+        reject(new Error('AMI command timed out after 10 seconds.'));
+    }, 10000); 
 
     try {
       const validatedConnection = AmiConnectionSchema.parse(connection);
@@ -103,8 +87,8 @@ function runAmiAction(
     let ami: any;
     const timeout = setTimeout(() => {
       if (ami) ami.disconnect();
-      reject(new Error('AMI action timed out after 5 seconds.'));
-    }, 5000);
+      reject(new Error('AMI action timed out after 10 seconds.'));
+    }, 10000);
 
     try {
       const validatedConnection = AmiConnectionSchema.parse(connection);
@@ -121,16 +105,12 @@ function runAmiAction(
       });
 
       ami.on('error', (err: Error) => {
-        ami.disconnect();
+        if(ami) ami.disconnect();
         reject(err);
       });
       
-      await logToFile(`[AMI ACTION] Sending: ${JSON.stringify(action)}`);
-
-      ami.action(action, async (err: Error | null, res: any) => {
-        await logToFile(`[AMI ACTION] Received: ${JSON.stringify({ err, res })}`);
-        
-        ami.disconnect();
+      ami.action(action, (err: Error | null, res: any) => {
+        if(ami) ami.disconnect();
         if (err) {
           reject(err);
         } else if (res?.response === 'Success') {
@@ -142,6 +122,7 @@ function runAmiAction(
 
     } catch (e) {
       clearTimeout(timeout);
+      if (ami) ami.disconnect();
       if (e instanceof z.ZodError) {
         reject(
           new Error(
@@ -173,7 +154,6 @@ export async function answerCallAmi(
     return { success: false, error: result.message || 'Answer command failed' };
   } catch (e) {
     const message = e instanceof Error ? e.message : 'An unknown error occurred.';
-    await logToFile(`answerCallAmi failed: ${message}`);
     return { success: false, error: message };
   }
 }
@@ -194,7 +174,6 @@ export async function hangupCallAmi(
     return { success: false, error: result.message || 'Hangup command failed' };
   } catch (e) {
     const message = e instanceof Error ? e.message : 'An unknown error occurred.';
-    await logToFile(`hangupCallAmi failed: ${message}`);
     return { success: false, error: message };
   }
 }
@@ -223,7 +202,6 @@ export async function originateCall(
     return { success: false, error: result.message || 'Origination failed' };
   } catch (e) {
     const message = e instanceof Error ? e.message : 'An unknown error occurred.';
-    await logToFile(`originateCall failed: ${message}`);
     return { success: false, error: message };
   }
 }
@@ -266,7 +244,6 @@ export async function getAmiEndpoints(
     return { success: true, data };
   } catch (e) {
     const message = e instanceof Error ? e.message : 'An unknown error occurred.';
-    await logToFile(`getAmiEndpoints failed: ${message}`);
     return { success: false, error: message };
   }
 }
@@ -293,7 +270,6 @@ export async function getAmiQueues(
     return { success: true, data: uniqueQueues };
   } catch (e) {
     const message = e instanceof Error ? e.message : 'An unknown error occurred.';
-    await logToFile(`getAmiQueues failed: ${message}`);
     return { success: false, error: message };
   }
 }

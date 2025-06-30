@@ -173,6 +173,7 @@ export function OperatorWorkspace({ user, amiConnection, ariConnection }: Operat
         // Endpoint States (if no channel)
         case 'online':
         case 'not_inuse':
+        case 'not in use':
           newStatus = 'available';
           break;
         case 'unavailable':
@@ -186,11 +187,10 @@ export function OperatorWorkspace({ user, amiConnection, ariConnection }: Operat
       }
 
       setState(prevState => ({
-        ...prevState,
         status: newStatus,
         channelId: channelId,
         channelName: channelName,
-        callerId: newStatus === 'ringing' || newStatus === 'on-call' ? callerId : undefined,
+        callerId: newStatus === 'ringing' || newStatus === 'on-call' ? callerId : prevState.callerId,
       }));
     } else {
       setState({ status: 'offline' });
@@ -247,6 +247,8 @@ export function OperatorWorkspace({ user, amiConnection, ariConnection }: Operat
     if (!result.success) {
        toast({ variant: 'destructive', title: 'Answer Failed', description: result.error });
     }
+    // After answering, we need to update the callerId for the appeal form
+    setState(prev => ({...prev, callerId: prev.callerId}))
     await pollStatus();
     setIsProcessing(false);
   };
@@ -262,6 +264,7 @@ export function OperatorWorkspace({ user, amiConnection, ariConnection }: Operat
     if (!result.success) {
       toast({ variant: 'destructive', title: 'Hangup Failed', description: result.error });
     }
+    setState(prev => ({...prev, callerId: undefined})); // Clear callerId on hangup
     await pollStatus();
     setIsProcessing(false);
   };

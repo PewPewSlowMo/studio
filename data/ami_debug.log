@@ -1,0 +1,5 @@
+2025-06-30T08:18:38.979Z | [AMI ACTION] Sending: {"Action":"Answer","Channel":"PJSIP/0001-00000042"}
+2025-06-30T08:18:39.621Z | [AMI ACTION] Received: {"err":{"response":"Error","actionid":"1751271518984","message":"Invalid/unknown command: Answer. Use Action: ListCommands to show available commands."},"res":{"response":"Error","actionid":"1751271518984","message":"Invalid/unknown command: Answer. Use Action: ListCommands to show available commands."}}
+2025-06-30T08:18:39.623Z | answerCallAmi failed: An unknown error occurred.
+2025-06-30T08:18:42.381Z | [AMI ACTION] Sending: {"Action":"Hangup","Channel":"PJSIP/0001-00000042"}
+2025-06-30T08:18:43.045Z | [AMI ACTION] Received: {"res":{"response":"Success","actionid":"1751271522386","message":"Channel Hungup"}}
