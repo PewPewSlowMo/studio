@@ -65,3 +65,7 @@ export async function saveAppeal(data: AppealFormData): Promise<{ success: boole
     return { success: false, error: message };
   }
 }
+
+export async function getAppeals(): Promise<Appeal[]> {
+    return readAppeals();
+}

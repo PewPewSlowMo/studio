@@ -9,6 +9,7 @@ import type { User } from '@/lib/types';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { MyCallsTab } from '@/components/operator/my-calls-tab';
 import { MyKpiTab } from '@/components/operator/my-kpi-tab';
+import { CrmTab } from '@/components/operator/crm-tab';
 
 
 export default function OperatorPage() {
@@ -98,10 +99,11 @@ export default function OperatorPage() {
 
     return (
         <Tabs defaultValue="workspace" className="w-full">
-            <TabsList className="grid w-full grid-cols-3 max-w-lg mx-auto">
+            <TabsList className="grid w-full grid-cols-4 max-w-xl mx-auto">
                 <TabsTrigger value="workspace">Рабочее место</TabsTrigger>
                 <TabsTrigger value="calls">Мои звонки</TabsTrigger>
                 <TabsTrigger value="kpi">Мои KPI</TabsTrigger>
+                <TabsTrigger value="crm">Поиск в CRM</TabsTrigger>
             </TabsList>
             <TabsContent value="workspace" className="mt-6">
                 <OperatorWorkspace user={user} amiConnection={config.ami} ariConnection={config.ari} />
@@ -111,6 +113,9 @@ export default function OperatorPage() {
             </TabsContent>
             <TabsContent value="kpi" className="mt-6">
                 <MyKpiTab user={user} />
+            </TabsContent>
+            <TabsContent value="crm" className="mt-6">
+                <CrmTab />
             </TabsContent>
         </Tabs>
     );

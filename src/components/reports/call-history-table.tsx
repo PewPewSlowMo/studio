@@ -14,8 +14,9 @@ import type { Call } from '@/lib/types';
 import { Badge } from '@/components/ui/badge';
 import { format, parseISO, isValid } from 'date-fns';
 import { Skeleton } from '../ui/skeleton';
+import { cn } from '@/lib/utils';
 
-export function CallHistoryTable({ calls, isLoading }: { calls: Call[], isLoading: boolean }) {
+export function CallHistoryTable({ calls, isLoading, onRowClick }: { calls: Call[], isLoading: boolean, onRowClick?: (call: Call) => void }) {
   const [filter, setFilter] = React.useState('');
   const [isClient, setIsClient] = React.useState(false);
 
@@ -91,7 +92,11 @@ export function CallHistoryTable({ calls, isLoading }: { calls: Call[], isLoadin
               <TableBody>
                 {filteredCalls.length > 0 ? (
                   filteredCalls.map((call) => (
-                    <TableRow key={call.id + call.startTime}>
+                    <TableRow 
+                      key={call.id + call.startTime}
+                      onClick={() => onRowClick?.(call)}
+                      className={cn(onRowClick && 'cursor-pointer')}
+                    >
                       <TableCell className="font-medium">{call.callerNumber}</TableCell>
                       <TableCell>{call.operatorName || 'N/A'}</TableCell>
                       <TableCell>

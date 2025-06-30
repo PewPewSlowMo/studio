@@ -10,6 +10,7 @@ import { AlertTriangle } from 'lucide-react';
 import { DateRangePicker } from '@/components/shared/date-range-picker';
 import { subDays, format, parseISO, isValid } from 'date-fns';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { CallDetailsDialog } from './call-details-dialog';
 
 interface MyCallsTabProps {
     user: User;
@@ -20,6 +21,7 @@ export function MyCallsTab({ user }: MyCallsTabProps) {
     const [calls, setCalls] = useState<Call[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [selectedCall, setSelectedCall] = useState<Call | null>(null);
 
     useEffect(() => {
         const fetchCalls = async () => {
@@ -61,6 +63,10 @@ export function MyCallsTab({ user }: MyCallsTabProps) {
 
         fetchCalls();
     }, [user, searchParams]);
+    
+    const handleRowClick = (call: Call) => {
+        setSelectedCall(call);
+    }
 
     if (error) {
         return (
@@ -73,21 +79,31 @@ export function MyCallsTab({ user }: MyCallsTabProps) {
     }
     
     return (
-         <Card>
-            <CardHeader>
-                <div className="flex justify-between items-start">
-                    <div>
-                        <CardTitle>История моих звонков</CardTitle>
-                        <CardDescription>
-                            Список всех обработанных вами вызовов за выбранный период.
-                        </CardDescription>
+        <>
+            <Card>
+                <CardHeader>
+                    <div className="flex justify-between items-start">
+                        <div>
+                            <CardTitle>История моих звонков</CardTitle>
+                            <CardDescription>
+                                Нажмите на звонок, чтобы просмотреть детали обращения и клиента.
+                            </CardDescription>
+                        </div>
+                        <DateRangePicker />
                     </div>
-                    <DateRangePicker />
-                </div>
-            </CardHeader>
-            <CardContent>
-                <CallHistoryTable calls={calls} isLoading={isLoading} />
-            </CardContent>
-        </Card>
+                </CardHeader>
+                <CardContent>
+                    <CallHistoryTable calls={calls} isLoading={isLoading} onRowClick={handleRowClick} />
+                </CardContent>
+            </Card>
+
+            {selectedCall && (
+                <CallDetailsDialog
+                    isOpen={!!selectedCall}
+                    onOpenChange={(open) => !open && setSelectedCall(null)}
+                    call={selectedCall}
+                />
+            )}
+        </>
     );
 }

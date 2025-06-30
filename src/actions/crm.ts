@@ -2,12 +2,20 @@
 
 import fs from 'fs/promises';
 import path from 'path';
+import { z } from 'zod';
 import type { Call, CrmContact } from '@/lib/types';
 import { getConfig } from './config';
 import { getCallHistory } from './cdr';
 import { getUsers } from './users';
 
 const CRM_DB_PATH = path.join(process.cwd(), 'data', 'crm.json');
+
+const CrmContactSchema = z.object({
+  phoneNumber: z.string().min(1, 'Phone number is required'),
+  name: z.string().min(1, 'Name is required'),
+  address: z.string().min(1, 'Address is required'),
+  type: z.string().min(1, 'Type is required'),
+});
 
 async function readCrmData(): Promise<CrmContact[]> {
   try {
@@ -23,6 +31,11 @@ async function readCrmData(): Promise<CrmContact[]> {
     throw new Error('Could not read from the CRM database.');
   }
 }
+
+async function writeCrmData(contacts: CrmContact[]): Promise<void> {
+  await fs.writeFile(CRM_DB_PATH, JSON.stringify(contacts, null, 2), 'utf-8');
+}
+
 
 export async function findContactByPhone(phoneNumber: string): Promise<{ contact: CrmContact | null, history: Call[] }> {
     if (!phoneNumber || phoneNumber === 'anonymous') {
@@ -54,4 +67,26 @@ export async function findContactByPhone(phoneNumber: string): Promise<{ contact
     }
 
     return { contact, history };
+}
+
+export async function addOrUpdateContact(contactData: CrmContact): Promise<{ success: boolean; error?: string }> {
+  try {
+    const validatedData = CrmContactSchema.parse(contactData);
+    const contacts = await readCrmData();
+    const index = contacts.findIndex(c => c.phoneNumber === validatedData.phoneNumber);
+
+    if (index !== -1) {
+      // Update existing contact
+      contacts[index] = { ...contacts[index], ...validatedData };
+    } else {
+      // Add new contact
+      contacts.unshift(validatedData);
+    }
+
+    await writeCrmData(contacts);
+    return { success: true };
+  } catch (e) {
+    const message = e instanceof Error ? e.message : 'An unknown error occurred.';
+    return { success: false, error: message };
+  }
 }
