@@ -177,40 +177,6 @@ export async function originateCall(
   }
 }
 
-export async function answerCall(
-  connection: AmiConnection,
-  channel: string
-): Promise<{ success: boolean; error?: string }> {
-  try {
-    const result = await runAmiAction(connection, { Action: 'Answer', Channel: channel });
-    if (result.success) {
-      return { success: true };
-    }
-    return { success: false, error: `Failed to answer channel. Asterisk responded: "${result.message}"` };
-  } catch (e) {
-    const message = e instanceof Error ? e.message : 'An unknown error occurred.';
-    console.error('answerCall failed:', message);
-    return { success: false, error: message };
-  }
-}
-
-export async function hangupCall(
-  connection: AmiConnection,
-  channel: string
-): Promise<{ success: boolean; error?: string }> {
-  try {
-    const result = await runAmiAction(connection, { Action: 'Hangup', Channel: channel });
-    if (result.success) {
-      return { success: true };
-    }
-    return { success: false, error: `Failed to hangup channel. Asterisk responded: "${result.message}"` };
-  } catch (e) {
-    const message = e instanceof Error ? e.message : 'An unknown error occurred.';
-    console.error('hangupCall failed:', message);
-    return { success: false, error: message };
-  }
-}
-
 export async function getEndpointDetails(
   connection: AmiConnection,
   extension: string
