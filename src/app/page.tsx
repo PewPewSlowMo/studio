@@ -114,7 +114,7 @@ export default function DashboardPage() {
     const operatorDetails = endpoints.map(endpoint => {
         const user = userMap.get(endpoint.resource);
         return {
-            name: user?.name || `Extension ${endpoint.resource}`,
+            name: user?.name || `Внутренний ${endpoint.resource}`,
             state: endpoint.state,
         }
     }).sort((a, b) => a.name.localeCompare(b.name));
@@ -148,10 +148,10 @@ export default function DashboardPage() {
     return (
       <Alert variant="destructive">
         <AlertTriangle className="h-4 w-4" />
-        <AlertTitle>Could not load Dashboard</AlertTitle>
+        <AlertTitle>Не удалось загрузить дашборд</AlertTitle>
         <AlertDescription>
-          <p>There was an error fetching the data needed for the dashboard.</p>
-          <p className="mt-2 font-mono text-xs">Error: {error}</p>
+          <p>Произошла ошибка при получении данных, необходимых для дашборда.</p>
+          <p className="mt-2 font-mono text-xs">Ошибка: {error}</p>
         </AlertDescription>
       </Alert>
     );
@@ -200,35 +200,35 @@ export default function DashboardPage() {
     <div className="flex flex-col gap-6">
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
         <KpiCard
-          title="Total Operators"
+          title="Всего операторов"
           value={totalOperators.toString()}
           icon={Users}
-          description="All configured PJSIP endpoints."
-          detailsTitle="All Operators"
+          description="Все настроенные PJSIP-адреса."
+          detailsTitle="Все операторы"
           details={operatorDetails}
         />
         <KpiCard
-          title="Operators Online"
+          title="Операторы онлайн"
           value={operatorsOnline.toString()}
           icon={PhoneForwarded}
-          description="Operators not in 'unavailable' state."
-          detailsTitle="Online Operators"
+          description="Операторы не в статусе 'недоступен'."
+          detailsTitle="Операторы онлайн"
           details={onlineOperatorDetails}
         />
         <KpiCard
-          title="Operators on Call"
+          title="Операторы на линии"
           value={operatorsOnCall.toString()}
           icon={Phone}
-          description="Operators in 'in use' or 'busy' state."
-          detailsTitle="Operators on Call"
+          description="Операторы в статусе 'занят' или 'разговор'."
+          detailsTitle="Операторы на линии"
           details={onCallOperatorDetails}
         />
         <KpiCard
-          title="Active Queues"
+          title="Активные очереди"
           value={totalQueues.toString()}
           icon={LayoutDashboard}
-          description="Total configured call queues."
-          detailsTitle="All Queues"
+          description="Всего настроенных очередей."
+          detailsTitle="Все очереди"
           details={queueDetails}
         />
       </div>

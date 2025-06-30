@@ -91,3 +91,7 @@ export async function addOrUpdateContact(contactData: CrmContact): Promise<{ suc
     return { success: false, error: message };
   }
 }
+
+export async function getContacts(): Promise<CrmContact[]> {
+    return readCrmData();
+}

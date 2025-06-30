@@ -66,10 +66,10 @@ export default function ReportsPage() {
         return (
              <Alert variant="destructive">
                 <AlertTriangle className="h-4 w-4" />
-                <AlertTitle>Could not connect to CDR Database</AlertTitle>
+                <AlertTitle>Не удалось подключиться к базе данных CDR</AlertTitle>
                 <AlertDescription>
-                    <p>There was an error connecting to the Call Detail Record database. Please check your connection settings in the Admin page.</p>
-                    <p className="mt-2 font-mono text-xs">Error: {error}</p>
+                    <p>Произошла ошибка при подключении к базе данных истории звонков. Пожалуйста, проверьте настройки подключения на странице администратора.</p>
+                    <p className="mt-2 font-mono text-xs">Ошибка: {error}</p>
                 </AlertDescription>
             </Alert>
         );
@@ -79,8 +79,8 @@ export default function ReportsPage() {
         <div className="space-y-6">
             <div className="flex flex-wrap items-center justify-between gap-4">
                 <div>
-                    <h1 className="text-3xl font-bold">Call History Reports</h1>
-                    <p className="text-muted-foreground">A log of all calls from the selected period.</p>
+                    <h1 className="text-3xl font-bold">Отчеты по истории звонков</h1>
+                    <p className="text-muted-foreground">Журнал всех звонков за выбранный период.</p>
                 </div>
                 <DateRangePicker />
             </div>
@@ -90,9 +90,9 @@ export default function ReportsPage() {
                     <div className="flex items-center gap-4">
                         <Database className="h-8 w-8 text-muted-foreground" />
                         <div>
-                            <CardTitle>Call History</CardTitle>
+                            <CardTitle>История звонков</CardTitle>
                             <CardDescription>
-                                A log of calls from the selected time period.
+                                Журнал звонков за выбранный период.
                             </CardDescription>
                         </div>
                     </div>

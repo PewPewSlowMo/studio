@@ -15,15 +15,11 @@ import { Badge } from '@/components/ui/badge';
 import { format, parseISO, isValid } from 'date-fns';
 import { Skeleton } from '../ui/skeleton';
 import { cn } from '@/lib/utils';
+import { ru } from 'date-fns/locale';
 
 export function CallHistoryTable({ calls, isLoading, onRowClick }: { calls: Call[], isLoading: boolean, onRowClick?: (call: Call) => void }) {
   const [filter, setFilter] = React.useState('');
-  const [isClient, setIsClient] = React.useState(false);
-
-  React.useEffect(() => {
-    setIsClient(true);
-  }, []);
-
+  
   const filteredCalls = React.useMemo(() => {
     if (!filter) return calls;
     return calls.filter(
@@ -35,22 +31,19 @@ export function CallHistoryTable({ calls, isLoading, onRowClick }: { calls: Call
   }, [calls, filter]);
 
   const formatDate = (dateString: string) => {
-    if (!isClient) {
-      return '...';
-    }
     const date = parseISO(dateString);
-    return isValid(date) ? format(date, 'Pp') : 'Invalid Date';
+    return isValid(date) ? format(date, 'Pp', { locale: ru }) : 'Неверная дата';
   };
   
   const TableSkeleton = () => (
      <Table>
       <TableHeader>
         <TableRow>
-          <TableHead>Caller</TableHead>
-          <TableHead>Operator</TableHead>
-          <TableHead>Status</TableHead>
-          <TableHead>Start Time</TableHead>
-          <TableHead>Talk Time (s)</TableHead>
+          <TableHead>Звонящий</TableHead>
+          <TableHead>Оператор</TableHead>
+          <TableHead>Статус</TableHead>
+          <TableHead>Время начала</TableHead>
+          <TableHead>Разговор (сек)</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
@@ -71,7 +64,7 @@ export function CallHistoryTable({ calls, isLoading, onRowClick }: { calls: Call
     <div>
       <div className="flex justify-between items-center mb-4">
         <Input
-          placeholder="Filter by number or operator..."
+          placeholder="Фильтр по номеру или оператору..."
           value={filter}
           onChange={(e) => setFilter(e.target.value)}
           className="max-w-sm"
@@ -82,11 +75,11 @@ export function CallHistoryTable({ calls, isLoading, onRowClick }: { calls: Call
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Caller</TableHead>
-                  <TableHead>Operator</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Start Time</TableHead>
-                  <TableHead>Talk Time (s)</TableHead>
+                  <TableHead>Звонящий</TableHead>
+                  <TableHead>Оператор</TableHead>
+                  <TableHead>Статус</TableHead>
+                  <TableHead>Время начала</TableHead>
+                  <TableHead>Разговор (сек)</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -118,7 +111,7 @@ export function CallHistoryTable({ calls, isLoading, onRowClick }: { calls: Call
                 ) : (
                   <TableRow>
                     <TableCell colSpan={5} className="h-24 text-center">
-                      No call history data found for the selected period.
+                      Нет данных о звонках за выбранный период.
                     </TableCell>
                   </TableRow>
                 )}

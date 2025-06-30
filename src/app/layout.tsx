@@ -12,8 +12,8 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: 'CallSync Central',
-  description: 'Войдите в систему аналитики колл-центра',
+  title: 'CallSync Central | Аналитика',
+  description: 'Система управления и аналитики для колл-центра',
   icons: null,
 };
 

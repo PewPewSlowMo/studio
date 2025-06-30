@@ -42,6 +42,9 @@ export interface Call {
   waitTime?: number;
   recordingUrl?: string;
   reason?: string;
+  // Add new fields for enriched data
+  callerName?: string;
+  appealDescription?: string;
 }
 
 export interface AsteriskEndpoint {

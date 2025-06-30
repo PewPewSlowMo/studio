@@ -1,30 +1,35 @@
 'use client';
 import { useState, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { CallHistoryTable } from '@/components/reports/call-history-table';
+import { MyCallsTable } from './my-calls-table'; // New component
 import { getCallHistory, type DateRangeParams } from '@/actions/cdr';
 import { getConfig } from '@/actions/config';
-import type { Call, User } from '@/lib/types';
+import { getContacts } from '@/actions/crm'; // New function
+import { getAppeals } from '@/actions/appeals';
+import type { Call, User, CrmContact, Appeal } from '@/lib/types';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { AlertTriangle } from 'lucide-react';
 import { DateRangePicker } from '@/components/shared/date-range-picker';
 import { subDays, format, parseISO, isValid } from 'date-fns';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { CallDetailsDialog } from './call-details-dialog';
 
 interface MyCallsTabProps {
     user: User;
 }
 
+type EnrichedCall = Call & {
+    callerName?: string;
+    appealDescription?: string;
+};
+
 export function MyCallsTab({ user }: MyCallsTabProps) {
     const searchParams = useSearchParams();
-    const [calls, setCalls] = useState<Call[]>([]);
+    const [calls, setCalls] = useState<EnrichedCall[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
-    const [selectedCall, setSelectedCall] = useState<Call | null>(null);
 
     useEffect(() => {
-        const fetchCalls = async () => {
+        const fetchAndEnrichCalls = async () => {
             if (!user.extension) {
                 setError('У пользователя нет внутреннего номера.');
                 setIsLoading(false);
@@ -41,19 +46,29 @@ export function MyCallsTab({ user }: MyCallsTabProps) {
                 const dateRange: DateRangeParams = { from: format(from, 'yyyy-MM-dd'), to: format(to, 'yyyy-MM-dd') };
 
                 const config = await getConfig();
-                const result = await getCallHistory(config.cdr, dateRange); 
-                if (result.success && result.data) {
-                    const userMap = new Map([[user.extension, user.name]]);
-                    const filteredCalls = result.data
-                        .filter(call => call.operatorExtension === user.extension)
-                        .map(call => ({
-                            ...call,
-                            operatorName: userMap.get(call.operatorExtension!) || `Ext. ${call.operatorExtension}`
-                        }));
-                    setCalls(filteredCalls);
-                } else {
-                    setError(result.error || 'Не удалось загрузить историю звонков.');
+                const [callsResult, contacts, appeals] = await Promise.all([
+                    getCallHistory(config.cdr, dateRange),
+                    getContacts(),
+                    getAppeals()
+                ]);
+
+                if (!callsResult.success || !callsResult.data) {
+                    throw new Error(callsResult.error || 'Не удалось загрузить историю звонков.');
                 }
+                
+                const contactMap = new Map(contacts.map(c => [c.phoneNumber, c.name]));
+                const appealMap = new Map(appeals.map(a => [a.callId, a.description]));
+
+                const userCalls = callsResult.data
+                    .filter(call => call.operatorExtension === user.extension)
+                    .map((call): EnrichedCall => ({
+                        ...call,
+                        callerName: contactMap.get(call.callerNumber),
+                        appealDescription: appealMap.get(call.id)
+                    }));
+
+                setCalls(userCalls);
+
             } catch (e) {
                 setError(e instanceof Error ? e.message : 'Произошла неизвестная ошибка.');
             } finally {
@@ -61,13 +76,9 @@ export function MyCallsTab({ user }: MyCallsTabProps) {
             }
         };
 
-        fetchCalls();
+        fetchAndEnrichCalls();
     }, [user, searchParams]);
     
-    const handleRowClick = (call: Call) => {
-        setSelectedCall(call);
-    }
-
     if (error) {
         return (
             <Alert variant="destructive">
@@ -86,24 +97,16 @@ export function MyCallsTab({ user }: MyCallsTabProps) {
                         <div>
                             <CardTitle>История моих звонков</CardTitle>
                             <CardDescription>
-                                Нажмите на звонок, чтобы просмотреть детали обращения и клиента.
+                                Нажмите на строку, чтобы раскрыть детали обращения.
                             </CardDescription>
                         </div>
                         <DateRangePicker />
                     </div>
                 </CardHeader>
                 <CardContent>
-                    <CallHistoryTable calls={calls} isLoading={isLoading} onRowClick={handleRowClick} />
+                    <MyCallsTable calls={calls} isLoading={isLoading} />
                 </CardContent>
             </Card>
-
-            {selectedCall && (
-                <CallDetailsDialog
-                    isOpen={!!selectedCall}
-                    onOpenChange={(open) => !open && setSelectedCall(null)}
-                    call={selectedCall}
-                />
-            )}
         </>
     );
 }

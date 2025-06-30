@@ -9,7 +9,7 @@ export default function LoginPage() {
           <div className="mb-4 rounded-xl bg-gradient-to-br from-blue-500 to-violet-600 p-3 text-white shadow-lg">
             <BarChart className="h-8 w-8" />
           </div>
-          <h1 className="text-3xl font-bold text-gray-900">
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">
             CallSync Central
           </h1>
           <p className="text-muted-foreground">
@@ -19,7 +19,7 @@ export default function LoginPage() {
         <LoginForm />
       </div>
       <footer className="absolute bottom-4 text-center text-sm text-muted-foreground">
-        <p>© 2025 CallSync Central. Разработано Denis для Национального Госпиталя.</p>
+        <p>© 2025 CallSync Central. Разработано для Национального Госпиталя.</p>
       </footer>
     </div>
   );

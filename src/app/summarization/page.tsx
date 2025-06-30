@@ -32,8 +32,8 @@ import { Badge } from '@/components/ui/badge';
 const formSchema = z.object({
   audioFile: z
     .any()
-    .refine((files) => files?.length > 0, 'Audio file is required.'),
-  transcript: z.string().min(10, 'Transcript must be at least 10 characters.'),
+    .refine((files) => files?.length > 0, 'Аудиофайл обязателен.'),
+  transcript: z.string().min(10, 'Транскрипт должен содержать не менее 10 символов.'),
 });
 
 export default function SummarizationPage() {
@@ -71,11 +71,11 @@ export default function SummarizationPage() {
       console.error(error);
       toast({
         variant: 'destructive',
-        title: 'An error occurred',
+        title: 'Произошла ошибка',
         description:
           error instanceof Error
             ? error.message
-            : 'Failed to summarize the call.',
+            : 'Не удалось обработать звонок.',
       });
     } finally {
       setIsLoading(false);
@@ -86,9 +86,9 @@ export default function SummarizationPage() {
     <div className="grid gap-8 lg:grid-cols-2">
       <Card>
         <CardHeader>
-          <CardTitle>Intelligent Call Summarization</CardTitle>
+          <CardTitle>Интеллектуальный анализ звонков</CardTitle>
           <CardDescription>
-            Upload a call recording and transcript to get an AI-powered summary.
+            Загрузите запись звонка и транскрипт, чтобы получить анализ на базе ИИ.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -99,7 +99,7 @@ export default function SummarizationPage() {
                 name="audioFile"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Call Recording</FormLabel>
+                    <FormLabel>Запись звонка</FormLabel>
                     <FormControl>
                       <Input
                         type="file"
@@ -116,10 +116,10 @@ export default function SummarizationPage() {
                 name="transcript"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Transcript</FormLabel>
+                    <FormLabel>Транскрипт</FormLabel>
                     <FormControl>
                       <Textarea
-                        placeholder="Paste the call transcript here..."
+                        placeholder="Вставьте сюда транскрипт звонка..."
                         className="min-h-[200px]"
                         {...field}
                       />
@@ -132,7 +132,7 @@ export default function SummarizationPage() {
                 {isLoading && (
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                 )}
-                Summarize Call
+                Анализировать звонок
               </Button>
             </form>
           </Form>
@@ -144,8 +144,8 @@ export default function SummarizationPage() {
           <Card className="flex items-center justify-center min-h-[400px]">
             <div className="flex flex-col items-center gap-4 text-muted-foreground">
               <Loader2 className="h-12 w-12 animate-spin text-primary" />
-              <p>Analyzing call...</p>
-              <p className="text-sm">This may take a moment.</p>
+              <p>Анализ звонка...</p>
+              <p className="text-sm">Это может занять некоторое время.</p>
             </div>
           </Card>
         )}
@@ -155,7 +155,7 @@ export default function SummarizationPage() {
               <CardHeader className="flex-row items-center gap-4 space-y-0">
                 <FileText className="h-8 w-8 text-primary" />
                 <div>
-                  <CardTitle>Summary</CardTitle>
+                  <CardTitle>Резюме</CardTitle>
                 </div>
               </CardHeader>
               <CardContent>
@@ -167,7 +167,7 @@ export default function SummarizationPage() {
                 <CardHeader className="flex-row items-center gap-4 space-y-0">
                   <Tags className="h-8 w-8 text-primary" />
                   <div>
-                    <CardTitle>Categories</CardTitle>
+                    <CardTitle>Категории</CardTitle>
                   </div>
                 </CardHeader>
                 <CardContent className="flex flex-wrap gap-2">
@@ -182,7 +182,7 @@ export default function SummarizationPage() {
                 <CardHeader className="flex-row items-center gap-4 space-y-0">
                   <ThumbsUp className="h-8 w-8 text-primary" />
                   <div>
-                    <CardTitle>Sentiment</CardTitle>
+                    <CardTitle>Тональность</CardTitle>
                   </div>
                 </CardHeader>
                 <CardContent>
