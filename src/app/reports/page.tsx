@@ -12,6 +12,7 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import type { Call, User } from '@/lib/types';
 import { DateRangePicker } from '@/components/shared/date-range-picker';
 import { subDays, format, parseISO, isValid } from 'date-fns';
+import { CallDetailsDialog } from '@/components/operator/call-details-dialog';
 
 export default function ReportsPage() {
     const searchParams = useSearchParams();
@@ -19,6 +20,8 @@ export default function ReportsPage() {
     const [error, setError] = useState<string | null>(null);
     const [calls, setCalls] = useState<Call[]>([]);
     const [users, setUsers] = useState<User[]>([]);
+    const [selectedCall, setSelectedCall] = useState<Call | null>(null);
+    const [isDetailsOpen, setIsDetailsOpen] = useState(false);
 
     useEffect(() => {
         const fetchData = async () => {
@@ -62,6 +65,11 @@ export default function ReportsPage() {
         }));
     }, [calls, users]);
 
+    const handleRowClick = (call: Call) => {
+        setSelectedCall(call);
+        setIsDetailsOpen(true);
+    }
+
     if (error) {
         return (
              <Alert variant="destructive">
@@ -76,6 +84,12 @@ export default function ReportsPage() {
     }
 
     return (
+        <>
+        <CallDetailsDialog
+            isOpen={isDetailsOpen}
+            onOpenChange={setIsDetailsOpen}
+            call={selectedCall}
+        />
         <div className="space-y-6">
             <div className="flex flex-wrap items-center justify-between gap-4">
                 <div>
@@ -92,15 +106,16 @@ export default function ReportsPage() {
                         <div>
                             <CardTitle>История звонков</CardTitle>
                             <CardDescription>
-                                Журнал звонков за выбранный период.
+                                Журнал звонков за выбранный период. Нажмите на строку для просмотра деталей.
                             </CardDescription>
                         </div>
                     </div>
                 </CardHeader>
                 <CardContent>
-                   <CallHistoryTable calls={enrichedCalls} isLoading={isLoading} />
+                   <CallHistoryTable calls={enrichedCalls} isLoading={isLoading} onRowClick={handleRowClick} />
                 </CardContent>
             </Card>
         </div>
+        </>
     );
 }

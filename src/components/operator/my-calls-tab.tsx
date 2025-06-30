@@ -1,10 +1,10 @@
 'use client';
 import { useState, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { MyCallsTable } from './my-calls-table'; // New component
+import { MyCallsTable } from './my-calls-table';
 import { getCallHistory, type DateRangeParams } from '@/actions/cdr';
 import { getConfig } from '@/actions/config';
-import { getContacts } from '@/actions/crm'; // New function
+import { getContacts } from '@/actions/crm';
 import { getAppeals } from '@/actions/appeals';
 import type { Call, User, CrmContact, Appeal } from '@/lib/types';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -12,6 +12,7 @@ import { AlertTriangle } from 'lucide-react';
 import { DateRangePicker } from '@/components/shared/date-range-picker';
 import { subDays, format, parseISO, isValid } from 'date-fns';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { CallDetailsDialog } from './call-details-dialog';
 
 interface MyCallsTabProps {
     user: User;
@@ -27,6 +28,8 @@ export function MyCallsTab({ user }: MyCallsTabProps) {
     const [calls, setCalls] = useState<EnrichedCall[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [selectedCall, setSelectedCall] = useState<Call | null>(null);
+    const [isDetailsOpen, setIsDetailsOpen] = useState(false);
 
     useEffect(() => {
         const fetchAndEnrichCalls = async () => {
@@ -79,6 +82,11 @@ export function MyCallsTab({ user }: MyCallsTabProps) {
         fetchAndEnrichCalls();
     }, [user, searchParams]);
     
+    const handleRowClick = (call: Call) => {
+        setSelectedCall(call);
+        setIsDetailsOpen(true);
+    };
+
     if (error) {
         return (
             <Alert variant="destructive">
@@ -91,6 +99,11 @@ export function MyCallsTab({ user }: MyCallsTabProps) {
     
     return (
         <>
+            <CallDetailsDialog 
+                isOpen={isDetailsOpen}
+                onOpenChange={setIsDetailsOpen}
+                call={selectedCall}
+            />
             <Card>
                 <CardHeader>
                     <div className="flex justify-between items-start">
@@ -104,7 +117,7 @@ export function MyCallsTab({ user }: MyCallsTabProps) {
                     </div>
                 </CardHeader>
                 <CardContent>
-                    <MyCallsTable calls={calls} isLoading={isLoading} />
+                    <MyCallsTable calls={calls} isLoading={isLoading} onRowClick={handleRowClick} />
                 </CardContent>
             </Card>
         </>

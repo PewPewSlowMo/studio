@@ -88,14 +88,14 @@ export function CallHistoryTable({ calls, isLoading, onRowClick }: { calls: Call
                     <TableRow 
                       key={call.id + call.startTime}
                       onClick={() => onRowClick?.(call)}
-                      className={cn(onRowClick && 'cursor-pointer')}
+                      className={cn(onRowClick && 'cursor-pointer hover:bg-muted')}
                     >
                       <TableCell className="font-medium">{call.callerNumber}</TableCell>
                       <TableCell>{call.operatorName || 'N/A'}</TableCell>
                       <TableCell>
                         <Badge
                           variant={
-                            call.status.toLowerCase() !== 'answered' ? 'destructive' : 'secondary'
+                            call.status.toLowerCase() !== 'answered' ? 'destructive' : 'success'
                           }
                           className="capitalize"
                         >

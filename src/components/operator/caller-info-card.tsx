@@ -3,14 +3,12 @@
 import { useState, useEffect, useRef } from 'react';
 import type { CrmContact, Call, User } from '@/lib/types';
 import {
-  AlertDialog,
-  AlertDialogContent,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogDescription,
-} from '@/components/ui/alert-dialog';
+  Dialog,
+  DialogContent,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { User as UserIcon, Phone, MapPin, BadgeInfo, History, Calendar, X, Clock, ChevronsRight, Save, Loader2, Mail, PhoneIncoming as PhoneIncomingIcon, Building } from 'lucide-react';
+import { User as UserIcon, Phone, MapPin, BadgeInfo, History, Calendar, X, Clock, ChevronsRight, Mail, PhoneIncoming as PhoneIncomingIcon, Building } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { format, parseISO, isValid } from 'date-fns';
@@ -63,19 +61,19 @@ export function CallerInfoCard({ isOpen, onClose, contact, onContactUpdate, hist
       resolver: zodResolver(crmContactFormSchema),
       defaultValues: { name: '', address: '', type: 'иной', email: '' },
   });
+  
+  const onValidAppealSubmit = () => {
+    appealForm.reset();
+    onClose();
+  };
 
   const handleAutoSubmit = async () => {
-    const values = appealForm.getValues();
-    if (!values.description || !values.category) {
-      toast({
-        title: 'Автосохранение отменено',
-        description: 'Недостаточно данных для сохранения обращения (описание и категория обязательны).',
-        variant: 'destructive'
-      });
-      onClose();
-      return;
+    // Only submit if there's actual data to save
+    if (appealForm.formState.isDirty) {
+        await appealForm.handleSubmit(onValidAppealSubmit)();
+    } else {
+        onClose(); // Just close if nothing was changed
     }
-    await appealForm.handleSubmit(onValidAppealSubmit)();
   };
   
   useEffect(() => {
@@ -115,11 +113,6 @@ export function CallerInfoCard({ isOpen, onClose, contact, onContactUpdate, hist
     }
   }, [contact, crmForm]);
 
-  const onValidAppealSubmit = () => {
-    appealForm.reset();
-    onClose();
-  };
-
   const formatDate = (dateString: string) => {
     const date = parseISO(dateString);
     return isValid(date) ? format(date, 'dd.MM.yyyy HH:mm', { locale: ru }) : 'Invalid Date';
@@ -127,16 +120,35 @@ export function CallerInfoCard({ isOpen, onClose, contact, onContactUpdate, hist
   
   const callDuration = '00:00'; // Placeholder
 
+  const isCallActive = callState.status === 'ringing' || callState.status === 'on-call';
+
+  const handleOpenChange = (open: boolean) => {
+    if (!open && isCallActive) {
+      toast({
+        title: "Действие запрещено",
+        description: "Нельзя закрыть карточку во время активного разговора.",
+        variant: "destructive",
+      });
+      return; // Prevent closing
+    }
+    if (!open) {
+      onClose(); // Allow closing
+    }
+  };
+
   return (
-    <AlertDialog open={isOpen} onOpenChange={onClose}>
-      <AlertDialogContent className="max-w-4xl p-0">
+    <Dialog open={isOpen} onOpenChange={handleOpenChange}>
+      <DialogContent 
+        className="max-w-4xl p-0"
+        onEscapeKeyDown={isCallActive ? (e) => e.preventDefault() : undefined}
+      >
         <div className="flex items-center justify-between p-4 border-b">
-           <AlertDialogTitle className="flex items-center gap-3">
+           <DialogTitle className="flex items-center gap-3">
               <PhoneIncomingIcon className="text-primary" />
               <span>Входящий звонок</span>
               <Badge variant="outline">{callDuration}</Badge>
-           </AlertDialogTitle>
-           <Button variant="ghost" size="icon" onClick={onClose} className="rounded-full">
+           </DialogTitle>
+           <Button variant="ghost" size="icon" onClick={onClose} className="rounded-full" disabled={isCallActive}>
                <X className="h-4 w-4" />
            </Button>
         </div>
@@ -215,7 +227,7 @@ export function CallerInfoCard({ isOpen, onClose, contact, onContactUpdate, hist
             />
           </div>
         </div>
-      </AlertDialogContent>
-    </AlertDialog>
+      </DialogContent>
+    </Dialog>
   );
 }
