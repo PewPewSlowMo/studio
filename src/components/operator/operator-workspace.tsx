@@ -57,7 +57,12 @@ function OperatorStatusCard({ user, status }: { user: User; status: CallState['s
 export function OperatorWorkspace({ user, amiConnection, ariConnection }: OperatorWorkspaceProps) {
   const [callState, setCallState] = useState<CallState>({ status: 'offline' });
   const [isWrapUp, setIsWrapUp] = useState(false);
-  const [activeCallData, setActiveCallData] = useState<{ callId: string; callerNumber: string, queue?: string; uniqueId: string; } | null>(null);
+  const [activeCallData, setActiveCallData] = useState<{
+    uniqueId: string;
+    channelId: string;
+    callerNumber: string;
+    queue?: string;
+  } | null>(null);
 
   const [crmContact, setCrmContact] = useState<CrmContact | null>(null);
   const [callHistory, setCallHistory] = useState<Call[]>([]);
@@ -77,7 +82,6 @@ export function OperatorWorkspace({ user, amiConnection, ariConnection }: Operat
         
         if (result.success && result.data) {
             const { endpointState, channelId, channelName, callerId, queue, uniqueId } = result.data;
-            // Use the unified status directly from the server action
             newStatus = endpointState as CallState['status'] || 'offline';
             newCallStateData = { channelId, channelName, callerId, queue, uniqueId };
         } else {
@@ -112,15 +116,18 @@ export function OperatorWorkspace({ user, amiConnection, ariConnection }: Operat
     }
     
     // An active call is happening (ringing or established)
-    if (currentStatus === 'ringing' || currentStatus === 'on-call') {
+    if ((currentStatus === 'ringing' || currentStatus === 'on-call') && callState.uniqueId && callState.channelId && callState.callerId) {
         setIsWrapUp(false); // A new call starts, so wrap-up must be false.
         setIsModalOpen(true);
         
-        // Update active call data only if it's new to prevent re-render loops
-        if (callState.channelId && callState.callerId && callState.uniqueId) {
-             if (activeCallData?.callId !== callState.channelId) {
-                 setActiveCallData({ callId: callState.channelId, callerNumber: callState.callerId, queue: callState.queue, uniqueId: callState.uniqueId });
-             }
+        // Update active call data only if it's a new call (different uniqueId)
+        if (activeCallData?.uniqueId !== callState.uniqueId) {
+             setActiveCallData({
+                 uniqueId: callState.uniqueId,
+                 channelId: callState.channelId,
+                 callerNumber: callState.callerId,
+                 queue: callState.queue,
+             });
         }
         
         // Fetch CRM data only once per new caller ID
@@ -166,7 +173,13 @@ export function OperatorWorkspace({ user, amiConnection, ariConnection }: Operat
             contact={crmContact}
             onContactUpdate={handleContactUpdate}
             history={callHistory}
-            callState={{...activeCallData, status: callState.status}}
+            callState={{
+              callId: activeCallData.uniqueId,
+              callerNumber: activeCallData.callerNumber,
+              queue: activeCallData.queue,
+              status: callState.status,
+              uniqueId: activeCallData.uniqueId
+            }}
             operator={user}
             isWrapUp={isWrapUp}
           />
