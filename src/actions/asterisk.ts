@@ -187,51 +187,48 @@ export async function getOperatorState(
 
     // --- New, more robust data extraction ---
     
-    // 3. Get the correct UniqueID. The `CDR(linkedid)` on the operator's channel
-    // points to the `CDR(uniqueid)` of the caller's channel, which is what's
-    // logged in the main CDR record. This is the most reliable way to link them.
+    // 3. Get the correct UniqueID for saving. The `CDR(linkedid)` on the operator's channel
+    // points to the `CDR(uniqueid)` of the caller's channel. This is the most reliable.
     const linkedIdResult = await getAriChannelVar(connection, operatorChannelId, 'CDR(linkedid)');
     let uniqueId = linkedIdResult.success ? linkedIdResult.data?.value : undefined;
 
-    // 4. If there is no `linkedid` (e.g., a direct call, not from a queue),
-    // it means the operator's channel IS the main channel, so we use its own `uniqueid`.
+    // If there is no `linkedid` (e.g., a direct call), use the operator's own `uniqueid`.
     if (!uniqueId || uniqueId === '') {
         const cdrUniqueIdResult = await getAriChannelVar(connection, operatorChannelId, 'CDR(uniqueid)');
         uniqueId = cdrUniqueIdResult.success ? cdrUniqueIdResult.data?.value : undefined;
     }
 
 
-    // 5. Get the Caller ID, prioritizing the custom CRM_SOURCE variable
+    // 4. Get the Caller ID using a hierarchy of reliability.
     let effectiveCallerId: string | undefined = undefined;
+    // Priority 1: Use the custom variable set by the dialplan.
     const crmSourceVarResult = await getAriChannelVar(connection, operatorChannelId, '__CRM_SOURCE');
     if (crmSourceVarResult.success && crmSourceVarResult.data?.value) {
         effectiveCallerId = crmSourceVarResult.data.value;
     } else {
-        // Fallback: get details from the initiating channel
-        let initiatingChannelId: string | undefined = undefined;
-        if (operatorChannel.creator) {
-            initiatingChannelId = operatorChannel.creator;
-        } else if (operatorChannel.bridge_ids && operatorChannel.bridge_ids.length > 0) {
-            const bridgeId = operatorChannel.bridge_ids[0];
-            const bridgeResult = await fetchFromAri(connection, `bridges/${bridgeId}`, AriBridgeSchema);
-            if (bridgeResult.success && bridgeResult.data) {
-                initiatingChannelId = bridgeResult.data.channels.find(id => id !== operatorChannelId);
-            }
-        }
-        
-        if (initiatingChannelId) {
-            const callerChannelResult = await fetchFromAri(connection, `channels/${initiatingChannelId}`, AriChannelSchema);
-            if (callerChannelResult.success && callerChannelResult.data) {
+        // Priority 2: Use the linked channel's details.
+        // The channel ID of the other party is often the same as the linkedid.
+        if (linkedIdResult.success && linkedIdResult.data?.value) {
+             const callerChannelResult = await fetchFromAri(connection, `channels/${linkedIdResult.data.value}`, AriChannelSchema);
+             if (callerChannelResult.success && callerChannelResult.data) {
                 effectiveCallerId = callerChannelResult.data.caller.number;
-            }
+             }
         }
-        // If all else fails, use the operator's channel caller info
-        if (!effectiveCallerId) {
-            effectiveCallerId = operatorChannel.caller.number;
+        // Priority 3: Fallback to creator channel if linked channel fails.
+        if (!effectiveCallerId && operatorChannel.creator) {
+            const creatorChannelResult = await fetchFromAri(connection, `channels/${operatorChannel.creator}`, AriChannelSchema);
+            if (creatorChannelResult.success && creatorChannelResult.data) {
+                effectiveCallerId = creatorChannelResult.data.caller.number;
+            }
         }
     }
+    
+    // Last resort: If still no ID, use the one from the operator's channel itself.
+    if (!effectiveCallerId) {
+        effectiveCallerId = operatorChannel.caller.number;
+    }
 
-    // 6. Get other details
+    // 5. Get other details
     const queue = operatorChannel.dialplan?.context;
 
     // --- Determine Final Status ---

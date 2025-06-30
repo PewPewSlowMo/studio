@@ -69,7 +69,6 @@ export function OperatorWorkspace({ user, amiConnection, ariConnection }: Operat
   const [isModalOpen, setIsModalOpen] = useState(false);
   
   const previousStatusRef = useRef<string | null>(null);
-  const lastCheckedCallerIdRef = useRef<string | null>(null);
 
   // This effect handles polling for the operator's status.
   useEffect(() => {
@@ -90,8 +89,7 @@ export function OperatorWorkspace({ user, amiConnection, ariConnection }: Operat
 
         setCallState(prevState => {
             const newState = { ...prevState, status: newStatus, ...newCallStateData };
-            // Only update state if something has actually changed to prevent re-renders
-            if (prevState.status !== newState.status || prevState.callerId !== newState.callerId || prevState.uniqueId !== newState.uniqueId) {
+            if (JSON.stringify(prevState) !== JSON.stringify(newState)) {
                 return newState as CallState;
             }
             return prevState;
@@ -108,53 +106,42 @@ export function OperatorWorkspace({ user, amiConnection, ariConnection }: Operat
     const currentStatus = callState.status;
     const prevStatus = previousStatusRef.current;
     
-    // Call has just ended: transition from 'on-call' to something else.
-    if (prevStatus === 'on-call' && currentStatus !== 'on-call' && activeCallData) {
-        setIsWrapUp(true);
-        // The modal is kept open by `isWrapUp` being true
-        return;
-    }
-    
-    // An active call is happening (ringing or established)
-    if ((currentStatus === 'ringing' || currentStatus === 'on-call') && callState.uniqueId && callState.channelId && callState.callerId) {
-        setIsWrapUp(false); // A new call starts, so wrap-up must be false.
-        setIsModalOpen(true);
+    // Case 1: Call is ringing or active
+    if ((currentStatus === 'ringing' || currentStatus === 'on-call') && callState.uniqueId && callState.callerId) {
+        setIsWrapUp(false);
+        if (!isModalOpen) setIsModalOpen(true);
         
-        // Update active call data only if it's a new call (different uniqueId)
         if (activeCallData?.uniqueId !== callState.uniqueId) {
              setActiveCallData({
                  uniqueId: callState.uniqueId,
-                 channelId: callState.channelId,
+                 channelId: callState.channelId!,
                  callerNumber: callState.callerId,
                  queue: callState.queue,
              });
-        }
-        
-        // Fetch CRM data only once per new caller ID
-        if (callState.callerId && lastCheckedCallerIdRef.current !== callState.callerId) {
-            lastCheckedCallerIdRef.current = callState.callerId;
-            findContactByPhone(callState.callerId).then(({ contact, history }) => {
+             findContactByPhone(callState.callerId).then(({ contact, history }) => {
                 setCrmContact(contact);
                 setCallHistory(history);
             });
         }
-    } else if (!isWrapUp) {
-        // No call is active and we are not in wrap-up time, so close everything.
-        setIsModalOpen(false);
-        setActiveCallData(null);
-        lastCheckedCallerIdRef.current = null;
+    } 
+    // Case 2: Call just ended (was on call, now is not)
+    else if ((prevStatus === 'on-call' || prevStatus === 'ringing') && currentStatus !== 'on-call' && currentStatus !== 'ringing' && activeCallData) {
+        setIsWrapUp(true);
+        // Modal stays open because isModalOpen is still true and we don't set it to false
+    } 
+    // Case 3: Idle state, not in wrap-up.
+    else if (!isWrapUp) {
+        if (isModalOpen) handleCloseModal();
     }
 
-    // Update the ref for the next render cycle.
     previousStatusRef.current = currentStatus;
-  }, [callState, isWrapUp, activeCallData]);
+  }, [callState, isModalOpen, isWrapUp, activeCallData]);
 
 
   const handleCloseModal = () => {
     setIsWrapUp(false);
     setIsModalOpen(false);
     setActiveCallData(null);
-    lastCheckedCallerIdRef.current = null;
     setCrmContact(null);
     setCallHistory([]);
   };
