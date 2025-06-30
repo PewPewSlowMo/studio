@@ -148,6 +148,49 @@ function runAmiAction(
   });
 }
 
+export async function answerCallAmi(
+  connection: AmiConnection,
+  channel: string
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    const action = {
+      Action: 'Answer',
+      Channel: channel,
+    };
+    const result = await runAmiAction(connection, action);
+    if (result.success) {
+      return { success: true };
+    }
+    return { success: false, error: result.message || 'Answer command failed' };
+  } catch (e) {
+    const message = e instanceof Error ? e.message : 'An unknown error occurred.';
+    console.error('answerCallAmi failed:', message);
+    return { success: false, error: message };
+  }
+}
+
+export async function hangupCallAmi(
+  connection: AmiConnection,
+  channel: string
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    const action = {
+      Action: 'Hangup',
+      Channel: channel,
+      Cause: 16, // Normal call clearing
+    };
+    const result = await runAmiAction(connection, action);
+    if (result.success) {
+      return { success: true };
+    }
+    return { success: false, error: result.message || 'Hangup command failed' };
+  } catch (e) {
+    const message = e instanceof Error ? e.message : 'An unknown error occurred.';
+    console.error('hangupCallAmi failed:', message);
+    return { success: false, error: message };
+  }
+}
+
 export async function originateCall(
   connection: AmiConnection,
   fromExtension: string,

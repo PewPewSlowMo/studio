@@ -15,8 +15,8 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { toast } from '@/hooks/use-toast';
-import { getOperatorState, answerCallAri, hangupCallAri } from '@/actions/asterisk';
-import { originateCall } from '@/actions/ami';
+import { getOperatorState } from '@/actions/asterisk';
+import { originateCall, answerCallAmi, hangupCallAmi } from '@/actions/ami';
 import { findContactByPhone } from '@/actions/crm';
 import { cn } from '@/lib/utils';
 import { CallerInfoCard } from './caller-info-card';
@@ -237,10 +237,13 @@ export function OperatorWorkspace({ user, amiConnection, ariConnection }: Operat
   };
   
   const handleAnswer = async () => {
-    if (!state.channelId) return;
+    if (!state.channelName) {
+        toast({ variant: 'destructive', title: 'Answer Failed', description: 'Channel name not available.' });
+        return;
+    }
     setIsProcessing(true);
     setIsCallerInfoOpen(false);
-    const result = await answerCallAri(ariConnection, state.channelId);
+    const result = await answerCallAmi(amiConnection, state.channelName);
     if (!result.success) {
        toast({ variant: 'destructive', title: 'Answer Failed', description: result.error });
     }
@@ -249,10 +252,13 @@ export function OperatorWorkspace({ user, amiConnection, ariConnection }: Operat
   };
   
   const handleHangup = async () => {
-    if (!state.channelId) return;
+    if (!state.channelName) {
+      toast({ variant: 'destructive', title: 'Hangup Failed', description: 'Channel name not available.' });
+      return;
+    }
     setIsProcessing(true);
     setIsCallerInfoOpen(false);
-    const result = await hangupCallAri(ariConnection, state.channelId);
+    const result = await hangupCallAmi(amiConnection, state.channelName);
     if (!result.success) {
       toast({ variant: 'destructive', title: 'Hangup Failed', description: result.error });
     }
