@@ -175,30 +175,36 @@ export async function getOperatorState(
 
     const operatorChannel = operatorChannelResult.data;
     
-    // Start with the default, which might be incorrect (e.g., the operator's own extension)
-    let effectiveCallerId = operatorChannel.caller.number; 
+    let effectiveCallerId = operatorChannel.caller.number; // Start with the default (likely wrong)
 
-    // --- Strategy 1: Find the real caller via the bridge (Most reliable) ---
-    if (operatorChannel.bridge_ids && operatorChannel.bridge_ids.length > 0) {
-        const bridgeId = operatorChannel.bridge_ids[0];
-        const bridgeResult = await fetchFromAri(connection, `bridges/${bridgeId}`, AriBridgeSchema);
+    // --- STRATEGY 1: Check for queue-specific channel variables (most reliable for queues) ---
+    const queueVarResult = await fetchFromAri(
+        connection,
+        `channels/${channelId}/variable?variable=QUEUE_CALLERIDNUM`,
+        AriChannelVarSchema
+    );
 
-        if (bridgeResult.success && bridgeResult.data) {
-            // Find the channel in the bridge that is NOT the operator's channel
-            const otherChannelId = bridgeResult.data.channels.find(c => c !== channelId);
-            if (otherChannelId) {
-                const otherChannelResult = await fetchFromAri(connection, `channels/${otherChannelId}`, AriChannelSchema);
-                if (otherChannelResult.success && otherChannelResult.data?.caller?.number && otherChannelResult.data.caller.number !== 'anonymous') {
-                    // This is the real external caller's channel.
-                    effectiveCallerId = otherChannelResult.data.caller.number;
+    if (queueVarResult.success && queueVarResult.data?.value) {
+        effectiveCallerId = queueVarResult.data.value;
+    } else {
+        // --- STRATEGY 2: Find the real caller via the bridge ---
+        if (operatorChannel.bridge_ids && operatorChannel.bridge_ids.length > 0) {
+            const bridgeId = operatorChannel.bridge_ids[0];
+            const bridgeResult = await fetchFromAri(connection, `bridges/${bridgeId}`, AriBridgeSchema);
+
+            if (bridgeResult.success && bridgeResult.data) {
+                const otherChannelId = bridgeResult.data.channels.find(c => c !== channelId);
+                if (otherChannelId) {
+                    const otherChannelResult = await fetchFromAri(connection, `channels/${otherChannelId}`, AriChannelSchema);
+                    if (otherChannelResult.success && otherChannelResult.data?.caller?.number && otherChannelResult.data.caller.number !== 'anonymous') {
+                        effectiveCallerId = otherChannelResult.data.caller.number;
+                    }
                 }
             }
         }
     }
     
-    // --- Strategy 2: Fallback to channel variable if bridge logic fails or returns the operator's own number ---
-    // We check if the callerId is still the operator's own extension number.
-    // This indicates the bridge logic likely didn't find the external caller.
+    // --- STRATEGY 3: Final fallback if other methods didn't produce a different number ---
     if (effectiveCallerId === extension) {
          const callerIdNumResult = await fetchFromAri(
             connection,
@@ -219,7 +225,7 @@ export async function getOperatorState(
             channelName: operatorChannel.name,
             channelState: operatorChannel.state,
             queue: operatorChannel.dialplan?.context,
-            callerId: effectiveCallerId, // Use the determined caller ID
+            callerId: effectiveCallerId,
         },
     };
 }
