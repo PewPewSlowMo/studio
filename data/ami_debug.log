@@ -3,3 +3,12 @@
 2025-06-30T08:18:39.623Z | answerCallAmi failed: An unknown error occurred.
 2025-06-30T08:18:42.381Z | [AMI ACTION] Sending: {"Action":"Hangup","Channel":"PJSIP/0001-00000042"}
 2025-06-30T08:18:43.045Z | [AMI ACTION] Received: {"res":{"response":"Success","actionid":"1751271522386","message":"Channel Hungup"}}
+2025-06-30T08:28:30.484Z | [AMI ACTION] Sending: {"Action":"Originate","Channel":"PJSIP/0001-00000046","Application":"Answer","Async":"true"}
+2025-06-30T08:28:31.128Z | [AMI ACTION] Received: {"res":{"response":"Success","actionid":"1751272110485","message":"Originate successfully queued"}}
+2025-06-30T08:28:33.158Z | [AMI ACTION] Sending: {"Action":"Originate","Channel":"PJSIP/0001-00000046","Application":"Answer","Async":"true"}
+2025-06-30T08:28:33.822Z | [AMI ACTION] Received: {"res":{"response":"Success","actionid":"1751272113158","message":"Originate successfully queued"}}
+2025-06-30T08:28:35.867Z | [AMI ACTION] Sending: {"Action":"Hangup","Channel":"PJSIP/0001-00000046"}
+2025-06-30T08:28:36.532Z | [AMI ACTION] Received: {"res":{"response":"Success","actionid":"1751272115868","message":"Channel Hungup"}}
+2025-06-30T08:28:40.484Z | [AMI ACTION] Error: AMI action timed out after 10 seconds.
+2025-06-30T08:28:43.159Z | [AMI ACTION] Error: AMI action timed out after 10 seconds.
+2025-06-30T08:28:45.868Z | [AMI ACTION] Error: AMI action timed out after 10 seconds.
