@@ -175,9 +175,24 @@ export async function getOperatorState(
 
     const operatorChannel = operatorChannelResult.data;
     
-    // The `caller` object on the operator's channel should contain the number of the person who initiated the call.
-    // This is the most direct and reliable source of information.
-    const effectiveCallerId = operatorChannel.caller.number;
+    // --- NEW LOGIC ---
+    // First, try to get the caller number from a custom channel variable if it exists.
+    // This is often more reliable in queue scenarios, as seen in user logs.
+    const crmSourceVarResult = await fetchFromAri(
+        connection,
+        `channels/${channelId}/variable?variable=CRM_SOURCE`,
+        AriChannelVarSchema
+    );
+
+    let effectiveCallerId = '';
+
+    if (crmSourceVarResult.success && crmSourceVarResult.data?.value) {
+        effectiveCallerId = crmSourceVarResult.data.value;
+    } else {
+        // Fallback to the standard caller object if the variable is not present
+        effectiveCallerId = operatorChannel.caller.number;
+    }
+    // --- END NEW LOGIC ---
     
     return {
         success: true,
@@ -187,7 +202,7 @@ export async function getOperatorState(
             channelName: operatorChannel.name,
             channelState: operatorChannel.state,
             queue: operatorChannel.dialplan?.context,
-            callerId: effectiveCallerId,
+            callerId: effectiveCallerId, // Use the reliably determined caller ID
         },
     };
 }
