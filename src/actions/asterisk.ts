@@ -122,6 +122,19 @@ const AriChannelVarSchema = z.object({
   value: z.string(),
 });
 
+async function getAriChannelVar(
+  connection: AsteriskConnection,
+  channelId: string,
+  variableName: string
+): Promise<{ success: boolean; data?: z.infer<typeof AriChannelVarSchema>; error?: string }> {
+  const result = await fetchFromAri(
+    connection,
+    `channels/${channelId}/variable?variable=${variableName}`,
+    AriChannelVarSchema
+  );
+  return result;
+}
+
 export async function getAriEndpointDetails(
   connection: AsteriskConnection,
   extension: string
@@ -179,12 +192,12 @@ export async function getOperatorState(
     }
     const operatorChannel = operatorChannelResult.data;
 
-    // --- Data Extraction: Start with fallbacks from operator's own channel ---
+    // --- Data Extraction ---
     let effectiveCallerId = operatorChannel.caller.number;
-    let uniqueId = operatorChannel.id; // This is the ID of the operator's leg of the call
+    let uniqueId = operatorChannel.id;
     let queue = operatorChannel.dialplan?.context;
-    
-    // --- Find the Initiating Channel (the real caller) ---
+
+    // --- Find the Initiating Channel (the real caller) to get correct UniqueID and fallback CallerID
     let initiatingChannelId: string | undefined = undefined;
 
     // Method A (Primary): Use the 'creator' field. It's the most direct link.
@@ -200,14 +213,19 @@ export async function getOperatorState(
             AriBridgeSchema
         );
         if (bridgeResult.success && bridgeResult.data) {
-            // Find the channel in the bridge that is NOT the operator's channel
             initiatingChannelId = bridgeResult.data.channels.find(
                 (id) => id !== operatorChannelId
             );
         }
     }
+    
+    // Primary Method for Caller ID: Check for __CRM_SOURCE on operator's channel
+    const crmSourceVarResult = await getAriChannelVar(connection, operatorChannelId, '__CRM_SOURCE');
+    if (crmSourceVarResult.success && crmSourceVarResult.data?.value) {
+        effectiveCallerId = crmSourceVarResult.data.value;
+    }
 
-    // --- Get Details from the Initiating Channel if found ---
+    // Get Details from the Initiating Channel if found
     if (initiatingChannelId) {
         const callerChannelResult = await fetchFromAri(
             connection,
@@ -216,15 +234,16 @@ export async function getOperatorState(
         );
         if (callerChannelResult.success && callerChannelResult.data) {
             const callerChannel = callerChannelResult.data;
-            // This is the correct data we need for CDR matching and display.
             uniqueId = callerChannel.id; // This is the uniqueid that will be in the CDR log.
-            effectiveCallerId = callerChannel.caller.number;
             queue = callerChannel.dialplan?.context || queue;
+            // Fallback Caller ID if __CRM_SOURCE was not found
+            if (!crmSourceVarResult.success || !crmSourceVarResult.data?.value) {
+                effectiveCallerId = callerChannel.caller.number;
+            }
         }
     }
     
     // --- Determine Final Status ---
-    // The status is determined by the operator's own channel/endpoint state.
     const stateToUse = operatorChannel.state || endpoint.state;
     const normalizedState = stateToUse?.toLowerCase();
     let finalStatus: CallState['status'] = 'offline';
@@ -237,14 +256,13 @@ export async function getOperatorState(
         case 'up':
             finalStatus = 'on-call';
             break;
-        case 'busy': // This state is often on the endpoint, not the channel
-        case 'onhook': // Not a standard ARI state, but good to have
+        case 'busy': 
             finalStatus = 'on-call';
             break;
         case 'down':
         case 'rsrvd':
         case 'not_inuse':
-        case 'not in use': // PJSIPShowEndpoint can return this
+        case 'not in use': 
              finalStatus = 'available';
              break;
         case 'unavailable':
@@ -252,8 +270,6 @@ export async function getOperatorState(
             finalStatus = 'offline';
             break;
         default:
-             // If we have a channel, it's very likely an active call or ringing.
-             // If we don't, but the endpoint is not unavailable, then it's available.
              if (operatorChannelId) {
                  finalStatus = 'on-call';
              } else {
@@ -261,7 +277,6 @@ export async function getOperatorState(
              }
     }
 
-    // Special case: If endpoint is 'busy' this should override channel state to be 'on-call'
     if (endpoint.state.toLowerCase() === 'busy') {
         finalStatus = 'on-call';
     }
