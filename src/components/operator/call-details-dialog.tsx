@@ -100,7 +100,10 @@ export function CallDetailsDialog({ isOpen, onOpenChange, call }: CallDetailsDia
         ) : (
           <div className="grid gap-6 py-4">
             <div className="space-y-4">
-                <h3 className="font-semibold text-lg">Детали обращения</h3>
+                <div className="flex justify-between items-center">
+                    <h3 className="font-semibold text-lg">Детали обращения</h3>
+                    <span className="text-xs font-mono text-muted-foreground">Lookup ID: {call?.id || '...'}</span>
+                </div>
                 <Separator />
                 {appeal ? (
                     <div className="space-y-2 text-sm">
