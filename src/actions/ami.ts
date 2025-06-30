@@ -41,10 +41,9 @@ function runAmiCommand<T extends Record<string, any>>(
 
       const results: T[] = [];
 
-      // Make sure to remove all listeners on disconnect
+      // Simply clear the timeout on disconnect
       ami.on('disconnect', () => {
           clearTimeout(timeout);
-          ami.removeAllListeners();
       });
 
       ami.on('managerevent', (event: T) => {
@@ -111,7 +110,6 @@ function runAmiAction(
 
       ami.on('disconnect', () => {
         clearTimeout(timeout);
-        ami.removeAllListeners();
       });
 
       ami.on('error', (err: Error) => {
