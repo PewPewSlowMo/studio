@@ -69,8 +69,6 @@ function runAmiCommand<T extends Record<string, any>>(
           reject(err);
         }
       });
-      
-      // Removed ami.keepConnected(); it's not suitable for request-response patterns.
 
     } catch (e) {
       clearTimeout(timeout);
@@ -86,13 +84,13 @@ function runAmiCommand<T extends Record<string, any>>(
 }
 
 /**
- * Executes a single fire-and-forget action on the AMI.
- * Connects, sends the action, and disconnects.
+ * Executes a single action and robustly handles the response from AMI.
+ * It differentiates between transport errors and AMI application-level errors.
  */
 function runAmiAction(
   connection: AmiConnection,
   action: Record<string, string>
-): Promise<{ success: boolean; message?: string }> {
+): Promise<{ success: boolean; message?: string; data?: any }> {
   return new Promise((resolve, reject) => {
     let ami: any;
     const timeout = setTimeout(() => {
@@ -120,18 +118,23 @@ function runAmiAction(
         reject(err);
       });
       
-      // The library queues the action until login is complete.
-      // The callback handles success/failure.
       ami.action(action, (err: Error | null, res: any) => {
         ami.disconnect();
         if (err) {
+          // This handles transport-level errors (e.g., connection refused)
           reject(err);
         } else {
-          resolve({ success: true, message: res?.message });
+          // This handles AMI application-level responses
+          if (res?.response?.toLowerCase() === 'error') {
+             // Resolve with failure, providing the error message from Asterisk
+             resolve({ success: false, message: res.message || 'AMI returned an unspecified error', data: res });
+          } else {
+             // Resolve with success
+             resolve({ success: true, message: res?.message, data: res });
+          }
         }
       });
 
-      // Removed ami.keepConnected(); it's not suitable for request-response patterns.
     } catch (e) {
       clearTimeout(timeout);
       if (e instanceof z.ZodError) {
@@ -167,7 +170,7 @@ export async function originateCall(
       Timeout: 20000, // 20 seconds
     };
     const result = await runAmiAction(connection, action);
-    if (result.success && result.message?.toLowerCase().includes('success')) {
+    if (result.success) {
       return { success: true };
     }
     return { success: false, error: result.message || 'Origination failed' };
@@ -184,7 +187,7 @@ export async function answerCall(
 ): Promise<{ success: boolean; error?: string }> {
   try {
     const result = await runAmiAction(connection, { Action: 'Answer', Channel: channel });
-    if (result.success && result.message?.toLowerCase().includes('answered')) {
+    if (result.success) {
       return { success: true };
     }
     return { success: false, error: result.message || 'Answer command failed' };
@@ -201,7 +204,7 @@ export async function hangupCall(
 ): Promise<{ success: boolean; error?: string }> {
   try {
     const result = await runAmiAction(connection, { Action: 'Hangup', Channel: channel });
-    if (result.success && result.message?.toLowerCase().includes('hungup')) {
+    if (result.success) {
       return { success: true };
     }
     return { success: false, error: result.message || 'Hangup command failed' };
