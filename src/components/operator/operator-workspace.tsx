@@ -62,85 +62,104 @@ export function OperatorWorkspace({ user, amiConnection, ariConnection }: Operat
   const [crmContact, setCrmContact] = useState<CrmContact | null>(null);
   const [callHistory, setCallHistory] = useState<Call[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const lastCheckedCallerIdRef = useRef<string | null>(null);
+  
   const previousStatusRef = useRef<string | null>(null);
+  const lastCheckedCallerIdRef = useRef<string | null>(null);
 
-  const pollStatus = useCallback(async () => {
-    if (!user.extension) return;
-
-    const result = await getOperatorState(ariConnection, user.extension);
-    let newStatus: CallState['status'] = 'offline';
-    let newChannelId: string | undefined, newChannelName: string | undefined, newCallerId: string | undefined;
-
-    if (result.success && result.data) {
-        const { endpointState, channelId, channelName, channelState, callerId } = result.data;
-        newChannelId = channelId;
-        newChannelName = channelName;
-        newCallerId = callerId;
-        
-        const stateToUse = channelState || endpointState;
-        const normalizedState = stateToUse?.toLowerCase();
-        
-        switch (normalizedState) {
-            case 'ring':
-            case 'ringing':
-                newStatus = 'ringing';
-                break;
-            case 'up': case 'busy': case 'offhook': case 'dialing':
-                newStatus = 'on-call';
-                break;
-            case 'down': case 'rsrvd': case 'online': case 'not_inuse': case 'not in use':
-                newStatus = 'available';
-                break;
-            case 'unavailable': case 'invalid': case 'offline':
-                newStatus = 'offline';
-                break;
-            default:
-                newStatus = channelId ? 'on-call' : 'available';
-        }
-    } else {
-        console.error('Polling failed:', result.error);
-    }
-    
-    // This check prevents unnecessary state updates and re-renders
-    if (newStatus !== callState.status || newCallerId !== callState.callerId) {
-        setCallState({ status: newStatus, channelId: newChannelId, channelName: newChannelName, callerId: newCallerId });
-    }
-  }, [user.extension, ariConnection, callState.status, callState.callerId]);
-
-
+  // This effect handles polling for the operator's status.
+  // It's self-contained and uses a functional update for setCallState
+  // to avoid depending on `callState` itself, which would reset the interval.
   useEffect(() => {
-    pollStatus();
-    const intervalId = setInterval(pollStatus, 2000);
-    return () => clearInterval(intervalId);
-  }, [pollStatus]);
+    const poll = async () => {
+        if (!user.extension) return;
 
+        const result = await getOperatorState(ariConnection, user.extension);
+        let newStatus: CallState['status'] = 'offline';
+        let newCallStateData: Partial<CallState> = {};
+        
+        if (result.success && result.data) {
+            const { endpointState, channelId, channelName, channelState, callerId, queue } = result.data;
+            newCallStateData = { channelId, channelName, callerId, queue };
+
+            const stateToUse = channelState || endpointState;
+            const normalizedState = stateToUse?.toLowerCase();
+            
+            switch (normalizedState) {
+                case 'ring':
+                case 'ringing':
+                    newStatus = 'ringing';
+                    break;
+                case 'up': case 'busy': case 'offhook': case 'dialing':
+                    newStatus = 'on-call';
+                    break;
+                case 'down': case 'rsrvd': case 'online': case 'not_inuse': case 'not in use':
+                    newStatus = 'available';
+                    break;
+                case 'unavailable': case 'invalid': case 'offline':
+                    newStatus = 'offline';
+                    break;
+                default:
+                    newStatus = channelId ? 'on-call' : 'available';
+            }
+        } else {
+            console.error('Polling failed:', result.error);
+        }
+
+        setCallState(prevState => {
+            const newState = { ...prevState, status: newStatus, ...newCallStateData };
+            // Only update state if something has actually changed to prevent re-renders
+            if (prevState.status !== newState.status || prevState.callerId !== newState.callerId || prevState.channelId !== newState.channelId) {
+                return newState as CallState;
+            }
+            return prevState;
+        });
+    };
+
+    poll();
+    const intervalId = setInterval(poll, 2000);
+    return () => clearInterval(intervalId);
+  }, [user.extension, ariConnection]);
+
+  // This effect reacts to changes in `callState` to manage the UI state (modal, wrap-up, etc.)
   useEffect(() => {
     const currentStatus = callState.status;
     const prevStatus = previousStatusRef.current;
-
-    // Transition from on-call to something else -> start wrap-up
+    
+    // Call has just ended: transition from 'on-call' to something else.
     if (prevStatus === 'on-call' && currentStatus !== 'on-call' && activeCallData) {
-      setIsWrapUp(true);
-      setIsModalOpen(true); // Keep modal open for wrap-up
-    } else if (currentStatus === 'ringing' || currentStatus === 'on-call') {
-      setIsModalOpen(true);
-      if (callState.callerId && lastCheckedCallerIdRef.current !== callState.callerId) {
-        lastCheckedCallerIdRef.current = callState.callerId;
-        findContactByPhone(callState.callerId).then(({ contact, history }) => {
-          setCrmContact(contact);
-          setCallHistory(history);
-        });
-      }
-      if (callState.channelId && callState.callerId) {
-          setActiveCallData({ callId: callState.channelId, callerNumber: callState.callerId, queue: callState.queue });
-      }
-    } else if (!isWrapUp) {
-      setIsModalOpen(false);
-      lastCheckedCallerIdRef.current = null;
-      setActiveCallData(null);
+        setIsWrapUp(true);
+        // The modal is kept open by `isWrapUp` being true
+        return;
     }
     
+    // An active call is happening (ringing or established)
+    if (currentStatus === 'ringing' || currentStatus === 'on-call') {
+        setIsWrapUp(false); // A new call starts, so wrap-up must be false.
+        setIsModalOpen(true);
+        
+        // Update active call data only if it's new to prevent re-render loops
+        if (callState.channelId && callState.callerId) {
+             if (activeCallData?.callId !== callState.channelId) {
+                 setActiveCallData({ callId: callState.channelId, callerNumber: callState.callerId, queue: callState.queue });
+             }
+        }
+        
+        // Fetch CRM data only once per new caller ID
+        if (callState.callerId && lastCheckedCallerIdRef.current !== callState.callerId) {
+            lastCheckedCallerIdRef.current = callState.callerId;
+            findContactByPhone(callState.callerId).then(({ contact, history }) => {
+                setCrmContact(contact);
+                setCallHistory(history);
+            });
+        }
+    } else if (!isWrapUp) {
+        // No call is active and we are not in wrap-up time, so close everything.
+        setIsModalOpen(false);
+        setActiveCallData(null);
+        lastCheckedCallerIdRef.current = null;
+    }
+
+    // Update the ref for the next render cycle.
     previousStatusRef.current = currentStatus;
   }, [callState, isWrapUp, activeCallData]);
 
