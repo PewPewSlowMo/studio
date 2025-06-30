@@ -57,7 +57,7 @@ function OperatorStatusCard({ user, status }: { user: User; status: CallState['s
 export function OperatorWorkspace({ user, amiConnection, ariConnection }: OperatorWorkspaceProps) {
   const [callState, setCallState] = useState<CallState>({ status: 'offline' });
   const [isWrapUp, setIsWrapUp] = useState(false);
-  const [activeCallData, setActiveCallData] = useState<{ callId: string; callerNumber: string, queue?: string } | null>(null);
+  const [activeCallData, setActiveCallData] = useState<{ callId: string; callerNumber: string, queue?: string; uniqueId: string; } | null>(null);
 
   const [crmContact, setCrmContact] = useState<CrmContact | null>(null);
   const [callHistory, setCallHistory] = useState<Call[]>([]);
@@ -78,8 +78,8 @@ export function OperatorWorkspace({ user, amiConnection, ariConnection }: Operat
         let newCallStateData: Partial<CallState> = {};
         
         if (result.success && result.data) {
-            const { endpointState, channelId, channelName, channelState, callerId, queue } = result.data;
-            newCallStateData = { channelId, channelName, callerId, queue };
+            const { endpointState, channelId, channelName, channelState, callerId, queue, uniqueId } = result.data;
+            newCallStateData = { channelId, channelName, callerId, queue, uniqueId };
 
             const stateToUse = channelState || endpointState;
             const normalizedState = stateToUse?.toLowerCase();
@@ -138,9 +138,9 @@ export function OperatorWorkspace({ user, amiConnection, ariConnection }: Operat
         setIsModalOpen(true);
         
         // Update active call data only if it's new to prevent re-render loops
-        if (callState.channelId && callState.callerId) {
+        if (callState.channelId && callState.callerId && callState.uniqueId) {
              if (activeCallData?.callId !== callState.channelId) {
-                 setActiveCallData({ callId: callState.channelId, callerNumber: callState.callerId, queue: callState.queue });
+                 setActiveCallData({ callId: callState.channelId, callerNumber: callState.callerId, queue: callState.queue, uniqueId: callState.uniqueId });
              }
         }
         

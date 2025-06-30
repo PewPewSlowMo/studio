@@ -34,6 +34,7 @@ interface ActiveCallModalProps {
     callerNumber: string;
     queue?: string;
     status: string;
+    uniqueId?: string;
   };
   operator: User;
   isWrapUp: boolean;
@@ -234,7 +235,7 @@ export function CallerInfoCard({ isOpen, onClose, contact, onContactUpdate, hist
             <h3 className="font-semibold text-lg">Детали звонка</h3>
             <AppealForm 
                 form={appealForm}
-                callId={callState.callId || 'n/a'}
+                callId={callState.uniqueId || callState.callId}
                 callerNumber={callState.callerNumber}
                 operator={operator}
                 isWrapUp={isWrapUp}

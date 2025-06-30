@@ -75,6 +75,7 @@ export interface CallState {
   channelName?: string;
   callerId?: string;
   queue?: string;
+  uniqueId?: string;
 }
 
 export interface CrmContact {
