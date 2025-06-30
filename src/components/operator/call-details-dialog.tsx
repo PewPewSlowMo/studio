@@ -63,6 +63,27 @@ export function CallDetailsDialog({ isOpen, onOpenChange, call }: CallDetailsDia
       setContact(savedContact);
   }
 
+  const categoryMap: Record<Appeal['category'], string> = {
+    sales: 'Продажи',
+    complaint: 'Жалоба',
+    support: 'Техподдержка',
+    info: 'Информация',
+    other: 'Другое',
+  };
+
+  const priorityMap: Record<Appeal['priority'], string> = {
+    low: 'Низкий',
+    medium: 'Средний',
+    high: 'Высокий',
+  };
+
+  const satisfactionMap: Record<Appeal['satisfaction'], string> = {
+    satisfied: 'Доволен',
+    neutral: 'Нейтрально',
+    dissatisfied: 'Недоволен',
+    'n/a': 'Неприменимо',
+  };
+
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-3xl">
@@ -83,11 +104,21 @@ export function CallDetailsDialog({ isOpen, onOpenChange, call }: CallDetailsDia
                 <Separator />
                 {appeal ? (
                     <div className="space-y-2 text-sm">
-                       <p><strong>Тип:</strong> <Badge variant="secondary" className="capitalize">{appeal.appealType}</Badge></p>
+                       <div className="grid grid-cols-2 gap-x-4 gap-y-2">
+                         <p><strong>Категория:</strong> <Badge variant="secondary" className="capitalize">{categoryMap[appeal.category] || appeal.category}</Badge></p>
+                         <p><strong>Приоритет:</strong> <Badge variant="outline" className="capitalize">{priorityMap[appeal.priority] || appeal.priority}</Badge></p>
+                         <p><strong>Удовлетворенность:</strong> <Badge variant="outline" className="capitalize">{satisfactionMap[appeal.satisfaction] || appeal.satisfaction}</Badge></p>
+                         <p><strong>Нужен контакт:</strong> {appeal.followUp ? 'Да' : 'Нет'}</p>
+                       </div>
+                       <Separator className="my-2" />
                        <p><strong>Описание:</strong></p>
                        <p className="p-2 bg-muted rounded-md">{appeal.description}</p>
                        <p><strong>Решение:</strong></p>
                        <p className="p-2 bg-muted rounded-md">{appeal.resolution || 'Не указано'}</p>
+                       {appeal.notes && <>
+                         <p><strong>Доп. заметки:</strong></p>
+                         <p className="p-2 bg-muted rounded-md">{appeal.notes}</p>
+                       </>}
                     </div>
                 ): (
                     <div className="text-center text-muted-foreground p-4 border border-dashed rounded-md">

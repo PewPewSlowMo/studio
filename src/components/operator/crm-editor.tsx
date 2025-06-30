@@ -32,6 +32,7 @@ const crmFormSchema = z.object({
   address: z.string().min(5, 'Адрес должен содержать не менее 5 символов.'),
   type: z.enum(['контингент', 'фсмс', 'платный', 'иной']),
   phoneNumber: z.string(),
+  email: z.string().email('Неверный формат email').optional().or(z.literal('')),
 });
 
 type CrmFormData = z.infer<typeof crmFormSchema>;
@@ -53,6 +54,7 @@ export function CrmEditor({ contact, phoneNumber, onSave }: CrmEditorProps) {
       address: '',
       type: 'иной',
       phoneNumber: phoneNumber,
+      email: '',
     },
   });
 
@@ -66,6 +68,7 @@ export function CrmEditor({ contact, phoneNumber, onSave }: CrmEditorProps) {
         // @ts-ignore
         type: contactTypes.includes(contact.type) ? contact.type : 'иной',
         phoneNumber: contact.phoneNumber,
+        email: contact.email || '',
       });
     } else {
       form.reset({
@@ -73,6 +76,7 @@ export function CrmEditor({ contact, phoneNumber, onSave }: CrmEditorProps) {
         address: '',
         type: 'иной',
         phoneNumber: phoneNumber,
+        email: '',
       });
     }
   }, [contact, phoneNumber, form]);
@@ -110,7 +114,7 @@ export function CrmEditor({ contact, phoneNumber, onSave }: CrmEditorProps) {
                 name="type"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Тип клиента</FormLabel>
+                    <FormLabel>Статус клиента</FormLabel>
                     <Select onValueChange={field.onChange} value={field.value}>
                       <FormControl>
                         <SelectTrigger>
@@ -136,6 +140,19 @@ export function CrmEditor({ contact, phoneNumber, onSave }: CrmEditorProps) {
                 <FormLabel>Ф.И.О.</FormLabel>
                 <FormControl>
                   <Input placeholder="Иванов Иван Иванович" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+           <FormField
+            control={form.control}
+            name="email"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Email</FormLabel>
+                <FormControl>
+                  <Input placeholder="user@example.com" {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>

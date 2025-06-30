@@ -15,6 +15,7 @@ const CrmContactSchema = z.object({
   name: z.string().min(1, 'Name is required'),
   address: z.string().min(1, 'Address is required'),
   type: z.string().min(1, 'Type is required'),
+  email: z.string().email('Invalid email address').optional().or(z.literal('')),
 });
 
 async function readCrmData(): Promise<CrmContact[]> {

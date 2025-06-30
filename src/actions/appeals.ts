@@ -14,9 +14,13 @@ const AppealFormSchema = z.object({
   operatorId: z.string(),
   operatorName: z.string(),
   callerNumber: z.string(),
-  appealType: z.enum(['complaint', 'service', 'other']),
   description: z.string().min(1, 'Description is required'),
   resolution: z.string().optional(),
+  category: z.enum(['sales', 'complaint', 'support', 'info', 'other']),
+  priority: z.enum(['low', 'medium', 'high']),
+  satisfaction: z.enum(['satisfied', 'neutral', 'dissatisfied', 'n/a']),
+  notes: z.string().optional(),
+  followUp: z.boolean().default(false),
 });
 
 export type AppealFormData = z.infer<typeof AppealFormSchema>;
@@ -49,14 +53,12 @@ export async function saveAppeal(data: AppealFormData): Promise<{ success: boole
       id: crypto.randomUUID(),
       ...validatedData,
       resolution: validatedData.resolution || '',
+      notes: validatedData.notes || '',
       createdAt: new Date().toISOString(),
     };
 
-    appeals.unshift(newAppeal); // Add to the beginning of the array
+    appeals.unshift(newAppeal);
     await writeAppeals(appeals);
-    
-    // In the future, we might revalidate paths where appeals are shown, e.g. for supervisors.
-    // revalidatePath('/supervisor/appeals');
     
     return { success: true, appeal: newAppeal };
   } catch (e) {

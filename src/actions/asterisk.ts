@@ -105,7 +105,7 @@ const AriChannelSchema = z.object({
       context: z.string(),
       exten: z.string(),
       priority: z.number()
-  })
+  }).optional()
 });
 
 export async function getAriEndpointDetails(
@@ -127,6 +127,7 @@ export async function getOperatorState(
         channelName?: string;
         channelState?: string;
         callerId?: string;
+        queue?: string;
     };
     error?: string;
 }> {
@@ -155,6 +156,7 @@ export async function getOperatorState(
                     channelName: channelResult.data.name,
                     channelState: channelResult.data.state,
                     callerId: channelResult.data.caller.number,
+                    queue: channelResult.data.dialplan?.context
                 },
             };
         }

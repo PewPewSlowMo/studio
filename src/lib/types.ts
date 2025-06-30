@@ -71,6 +71,7 @@ export interface CallState {
   channelId?: string;
   channelName?: string;
   callerId?: string;
+  queue?: string;
 }
 
 export interface CrmContact {
@@ -78,16 +79,22 @@ export interface CrmContact {
   name: string;
   address: string;
   type: string;
+  email?: string;
 }
 
 export interface Appeal {
   id: string;
-  callId: string; // Will use channel ID for now
+  callId: string;
   operatorId: string;
   operatorName: string;
   callerNumber: string;
-  appealType: 'complaint' | 'service' | 'other';
   description: string;
   resolution: string;
   createdAt: string;
+  // New fields
+  category: 'sales' | 'complaint' | 'support' | 'info' | 'other';
+  priority: 'low' | 'medium' | 'high';
+  satisfaction: 'satisfied' | 'neutral' | 'dissatisfied' | 'n/a';
+  notes: string;
+  followUp: boolean;
 }

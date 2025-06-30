@@ -8,7 +8,7 @@ import { getOperatorState } from '@/actions/asterisk';
 import { findContactByPhone } from '@/actions/crm';
 import { cn } from '@/lib/utils';
 import { CallerInfoCard } from './caller-info-card';
-import { AppealForm } from './appeal-form';
+import { addOrUpdateContact } from '@/actions/crm';
 
 // --- Prop Types ---
 interface OperatorWorkspaceProps {
@@ -56,135 +56,126 @@ function OperatorStatusCard({ user, status }: { user: User; status: CallState['s
 // --- Main component ---
 export function OperatorWorkspace({ user, amiConnection, ariConnection }: OperatorWorkspaceProps) {
   const [callState, setCallState] = useState<CallState>({ status: 'offline' });
-  const [previousCallState, setPreviousCallState] = useState<CallState>({ status: 'offline' });
   const [isWrapUp, setIsWrapUp] = useState(false);
-  const [activeCallData, setActiveCallData] = useState<{ callId: string; callerNumber: string } | null>(null);
+  const [activeCallData, setActiveCallData] = useState<{ callId: string; callerNumber: string, queue?: string } | null>(null);
 
-  // For caller info pop-up
   const [crmContact, setCrmContact] = useState<CrmContact | null>(null);
   const [callHistory, setCallHistory] = useState<Call[]>([]);
-  const [isCallerInfoOpen, setIsCallerInfoOpen] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const lastCheckedCallerIdRef = useRef<string | null>(null);
+  const previousStatusRef = useRef<string | null>(null);
 
   const pollStatus = useCallback(async () => {
     if (!user.extension) return;
 
     const result = await getOperatorState(ariConnection, user.extension);
     let newStatus: CallState['status'] = 'offline';
-    let newChannelId, newChannelName, newCallerId;
+    let newChannelId: string | undefined, newChannelName: string | undefined, newCallerId: string | undefined;
 
     if (result.success && result.data) {
-      const { endpointState, channelId, channelName, channelState, callerId } = result.data;
-      newChannelId = channelId;
-      newChannelName = channelName;
-      newCallerId = callerId;
-
-      const stateToUse = channelState || endpointState;
-      const normalizedState = stateToUse?.toLowerCase();
-
-      switch (normalizedState) {
-        case 'ring':
-        case 'ringing':
-          newStatus = 'ringing';
-          break;
-        case 'up': case 'busy': case 'offhook': case 'dialing':
-          newStatus = 'on-call';
-          break;
-        case 'down': case 'rsrvd': case 'online': case 'not_inuse': case 'not in use':
-          newStatus = 'available';
-          break;
-        case 'unavailable': case 'invalid': case 'offline':
-          newStatus = 'offline';
-          break;
-        default:
-          newStatus = channelId ? 'on-call' : 'available';
-      }
-    } else {
-      console.error('Polling failed:', result.error);
-    }
-
-    const newState = { status: newStatus, channelId: newChannelId, channelName: newChannelName, callerId: newCallerId };
-    
-    setCallState(currentState => {
-        if (
-            currentState.status === newState.status &&
-            currentState.channelId === newState.channelId &&
-            currentState.callerId === newState.callerId
-        ) {
-            return currentState;
+        const { endpointState, channelId, channelName, channelState, callerId } = result.data;
+        newChannelId = channelId;
+        newChannelName = channelName;
+        newCallerId = callerId;
+        
+        const stateToUse = channelState || endpointState;
+        const normalizedState = stateToUse?.toLowerCase();
+        
+        switch (normalizedState) {
+            case 'ring':
+            case 'ringing':
+                newStatus = 'ringing';
+                break;
+            case 'up': case 'busy': case 'offhook': case 'dialing':
+                newStatus = 'on-call';
+                break;
+            case 'down': case 'rsrvd': case 'online': case 'not_inuse': case 'not in use':
+                newStatus = 'available';
+                break;
+            case 'unavailable': case 'invalid': case 'offline':
+                newStatus = 'offline';
+                break;
+            default:
+                newStatus = channelId ? 'on-call' : 'available';
         }
-        return newState;
-    });
+    } else {
+        console.error('Polling failed:', result.error);
+    }
+    
+    // This check prevents unnecessary state updates and re-renders
+    if (newStatus !== callState.status || newCallerId !== callState.callerId) {
+        setCallState({ status: newStatus, channelId: newChannelId, channelName: newChannelName, callerId: newCallerId });
+    }
+  }, [user.extension, ariConnection, callState.status, callState.callerId]);
 
-  }, [user.extension, ariConnection]);
 
   useEffect(() => {
     pollStatus();
-    const intervalId = setInterval(pollStatus, 2000); // Poll every 2 seconds
+    const intervalId = setInterval(pollStatus, 2000);
     return () => clearInterval(intervalId);
   }, [pollStatus]);
 
   useEffect(() => {
-    if (callState.status !== previousCallState.status || callState.channelId !== previousCallState.channelId) {
-      // Transition from on-call to something else
-      if (previousCallState.status === 'on-call' && callState.status !== 'on-call' && activeCallData) {
-        setIsWrapUp(true);
-      } 
-      // Transition to on-call
-      else if (callState.status === 'on-call' && callState.channelId && callState.callerId) {
-        setActiveCallData({ callId: callState.channelId, callerNumber: callState.callerId });
-        setIsWrapUp(false);
+    const currentStatus = callState.status;
+    const prevStatus = previousStatusRef.current;
+
+    // Transition from on-call to something else -> start wrap-up
+    if (prevStatus === 'on-call' && currentStatus !== 'on-call' && activeCallData) {
+      setIsWrapUp(true);
+      setIsModalOpen(true); // Keep modal open for wrap-up
+    } else if (currentStatus === 'ringing' || currentStatus === 'on-call') {
+      setIsModalOpen(true);
+      if (callState.callerId && lastCheckedCallerIdRef.current !== callState.callerId) {
+        lastCheckedCallerIdRef.current = callState.callerId;
+        findContactByPhone(callState.callerId).then(({ contact, history }) => {
+          setCrmContact(contact);
+          setCallHistory(history);
+        });
       }
-      // Transition to not on-call and not in wrap-up
-      else if (callState.status !== 'on-call' && !isWrapUp) {
-        setActiveCallData(null);
+      if (callState.channelId && callState.callerId) {
+          setActiveCallData({ callId: callState.channelId, callerNumber: callState.callerId, queue: callState.queue });
       }
-
-      setPreviousCallState(callState);
+    } else if (!isWrapUp) {
+      setIsModalOpen(false);
+      lastCheckedCallerIdRef.current = null;
+      setActiveCallData(null);
     }
-  }, [callState, previousCallState, activeCallData, isWrapUp]);
+    
+    previousStatusRef.current = currentStatus;
+  }, [callState, isWrapUp, activeCallData]);
 
 
-  useEffect(() => {
-    const fetchContactAndOpen = async (callerId: string) => {
-        if (lastCheckedCallerIdRef.current === callerId) return;
-
-        lastCheckedCallerIdRef.current = callerId;
-        const { contact, history } = await findContactByPhone(callerId);
-        setCrmContact(contact);
-        setCallHistory(history);
-        setIsCallerInfoOpen(true);
-    };
-
-    if (callState.status === 'ringing' && callState.callerId) {
-        fetchContactAndOpen(callState.callerId);
-    } else {
-        if (isCallerInfoOpen) {
-            setIsCallerInfoOpen(false);
-        }
-        lastCheckedCallerIdRef.current = null;
-    }
-  }, [callState, isCallerInfoOpen]);
-
-
-  const handleWrapUpEnd = () => {
+  const handleCloseModal = () => {
     setIsWrapUp(false);
+    setIsModalOpen(false);
     setActiveCallData(null);
+    lastCheckedCallerIdRef.current = null;
+    setCrmContact(null);
+    setCallHistory([]);
   };
 
-  const RightPanel = () => {
-    if (activeCallData) {
-      return (
-        <AppealForm
-          callId={activeCallData.callId}
-          callerNumber={activeCallData.callerNumber}
-          operator={user}
-          isWrapUp={isWrapUp}
-          onWrapUpEnd={handleWrapUpEnd}
-        />
-      );
-    }
-    return (
+  const handleContactUpdate = (updatedContact: CrmContact) => {
+    setCrmContact(updatedContact);
+    // No need to call the server again, just update state
+  }
+  
+  return (
+    <>
+      {isModalOpen && activeCallData && (
+          <CallerInfoCard
+            isOpen={isModalOpen}
+            onClose={handleCloseModal}
+            contact={crmContact}
+            onContactUpdate={handleContactUpdate}
+            history={callHistory}
+            callState={{...activeCallData, status: callState.status}}
+            operator={user}
+            isWrapUp={isWrapUp}
+          />
+      )}
+
+      <div className="space-y-8 max-w-5xl mx-auto">
+        <OperatorStatusCard user={user} status={isWrapUp ? 'wrap-up' : callState.status} />
         <Card>
             <CardHeader>
                 <CardTitle>Рабочее место</CardTitle>
@@ -197,25 +188,6 @@ export function OperatorWorkspace({ user, amiConnection, ariConnection }: Operat
                 </div>
             </CardContent>
         </Card>
-    );
-  };
-
-  return (
-    <>
-      <CallerInfoCard
-        isOpen={isCallerInfoOpen}
-        onOpenChange={setIsCallerInfoOpen}
-        contact={crmContact}
-        history={callHistory}
-        callerId={callState.callerId || ''}
-      />
-      <div className="grid md:grid-cols-2 gap-8 max-w-5xl mx-auto">
-        <div>
-          <OperatorStatusCard user={user} status={isWrapUp ? 'wrap-up' : callState.status} />
-        </div>
-        <div>
-          <RightPanel />
-        </div>
       </div>
     </>
   );
