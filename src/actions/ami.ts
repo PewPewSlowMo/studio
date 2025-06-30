@@ -183,8 +183,11 @@ export async function answerCall(
   channel: string
 ): Promise<{ success: boolean; error?: string }> {
   try {
-    await runAmiAction(connection, { Action: 'Answer', Channel: channel });
-    return { success: true };
+    const result = await runAmiAction(connection, { Action: 'Answer', Channel: channel });
+    if (result.success && result.message?.toLowerCase().includes('answered')) {
+      return { success: true };
+    }
+    return { success: false, error: result.message || 'Answer command failed' };
   } catch (e) {
     const message = e instanceof Error ? e.message : 'An unknown error occurred.';
     console.error('answerCall failed:', message);
@@ -197,8 +200,11 @@ export async function hangupCall(
   channel: string
 ): Promise<{ success: boolean; error?: string }> {
   try {
-    await runAmiAction(connection, { Action: 'Hangup', Channel: channel });
-    return { success: true };
+    const result = await runAmiAction(connection, { Action: 'Hangup', Channel: channel });
+    if (result.success && result.message?.toLowerCase().includes('hungup')) {
+      return { success: true };
+    }
+    return { success: false, error: result.message || 'Hangup command failed' };
   } catch (e) {
     const message = e instanceof Error ? e.message : 'An unknown error occurred.';
     console.error('hangupCall failed:', message);
