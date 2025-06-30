@@ -107,6 +107,7 @@ const AriChannelSchema = z.object({
       priority: z.number()
   }).optional(),
   bridge_ids: z.array(z.string()).optional(),
+  creator: z.string().optional(),
 });
 
 const AriBridgeSchema = z.object({
@@ -178,57 +179,53 @@ export async function getOperatorState(
 
     // Set default/fallback values from the operator's channel itself
     let effectiveCallerId = operatorChannel.caller.number;
-    let uniqueId = operatorChannel.id; // This is the uniqueid of the operator's leg of the call
+    let uniqueId = operatorChannel.id; // Start with the wrong one as a last resort
     let queue = operatorChannel.dialplan?.context;
+    
+    // This will hold the ID of the channel that initiated the call to the operator
+    let initiatingChannelId: string | undefined = undefined;
 
-    // 3. The "Bridge" Method: The most reliable way to find the caller's info.
-    // When a call is answered, Asterisk puts both channels (caller and operator) into a bridge.
-    const bridgeId = operatorChannel.bridge_ids?.[0];
-    if (bridgeId) {
-        const bridgeResult = await fetchFromAri(
-            connection,
-            `bridges/${bridgeId}`,
-            AriBridgeSchema
-        );
-        
-        if (bridgeResult.success && bridgeResult.data) {
-            // Find the *other* channel in the bridge (the one that is not the operator)
-            const otherChannelId = bridgeResult.data.channels.find(
-                (id) => id !== operatorChannelId
+    // 3. The "Creator" Method (NEW PRIMARY): The most reliable way to find the original channel.
+    // The creator of the operator's channel IS the original caller's channel.
+    if (operatorChannel.creator) {
+        initiatingChannelId = operatorChannel.creator;
+    }
+
+    // 4. The "Bridge" Method (FALLBACK): If creator is not found, try to find the peer in the bridge.
+    // This is useful for established calls or different dialplan configurations.
+    if (!initiatingChannelId) {
+        const bridgeId = operatorChannel.bridge_ids?.[0];
+        if (bridgeId) {
+            const bridgeResult = await fetchFromAri(
+                connection,
+                `bridges/${bridgeId}`,
+                AriBridgeSchema
             );
-
-            if (otherChannelId) {
-                // 4. Fetch the other channel's details - this is the original caller's channel.
-                const callerChannelResult = await fetchFromAri(
-                    connection,
-                    `channels/${otherChannelId}`,
-                    AriChannelSchema
+            if (bridgeResult.success && bridgeResult.data) {
+                const otherChannelId = bridgeResult.data.channels.find(
+                    (id) => id !== operatorChannelId
                 );
-
-                if (callerChannelResult.success && callerChannelResult.data) {
-                    const callerChannel = callerChannelResult.data;
-                    // This is the correct data we need for CDR matching and display.
-                    // The ID of the original channel is the `uniqueid` in the CDR log.
-                    uniqueId = callerChannel.id;
-                    effectiveCallerId = callerChannel.caller.number;
-                    // The queue context is often more accurately found on the caller's channel
-                    queue = callerChannel.dialplan?.context || queue;
+                if (otherChannelId) {
+                    initiatingChannelId = otherChannelId;
                 }
             }
         }
     }
-    
-    // 5. The "Variable" Method: As a fallback, check for a dialplan variable.
-    // This is useful if the bridge isn't formed yet (e.g., during ringing).
-    // If the caller ID still looks like the operator's own extension, try getting it from a variable.
-    if (effectiveCallerId === extension) { 
-        const crmSourceVarResult = await fetchFromAri(
+
+    // 5. If we found the initiating channel (by creator or bridge), get its details.
+    // This is the source of truth for the CDR `uniqueid` and the real caller ID.
+    if (initiatingChannelId) {
+        const callerChannelResult = await fetchFromAri(
             connection,
-            `channels/${operatorChannelId}/variable?variable=CRM_SOURCE`,
-            AriChannelVarSchema
+            `channels/${initiatingChannelId}`,
+            AriChannelSchema
         );
-         if (crmSourceVarResult.success && crmSourceVarResult.data?.value) {
-            effectiveCallerId = crmSourceVarResult.data.value;
+        if (callerChannelResult.success && callerChannelResult.data) {
+            const callerChannel = callerChannelResult.data;
+            // This is the correct data we need for CDR matching and display.
+            uniqueId = callerChannel.id; // This is the uniqueid that will be in the CDR log.
+            effectiveCallerId = callerChannel.caller.number;
+            queue = callerChannel.dialplan?.context || queue;
         }
     }
     
