@@ -203,7 +203,16 @@ export async function getOperatorState(
 
     // 4. Get the CDR(uniqueid) - this is the MOST important ID for linking records
     const cdrUniqueIdResult = await getAriChannelVar(connection, channelToQueryForIds, 'CDR(uniqueid)');
-    const uniqueId = cdrUniqueIdResult.success ? cdrUniqueIdResult.data?.value : channelToQueryForIds;
+    let uniqueId: string | undefined = cdrUniqueIdResult.success ? cdrUniqueIdResult.data?.value : undefined;
+
+    // Fallback for cases where CDR(uniqueid) might not be set yet.
+    // TOUCH_MONITOR is often set early with the same value.
+    if (!uniqueId) {
+        const touchMonitorResult = await getAriChannelVar(connection, channelToQueryForIds, 'TOUCH_MONITOR');
+        if (touchMonitorResult.success && touchMonitorResult.data?.value) {
+            uniqueId = touchMonitorResult.data.value;
+        }
+    }
 
     // 5. Get the Caller ID, prioritizing the custom CRM_SOURCE variable
     let effectiveCallerId: string | undefined = undefined;
