@@ -145,7 +145,7 @@ export async function getOperatorState(
     const channelId = endpoint.channel_ids.length > 0 ? endpoint.channel_ids[0] : undefined;
 
     if (channelId) {
-        const [channelResult, realCallerIdResult] = await Promise.all([
+        const [channelResult, callerIdNumResult] = await Promise.all([
              fetchFromAri(
                 connection,
                 `channels/${channelId}`,
@@ -153,7 +153,7 @@ export async function getOperatorState(
             ),
              fetchFromAri(
                 connection,
-                `channels/${channelId}/variable?variable=REALCALLERIDNUM`,
+                `channels/${channelId}/variable?variable=CALLERIDNUM`,
                 AriChannelVarSchema
             )
         ]);
@@ -162,9 +162,9 @@ export async function getOperatorState(
         if (channelResult.success && channelResult.data) {
             let effectiveCallerId = channelResult.data.caller.number;
             
-            // If REALCALLERIDNUM exists and has a value, it's often more reliable, especially with queues.
-            if (realCallerIdResult.success && realCallerIdResult.data?.value) {
-                effectiveCallerId = realCallerIdResult.data.value;
+            // If CALLERIDNUM exists and has a value, it is the most reliable source, especially with queues.
+            if (callerIdNumResult.success && callerIdNumResult.data?.value) {
+                effectiveCallerId = callerIdNumResult.data.value;
             }
 
             return {
