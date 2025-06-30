@@ -175,47 +175,9 @@ export async function getOperatorState(
 
     const operatorChannel = operatorChannelResult.data;
     
-    let effectiveCallerId = operatorChannel.caller.number; // Start with the default (likely wrong)
-
-    // --- STRATEGY 1: Check for queue-specific channel variables (most reliable for queues) ---
-    const queueVarResult = await fetchFromAri(
-        connection,
-        `channels/${channelId}/variable?variable=QUEUE_CALLERIDNUM`,
-        AriChannelVarSchema
-    );
-
-    if (queueVarResult.success && queueVarResult.data?.value) {
-        effectiveCallerId = queueVarResult.data.value;
-    } else {
-        // --- STRATEGY 2: Find the real caller via the bridge ---
-        if (operatorChannel.bridge_ids && operatorChannel.bridge_ids.length > 0) {
-            const bridgeId = operatorChannel.bridge_ids[0];
-            const bridgeResult = await fetchFromAri(connection, `bridges/${bridgeId}`, AriBridgeSchema);
-
-            if (bridgeResult.success && bridgeResult.data) {
-                const otherChannelId = bridgeResult.data.channels.find(c => c !== channelId);
-                if (otherChannelId) {
-                    const otherChannelResult = await fetchFromAri(connection, `channels/${otherChannelId}`, AriChannelSchema);
-                    if (otherChannelResult.success && otherChannelResult.data?.caller?.number && otherChannelResult.data.caller.number !== 'anonymous') {
-                        effectiveCallerId = otherChannelResult.data.caller.number;
-                    }
-                }
-            }
-        }
-    }
-    
-    // --- STRATEGY 3: Final fallback if other methods didn't produce a different number ---
-    if (effectiveCallerId === extension) {
-         const callerIdNumResult = await fetchFromAri(
-            connection,
-            `channels/${channelId}/variable?variable=CALLERID(num)`,
-            AriChannelVarSchema
-        );
-        
-        if (callerIdNumResult.success && callerIdNumResult.data?.value) {
-            effectiveCallerId = callerIdNumResult.data.value;
-        }
-    }
+    // The `caller` object on the operator's channel should contain the number of the person who initiated the call.
+    // This is the most direct and reliable source of information.
+    const effectiveCallerId = operatorChannel.caller.number;
     
     return {
         success: true,
