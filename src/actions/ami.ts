@@ -2,10 +2,26 @@
 
 import { z } from 'zod';
 import type { AsteriskEndpoint, AsteriskQueue } from '@/lib/types';
+import fs from 'fs/promises';
+import path from 'path';
 
 // This is a CommonJS module. We configure Next.js to treat it as an external
 // package on the server via `serverComponentsExternalPackages` in next.config.ts.
 const Ami = require('asterisk-manager');
+
+const LOG_FILE_PATH = path.join(process.cwd(), 'data', 'ami_debug.log');
+
+async function logToFile(message: string) {
+  try {
+    const logMessage = `${new Date().toISOString()} | ${message}\n`;
+    await fs.mkdir(path.dirname(LOG_FILE_PATH), { recursive: true });
+    await fs.appendFile(LOG_FILE_PATH, logMessage, 'utf-8');
+  } catch (e) {
+    // Fallback to console if file logging fails
+    console.error('Failed to write to debug log:', e);
+    console.error('Original log message:', message);
+  }
+}
 
 const AmiConnectionSchema = z.object({
   host: z.string().min(1, 'Host is required'),
@@ -41,9 +57,8 @@ function runAmiCommand<T extends Record<string, any>>(
 
       const results: T[] = [];
 
-      // Simply clear the timeout on disconnect
       ami.on('disconnect', () => {
-          clearTimeout(timeout);
+        clearTimeout(timeout);
       });
 
       ami.on('managerevent', (event: T) => {
@@ -60,8 +75,6 @@ function runAmiCommand<T extends Record<string, any>>(
           reject(err);
       });
 
-      // The library queues the action until login is complete.
-      // No need for a 'connect' handler.
       ami.action(action, (err: Error | null) => {
         if (err) {
           ami.disconnect();
@@ -82,16 +95,11 @@ function runAmiCommand<T extends Record<string, any>>(
   });
 }
 
-/**
- * Executes a single action and robustly handles the response from AMI.
- * It differentiates between transport errors and AMI application-level errors.
- * It now explicitly checks for "Response: Success".
- */
 function runAmiAction(
   connection: AmiConnection,
   action: Record<string, string>
 ): Promise<{ success: boolean; message?: string; data?: any }> {
-  return new Promise((resolve, reject) => {
+  return new Promise(async (resolve, reject) => {
     let ami: any;
     const timeout = setTimeout(() => {
       if (ami) ami.disconnect();
@@ -117,22 +125,17 @@ function runAmiAction(
         reject(err);
       });
       
-      // LOGGING ADDED
-      console.log('[AMI ACTION] Sending:', action);
+      await logToFile(`[AMI ACTION] Sending: ${JSON.stringify(action)}`);
 
-      ami.action(action, (err: Error | null, res: any) => {
-        // LOGGING ADDED
-        console.log('[AMI ACTION] Received:', { err, res });
+      ami.action(action, async (err: Error | null, res: any) => {
+        await logToFile(`[AMI ACTION] Received: ${JSON.stringify({ err, res })}`);
         
         ami.disconnect();
         if (err) {
-          // This handles transport-level errors (e.g., connection refused)
           reject(err);
         } else if (res?.response === 'Success') {
-          // Explicitly check for a "Success" response from Asterisk.
           resolve({ success: true, message: res.message || 'Action was successful.', data: res });
         } else {
-          // Any other response from Asterisk is considered a failure.
           resolve({ success: false, message: res?.message || 'Action failed: Asterisk did not return "Success".', data: res });
         }
       });
@@ -170,7 +173,7 @@ export async function answerCallAmi(
     return { success: false, error: result.message || 'Answer command failed' };
   } catch (e) {
     const message = e instanceof Error ? e.message : 'An unknown error occurred.';
-    console.error('answerCallAmi failed:', message);
+    await logToFile(`answerCallAmi failed: ${message}`);
     return { success: false, error: message };
   }
 }
@@ -183,7 +186,6 @@ export async function hangupCallAmi(
     const action = {
       Action: 'Hangup',
       Channel: channel,
-      Cause: 17, // User Busy
     };
     const result = await runAmiAction(connection, action);
     if (result.success) {
@@ -192,7 +194,7 @@ export async function hangupCallAmi(
     return { success: false, error: result.message || 'Hangup command failed' };
   } catch (e) {
     const message = e instanceof Error ? e.message : 'An unknown error occurred.';
-    console.error('hangupCallAmi failed:', message);
+    await logToFile(`hangupCallAmi failed: ${message}`);
     return { success: false, error: message };
   }
 }
@@ -221,7 +223,7 @@ export async function originateCall(
     return { success: false, error: result.message || 'Origination failed' };
   } catch (e) {
     const message = e instanceof Error ? e.message : 'An unknown error occurred.';
-    console.error('originateCall failed:', message);
+    await logToFile(`originateCall failed: ${message}`);
     return { success: false, error: message };
   }
 }
@@ -236,8 +238,6 @@ export async function getEndpointDetails(
     }
     const endpoint = result.data?.find(e => e.resource === extension);
     if (endpoint) {
-        // Since PJSIPShowEndpoints does not return callerid, we may need to do another query if call is active
-        // For now, this is sufficient for status check.
         return { success: true, data: endpoint };
     }
     return { success: false, error: `Endpoint ${extension} not found.` };
@@ -266,7 +266,7 @@ export async function getAmiEndpoints(
     return { success: true, data };
   } catch (e) {
     const message = e instanceof Error ? e.message : 'An unknown error occurred.';
-    console.error('getAmiEndpoints failed:', message);
+    await logToFile(`getAmiEndpoints failed: ${message}`);
     return { success: false, error: message };
   }
 }
@@ -293,7 +293,7 @@ export async function getAmiQueues(
     return { success: true, data: uniqueQueues };
   } catch (e) {
     const message = e instanceof Error ? e.message : 'An unknown error occurred.';
-    console.error('getAmiQueues failed:', message);
+    await logToFile(`getAmiQueues failed: ${message}`);
     return { success: false, error: message };
   }
 }
