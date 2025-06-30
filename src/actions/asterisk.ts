@@ -105,8 +105,17 @@ const AriChannelSchema = z.object({
       context: z.string(),
       exten: z.string(),
       priority: z.number()
-  }).optional()
+  }).optional(),
+  bridge_ids: z.array(z.string()).optional(),
 });
+
+const AriBridgeSchema = z.object({
+    id: z.string(),
+    technology: z.string(),
+    bridge_type: z.string(),
+    channels: z.array(z.string()),
+});
+
 
 const AriChannelVarSchema = z.object({
   value: z.string(),
@@ -144,47 +153,98 @@ export async function getOperatorState(
     
     const channelId = endpoint.channel_ids.length > 0 ? endpoint.channel_ids[0] : undefined;
 
-    if (channelId) {
-        const [channelResult, callerIdNumResult] = await Promise.all([
-             fetchFromAri(
-                connection,
-                `channels/${channelId}`,
-                AriChannelSchema
-            ),
-             fetchFromAri(
-                connection,
-                `channels/${channelId}/variable?variable=CALLERIDNUM`,
-                AriChannelVarSchema
-            )
-        ]);
-
-
-        if (channelResult.success && channelResult.data) {
-            let effectiveCallerId = channelResult.data.caller.number;
-            
-            // If CALLERIDNUM exists and has a value, it is the most reliable source, especially with queues.
-            if (callerIdNumResult.success && callerIdNumResult.data?.value) {
-                effectiveCallerId = callerIdNumResult.data.value;
-            }
-
-            return {
-                success: true,
-                data: {
-                    endpointState: endpoint.state,
-                    channelId: channelId,
-                    channelName: channelResult.data.name,
-                    channelState: channelResult.data.state,
-                    callerId: effectiveCallerId,
-                    queue: channelResult.data.dialplan?.context
-                },
-            };
-        }
+    if (!channelId) {
+        return { 
+            success: true, 
+            data: { 
+                endpointState: endpoint.state 
+            } 
+        };
     }
 
-    return { 
-        success: true, 
-        data: { 
-            endpointState: endpoint.state 
-        } 
+    const operatorChannelResult = await fetchFromAri(
+        connection,
+        `channels/${channelId}`,
+        AriChannelSchema
+    );
+
+    if (!operatorChannelResult.success || !operatorChannelResult.data) {
+        return { success: true, data: { endpointState: endpoint.state } }; // Fallback
+    }
+
+    const operatorChannel = operatorChannelResult.data;
+    let effectiveCallerId = operatorChannel.caller.number; // Fallback value
+
+    const baseData = {
+        endpointState: endpoint.state,
+        channelId: channelId,
+        channelName: operatorChannel.name,
+        channelState: operatorChannel.state,
+        queue: operatorChannel.dialplan?.context,
+    };
+
+    // New Strategy: Find caller via the bridge
+    if (operatorChannel.bridge_ids && operatorChannel.bridge_ids.length > 0) {
+        const bridgeId = operatorChannel.bridge_ids[0];
+        const bridgeResult = await fetchFromAri(connection, `bridges/${bridgeId}`, AriBridgeSchema);
+
+        if (bridgeResult.success && bridgeResult.data) {
+            const otherChannelId = bridgeResult.data.channels.find(c => c !== channelId);
+            if (otherChannelId) {
+                const otherChannelResult = await fetchFromAri(connection, `channels/${otherChannelId}`, AriChannelSchema);
+                if (otherChannelResult.success && otherChannelResult.data) {
+                    // This is the real caller's channel
+                    effectiveCallerId = otherChannelResult.data.caller.number;
+                     return {
+                        success: true,
+                        data: {
+                            ...baseData,
+                            callerId: effectiveCallerId,
+                        },
+                    };
+                }
+            }
+        }
+    }
+    
+    // Fallback Strategy: If bridge fails, check CALLERID(num) variable
+    const callerIdNumResult = await fetchFromAri(
+        connection,
+        `channels/${channelId}/variable?variable=CALLERID(num)`,
+        AriChannelVarSchema
+    );
+    
+    if (callerIdNumResult.success && callerIdNumResult.data?.value) {
+        effectiveCallerId = callerIdNumResult.data.value;
+    }
+
+    let newStatus: OperatorCallState['status'] = 'offline';
+    const stateToUse = operatorChannel.state?.toLowerCase();
+            
+    switch (stateToUse) {
+        case 'ring':
+        case 'ringing':
+            newStatus = 'ringing';
+            break;
+        case 'up': case 'busy': case 'offhook': case 'dialing':
+            newStatus = 'on-call';
+            break;
+        case 'down': case 'rsrvd': case 'online': case 'not_inuse': case 'not in use':
+            newStatus = 'available';
+            break;
+        case 'unavailable': case 'invalid': case 'offline':
+            newStatus = 'offline';
+            break;
+        default:
+            newStatus = channelId ? 'on-call' : 'available';
+    }
+
+
+    return {
+        success: true,
+        data: {
+            ...baseData,
+            callerId: effectiveCallerId,
+        },
     };
 }
