@@ -169,82 +169,57 @@ export async function getOperatorState(
     );
 
     if (!operatorChannelResult.success || !operatorChannelResult.data) {
-        return { success: true, data: { endpointState: endpoint.state } }; // Fallback
+        // Still return endpoint state even if channel fetch fails
+        return { success: true, data: { endpointState: endpoint.state } };
     }
 
     const operatorChannel = operatorChannelResult.data;
-    let effectiveCallerId = operatorChannel.caller.number; // Fallback value
+    
+    // Start with the default, which might be incorrect (e.g., the operator's own extension)
+    let effectiveCallerId = operatorChannel.caller.number; 
 
-    const baseData = {
-        endpointState: endpoint.state,
-        channelId: channelId,
-        channelName: operatorChannel.name,
-        channelState: operatorChannel.state,
-        queue: operatorChannel.dialplan?.context,
-    };
-
-    // New Strategy: Find caller via the bridge
+    // --- Strategy 1: Find the real caller via the bridge (Most reliable) ---
     if (operatorChannel.bridge_ids && operatorChannel.bridge_ids.length > 0) {
         const bridgeId = operatorChannel.bridge_ids[0];
         const bridgeResult = await fetchFromAri(connection, `bridges/${bridgeId}`, AriBridgeSchema);
 
         if (bridgeResult.success && bridgeResult.data) {
+            // Find the channel in the bridge that is NOT the operator's channel
             const otherChannelId = bridgeResult.data.channels.find(c => c !== channelId);
             if (otherChannelId) {
                 const otherChannelResult = await fetchFromAri(connection, `channels/${otherChannelId}`, AriChannelSchema);
-                if (otherChannelResult.success && otherChannelResult.data) {
-                    // This is the real caller's channel
+                if (otherChannelResult.success && otherChannelResult.data?.caller?.number && otherChannelResult.data.caller.number !== 'anonymous') {
+                    // This is the real external caller's channel.
                     effectiveCallerId = otherChannelResult.data.caller.number;
-                     return {
-                        success: true,
-                        data: {
-                            ...baseData,
-                            callerId: effectiveCallerId,
-                        },
-                    };
                 }
             }
         }
     }
     
-    // Fallback Strategy: If bridge fails, check CALLERID(num) variable
-    const callerIdNumResult = await fetchFromAri(
-        connection,
-        `channels/${channelId}/variable?variable=CALLERID(num)`,
-        AriChannelVarSchema
-    );
+    // --- Strategy 2: Fallback to channel variable if bridge logic fails or returns the operator's own number ---
+    // We check if the callerId is still the operator's own extension number.
+    // This indicates the bridge logic likely didn't find the external caller.
+    if (effectiveCallerId === extension) {
+         const callerIdNumResult = await fetchFromAri(
+            connection,
+            `channels/${channelId}/variable?variable=CALLERID(num)`,
+            AriChannelVarSchema
+        );
+        
+        if (callerIdNumResult.success && callerIdNumResult.data?.value) {
+            effectiveCallerId = callerIdNumResult.data.value;
+        }
+    }
     
-    if (callerIdNumResult.success && callerIdNumResult.data?.value) {
-        effectiveCallerId = callerIdNumResult.data.value;
-    }
-
-    let newStatus: OperatorCallState['status'] = 'offline';
-    const stateToUse = operatorChannel.state?.toLowerCase();
-            
-    switch (stateToUse) {
-        case 'ring':
-        case 'ringing':
-            newStatus = 'ringing';
-            break;
-        case 'up': case 'busy': case 'offhook': case 'dialing':
-            newStatus = 'on-call';
-            break;
-        case 'down': case 'rsrvd': case 'online': case 'not_inuse': case 'not in use':
-            newStatus = 'available';
-            break;
-        case 'unavailable': case 'invalid': case 'offline':
-            newStatus = 'offline';
-            break;
-        default:
-            newStatus = channelId ? 'on-call' : 'available';
-    }
-
-
     return {
         success: true,
         data: {
-            ...baseData,
-            callerId: effectiveCallerId,
+            endpointState: endpoint.state,
+            channelId: channelId,
+            channelName: operatorChannel.name,
+            channelState: operatorChannel.state,
+            queue: operatorChannel.dialplan?.context,
+            callerId: effectiveCallerId, // Use the determined caller ID
         },
     };
 }
