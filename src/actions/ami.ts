@@ -116,7 +116,7 @@ function runAmiAction(
         } else if (res?.response === 'Success') {
           resolve({ success: true, message: res.message || 'Action was successful.', data: res });
         } else {
-          resolve({ success: false, message: res?.message || 'Action failed: Asterisk did not return "Success".', data: res });
+          reject(new Error(res?.message || 'Action failed: Asterisk did not return "Success".'));
         }
       });
 
@@ -143,15 +143,18 @@ export async function answerCallAmi(
   channel: string
 ): Promise<{ success: boolean; error?: string }> {
   try {
+    // We use the Originate action to have the channel execute the Answer application.
+    // This is a robust workaround for servers where the 'Answer' command might be restricted,
+    // as indicated by the "Invalid/unknown command: Answer" error from the logs.
     const action = {
-      Action: 'Answer',
+      Action: 'Originate',
       Channel: channel,
+      Application: 'Answer',
+      Async: 'true', // Asynchronous to not block the flow
     };
-    const result = await runAmiAction(connection, action);
-    if (result.success) {
-      return { success: true };
-    }
-    return { success: false, error: result.message || 'Answer command failed' };
+    await runAmiAction(connection, action);
+    // If runAmiAction doesn't throw, the command was accepted by Asterisk.
+    return { success: true };
   } catch (e) {
     const message = e instanceof Error ? e.message : 'An unknown error occurred.';
     return { success: false, error: message };
@@ -167,11 +170,8 @@ export async function hangupCallAmi(
       Action: 'Hangup',
       Channel: channel,
     };
-    const result = await runAmiAction(connection, action);
-    if (result.success) {
-      return { success: true };
-    }
-    return { success: false, error: result.message || 'Hangup command failed' };
+    await runAmiAction(connection, action);
+    return { success: true };
   } catch (e) {
     const message = e instanceof Error ? e.message : 'An unknown error occurred.';
     return { success: false, error: message };
