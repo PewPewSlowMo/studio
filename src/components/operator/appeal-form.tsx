@@ -44,12 +44,12 @@ export const appealFormSchema = z.object({
 export type AppealFormValues = z.infer<typeof appealFormSchema>;
 
 interface AppealFormProps {
+  form: any; // Pass form instance from parent
   callId: string;
   callerNumber: string;
   operator: User;
   isWrapUp: boolean;
   onFormSubmit: () => void;
-  form: any; // Pass form instance from parent
 }
 
 export function AppealForm({ form, callId, callerNumber, operator, isWrapUp, onFormSubmit }: AppealFormProps) {
@@ -69,10 +69,6 @@ export function AppealForm({ form, callId, callerNumber, operator, isWrapUp, onF
     const result = await saveAppeal(appealData);
 
     if (result.success) {
-      toast({
-        title: 'Обращение сохранено',
-        description: 'Карточка обращения успешно создана.',
-      });
       onFormSubmit();
     } else {
       toast({

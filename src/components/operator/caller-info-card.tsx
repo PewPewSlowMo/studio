@@ -62,9 +62,26 @@ export function CallerInfoCard({ isOpen, onClose, contact, onContactUpdate, hist
       defaultValues: { name: '', address: '', type: 'иной', email: '' },
   });
   
+  const isCallActive = callState.status === 'ringing' || callState.status === 'on-call';
+
   const onValidAppealSubmit = () => {
-    appealForm.reset();
-    onClose();
+    // If the call is not active (i.e. in wrap-up), then reset the form and close.
+    if (!isCallActive) {
+        toast({
+            title: 'Обращение сохранено',
+            description: 'Карточка обращения успешно сохранена.',
+        });
+        appealForm.reset();
+        onClose();
+    } else {
+        // If the call is active, we don't want to close the modal.
+        // We just reset the form's dirty state to show that the save was successful.
+        toast({
+            title: 'Данные сохранены',
+            description: 'Вы можете продолжить редактирование.',
+        });
+        appealForm.reset(appealForm.getValues());
+    }
   };
 
   const handleAutoSubmit = async () => {
@@ -119,8 +136,6 @@ export function CallerInfoCard({ isOpen, onClose, contact, onContactUpdate, hist
   }
   
   const callDuration = '00:00'; // Placeholder
-
-  const isCallActive = callState.status === 'ringing' || callState.status === 'on-call';
 
   const handleOpenChange = (open: boolean) => {
     if (!open && isCallActive) {
@@ -220,7 +235,7 @@ export function CallerInfoCard({ isOpen, onClose, contact, onContactUpdate, hist
             <AppealForm 
                 form={appealForm}
                 callId={callState.callId || 'n/a'}
-                callerNumber={callState.callerNumber || 'n/a'}
+                callerNumber={callState.callerNumber}
                 operator={operator}
                 isWrapUp={isWrapUp}
                 onFormSubmit={onValidAppealSubmit}
