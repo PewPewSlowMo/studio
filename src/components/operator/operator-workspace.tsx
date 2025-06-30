@@ -142,29 +142,58 @@ export function OperatorWorkspace({ user, amiConnection, ariConnection }: Operat
 
   const pollStatus = useCallback(async () => {
     if (!user.extension) return;
-    
-    const result = await getOperatorState(ariConnection, user.extension);
-    if (result.success && result.data) {
-        const { endpointState, channelId, callerId } = result.data;
-        const normalizedState = endpointState?.toLowerCase();
-        
-        let newStatus: CallState['status'] = 'available'; // Safer default
-        if (normalizedState === 'unavailable' || normalizedState === 'invalid') {
-            newStatus = 'offline';
-        } else if (normalizedState === 'ringing') {
-            newStatus = 'ringing';
-        } else if (normalizedState === 'inuse' || normalizedState === 'busy') {
-            newStatus = 'on-call';
-        } else if (normalizedState === 'not_inuse') {
-             newStatus = 'available';
-        }
-        // The problematic `else { newStatus = 'connecting' }` is removed.
-        // Any other state from Asterisk will now correctly default to 'available'.
 
-        setState(prevState => ({ ...prevState, status: newStatus, channel: channelId, callerId }));
+    const result = await getOperatorState(ariConnection, user.extension);
+
+    if (result.success && result.data) {
+      const { endpointState, channelId, channelState, callerId } = result.data;
+      
+      const stateToUse = channelState || endpointState;
+      const normalizedState = stateToUse?.toLowerCase();
+      
+      let newStatus: CallState['status'] = 'available';
+
+      switch (normalizedState) {
+        // Channel States
+        case 'ring':
+        case 'ringing':
+          newStatus = 'ringing';
+          break;
+        case 'up':
+        case 'busy':
+        case 'offhook':
+        case 'dialing':
+          newStatus = 'on-call';
+          break;
+        case 'down':
+        case 'rsrvd':
+          newStatus = 'available';
+          break;
+
+        // Endpoint States (if no channel)
+        case 'online':
+        case 'not_inuse':
+          newStatus = 'available';
+          break;
+        case 'unavailable':
+        case 'invalid':
+        case 'offline':
+          newStatus = 'offline';
+          break;
+        
+        default:
+          newStatus = channelId ? 'on-call' : 'available';
+      }
+
+      setState(prevState => ({
+        ...prevState,
+        status: newStatus,
+        channel: channelId,
+        callerId: newStatus === 'ringing' || newStatus === 'on-call' ? callerId : undefined,
+      }));
     } else {
-        setState({ status: 'offline' });
-        console.error("Polling failed:", result.error);
+      setState({ status: 'offline' });
+      console.error('Polling failed:', result.error);
     }
   }, [ariConnection, user.extension]);
 
