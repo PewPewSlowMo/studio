@@ -2,10 +2,27 @@
 
 import { z } from 'zod';
 import type { AsteriskEndpoint, AsteriskQueue } from '@/lib/types';
+import fs from 'fs/promises';
+import path from 'path';
 
 // This is a CommonJS module. We configure Next.js to treat it as an external
 // package on the server via `serverComponentsExternalPackages` in next.config.ts.
 const Ami = require('asterisk-manager');
+
+const DEBUG_LOG_PATH = path.join(process.cwd(), 'data', 'ami_debug.log');
+
+async function logToDebugFile(message: string) {
+  try {
+    const timestamp = new Date().toISOString();
+    // Ensure the directory exists
+    await fs.mkdir(path.dirname(DEBUG_LOG_PATH), { recursive: true });
+    // Append the message to the log file
+    await fs.appendFile(DEBUG_LOG_PATH, `${timestamp} | ${message}\n`, 'utf-8');
+  } catch (e) {
+    // Log to console if file logging fails
+    console.error('Failed to write to debug log:', e);
+  }
+}
 
 const AmiConnectionSchema = z.object({
   host: z.string().min(1, 'Host is required'),
@@ -83,11 +100,15 @@ function runAmiAction(
   connection: AmiConnection,
   action: Record<string, string>
 ): Promise<{ success: boolean; message?: string; data?: any }> {
+  logToDebugFile(`[AMI ACTION] Sending: ${JSON.stringify(action)}`);
+  
   return new Promise(async (resolve, reject) => {
     let ami: any;
     const timeout = setTimeout(() => {
       if (ami) ami.disconnect();
-      reject(new Error('AMI action timed out after 10 seconds.'));
+      const timeoutError = new Error('AMI action timed out after 10 seconds.');
+      logToDebugFile(`[AMI ACTION] Error: ${timeoutError.message}`);
+      reject(timeoutError);
     }, 10000);
 
     try {
@@ -99,17 +120,22 @@ function runAmiAction(
         validatedConnection.password,
         true
       );
+      
+      const actionid = new Date().getTime().toString();
+      action.actionid = actionid;
 
       ami.on('disconnect', () => {
         clearTimeout(timeout);
       });
 
       ami.on('error', (err: Error) => {
+        logToDebugFile(`[AMI ACTION] Connection Error: ${JSON.stringify(err)}`);
         if(ami) ami.disconnect();
         reject(err);
       });
       
       ami.action(action, (err: Error | null, res: any) => {
+        logToDebugFile(`[AMI ACTION] Received: ${JSON.stringify({ err, res })}`);
         if(ami) ami.disconnect();
         if (err) {
           reject(err);
@@ -123,17 +149,16 @@ function runAmiAction(
     } catch (e) {
       clearTimeout(timeout);
       if (ami) ami.disconnect();
+      
+      let errorMessage = 'An unknown error occurred during AMI action execution.';
       if (e instanceof z.ZodError) {
-        reject(
-          new Error(
-            `Invalid input: ${e.errors.map((err) => err.message).join(', ')}`
-          )
-        );
+        errorMessage = `Invalid input: ${e.errors.map((err) => err.message).join(', ')}`;
       } else if (e instanceof Error) {
-        reject(e);
-      } else {
-        reject(new Error('An unknown error occurred during AMI action execution.'));
+        errorMessage = e.message;
       }
+      
+      logToDebugFile(`[AMI ACTION] Catch Error: ${errorMessage}`);
+      reject(new Error(errorMessage));
     }
   });
 }
@@ -143,20 +168,17 @@ export async function answerCallAmi(
   channel: string
 ): Promise<{ success: boolean; error?: string }> {
   try {
-    // We use the Originate action to have the channel execute the Answer application.
-    // This is a robust workaround for servers where the 'Answer' command might be restricted,
-    // as indicated by the "Invalid/unknown command: Answer" error from the logs.
     const action = {
       Action: 'Originate',
       Channel: channel,
       Application: 'Answer',
-      Async: 'true', // Asynchronous to not block the flow
+      Async: 'true',
     };
     await runAmiAction(connection, action);
-    // If runAmiAction doesn't throw, the command was accepted by Asterisk.
     return { success: true };
   } catch (e) {
     const message = e instanceof Error ? e.message : 'An unknown error occurred.';
+    logToDebugFile(`answerCallAmi failed: ${message}`);
     return { success: false, error: message };
   }
 }
@@ -174,6 +196,7 @@ export async function hangupCallAmi(
     return { success: true };
   } catch (e) {
     const message = e instanceof Error ? e.message : 'An unknown error occurred.';
+    logToDebugFile(`hangupCallAmi failed: ${message}`);
     return { success: false, error: message };
   }
 }
@@ -202,6 +225,7 @@ export async function originateCall(
     return { success: false, error: result.message || 'Origination failed' };
   } catch (e) {
     const message = e instanceof Error ? e.message : 'An unknown error occurred.';
+     logToDebugFile(`originateCall failed: ${message}`);
     return { success: false, error: message };
   }
 }
