@@ -1,5 +1,20 @@
 [
   {
+    "id": "b69e65df-671a-4f85-83e9-c768d1ed3f93",
+    "callId": "1751280848.217",
+    "operatorId": "6441dd03-cebf-4abd-8e8b-2f6ed775480a",
+    "operatorName": "operator",
+    "callerNumber": "0777",
+    "description": "Информация о звонящем\n0001",
+    "resolution": "Информация о звонящем\n0001",
+    "category": "info",
+    "priority": "medium",
+    "satisfaction": "satisfied",
+    "notes": "Информация о звонящем\n0001",
+    "followUp": true,
+    "createdAt": "2025-06-30T10:54:38.507Z"
+  },
+  {
     "id": "2e1ab3cf-b391-4a3a-8653-5bf0b07f992c",
     "callId": "1751275591.167",
     "operatorId": "6441dd03-cebf-4abd-8e8b-2f6ed775480a",

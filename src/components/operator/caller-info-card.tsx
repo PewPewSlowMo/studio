@@ -32,10 +32,10 @@ interface ActiveCallModalProps {
   onContactUpdate: (contact: CrmContact) => void;
   history: Call[];
   callState: {
-    status: string;
-    callerNumber?: string;
-    callId?: string;
+    callId: string;
+    callerNumber: string;
     queue?: string;
+    status: string;
   };
   operator: User;
   isWrapUp: boolean;
@@ -185,7 +185,7 @@ export function CallerInfoCard({ isOpen, onClose, contact, onContactUpdate, hist
                 {history.length > 0 ? (
                     <div className="space-y-2 pr-4 text-xs">
                         {history.map(call => (
-                            <div key={call.id} className="p-2 rounded-md bg-muted/50">
+                            <div key={call.id + call.startTime} className="p-2 rounded-md bg-muted/50">
                                 <div className="flex justify-between items-center">
                                     <span className="font-semibold flex items-center gap-1.5"><Calendar className="h-3 w-3" /> {formatDate(call.startTime)}</span>
                                     <Badge variant={call.status === 'ANSWERED' ? 'success' : 'destructive'}>{call.status}</Badge>
