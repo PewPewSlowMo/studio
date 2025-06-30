@@ -163,8 +163,6 @@ export function OperatorWorkspace({ user, amiConnection, ariConnection }: Operat
 
     const newState = { status: newStatus, channelId: newChannelId, channelName: newChannelName, callerId: newCallerId };
     
-    // By using the functional form of setState, we compare with the previous state
-    // and prevent a re-render if the state hasn't changed. This is the fix.
     setCallState((currentState) => {
       if (
         currentState.status === newState.status &&
@@ -177,8 +175,6 @@ export function OperatorWorkspace({ user, amiConnection, ariConnection }: Operat
     });
   }, [user.extension, ariConnection]);
 
-  // This effect handles the logic based on state changes (e.g., entering wrap-up)
-  // It only runs when `callState` has actually been updated.
   useEffect(() => {
     if (previousStatusRef.current === 'on-call' && callState.status !== 'on-call' && activeCallData) {
       setIsWrapUp(true);
@@ -198,24 +194,31 @@ export function OperatorWorkspace({ user, amiConnection, ariConnection }: Operat
     return () => clearInterval(intervalId);
   }, [pollStatus]);
 
+  // This effect handles opening and closing the CallerInfoCard.
+  // It is written to prevent state update loops.
   useEffect(() => {
-    const fetchContact = async (callerId: string) => {
-      setLastCheckedCallerId(callerId);
+    const fetchContactAndOpen = async (callerId: string) => {
       const { contact, history } = await findContactByPhone(callerId);
       setCrmContact(contact);
       setCallHistory(history);
       setIsCallerInfoOpen(true);
     };
 
-    if (callState.status === 'ringing' && callState.callerId && callState.callerId !== lastCheckedCallerId) {
-      fetchContact(callState.callerId);
-    }
-
-    if (callState.status !== 'ringing' && isCallerInfoOpen) {
+    if (callState.status === 'ringing' && callState.callerId) {
+      // Use functional update for lastCheckedCallerId to avoid having it in the deps array
+      // and to get the most recent value to prevent re-fetching.
+      setLastCheckedCallerId(prevId => {
+        if (prevId !== callState.callerId) {
+          fetchContactAndOpen(callState.callerId!);
+        }
+        return callState.callerId;
+      });
+    } else {
+      // If not ringing, ensure the dialog is closed and the ID is reset.
       setIsCallerInfoOpen(false);
       setLastCheckedCallerId(null);
     }
-  }, [callState.status, callState.callerId, isCallerInfoOpen, lastCheckedCallerId]);
+  }, [callState.status, callState.callerId]);
 
   const handleDial = async (number: string) => {
     if (!user.extension) return;
