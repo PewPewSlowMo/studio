@@ -67,8 +67,6 @@ export function OperatorWorkspace({ user, amiConnection, ariConnection }: Operat
   const lastCheckedCallerIdRef = useRef<string | null>(null);
 
   // This effect handles polling for the operator's status.
-  // It's self-contained and uses a functional update for setCallState
-  // to avoid depending on `callState` itself, which would reset the interval.
   useEffect(() => {
     const poll = async () => {
         if (!user.extension) return;
@@ -78,29 +76,10 @@ export function OperatorWorkspace({ user, amiConnection, ariConnection }: Operat
         let newCallStateData: Partial<CallState> = {};
         
         if (result.success && result.data) {
-            const { endpointState, channelId, channelName, channelState, callerId, queue, uniqueId } = result.data;
+            const { endpointState, channelId, channelName, callerId, queue, uniqueId } = result.data;
+            // Use the unified status directly from the server action
+            newStatus = endpointState as CallState['status'] || 'offline';
             newCallStateData = { channelId, channelName, callerId, queue, uniqueId };
-
-            const stateToUse = channelState || endpointState;
-            const normalizedState = stateToUse?.toLowerCase();
-            
-            switch (normalizedState) {
-                case 'ring':
-                case 'ringing':
-                    newStatus = 'ringing';
-                    break;
-                case 'up': case 'busy': case 'offhook': case 'dialing':
-                    newStatus = 'on-call';
-                    break;
-                case 'down': case 'rsrvd': case 'online': case 'not_inuse': case 'not in use':
-                    newStatus = 'available';
-                    break;
-                case 'unavailable': case 'invalid': case 'offline':
-                    newStatus = 'offline';
-                    break;
-                default:
-                    newStatus = channelId ? 'on-call' : 'available';
-            }
         } else {
             console.error('Polling failed:', result.error);
         }
@@ -108,7 +87,7 @@ export function OperatorWorkspace({ user, amiConnection, ariConnection }: Operat
         setCallState(prevState => {
             const newState = { ...prevState, status: newStatus, ...newCallStateData };
             // Only update state if something has actually changed to prevent re-renders
-            if (prevState.status !== newState.status || prevState.callerId !== newState.callerId || prevState.channelId !== newState.channelId) {
+            if (prevState.status !== newState.status || prevState.callerId !== newState.callerId || prevState.uniqueId !== newState.uniqueId) {
                 return newState as CallState;
             }
             return prevState;

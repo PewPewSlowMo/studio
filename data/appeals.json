@@ -1,5 +1,35 @@
 [
   {
+    "id": "b3a35d28-02a9-414c-86d0-88b6a1c8d524",
+    "callId": "1751281780.233",
+    "operatorId": "6441dd03-cebf-4abd-8e8b-2f6ed775480a",
+    "operatorName": "operator",
+    "callerNumber": "0777",
+    "description": "Проблема не решилась, сохранил карточку, но заполненных данных не вижу в деталях звонка.",
+    "resolution": "Проблема не решилась, сохранил карточку, но заполненных данных не вижу в деталях звонка.",
+    "category": "info",
+    "priority": "medium",
+    "satisfaction": "neutral",
+    "notes": "Проблема не решилась, сохранил карточку, но заполненных данных не вижу в деталях звонка.",
+    "followUp": true,
+    "createdAt": "2025-06-30T11:09:57.084Z"
+  },
+  {
+    "id": "8cae45ac-2d82-4d89-bcc7-c8e122fc1cd8",
+    "callId": "1751281780.233",
+    "operatorId": "6441dd03-cebf-4abd-8e8b-2f6ed775480a",
+    "operatorName": "operator",
+    "callerNumber": "0777",
+    "description": "Проблема не решилась, сохранил карточку, но заполненных данных не вижу в деталях звонка.",
+    "resolution": "Проблема не решилась, сохранил карточку, но заполненных данных не вижу в деталях звонка.",
+    "category": "info",
+    "priority": "medium",
+    "satisfaction": "neutral",
+    "notes": "Проблема не решилась, сохранил карточку, но заполненных данных не вижу в деталях звонка.",
+    "followUp": true,
+    "createdAt": "2025-06-30T11:09:51.836Z"
+  },
+  {
     "id": "2efff7a5-0e9f-4a20-9387-610877fdee00",
     "callId": "1751281634.230",
     "operatorId": "6441dd03-cebf-4abd-8e8b-2f6ed775480a",

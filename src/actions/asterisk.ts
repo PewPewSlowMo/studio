@@ -145,16 +145,16 @@ export async function getOperatorState(
     };
     error?: string;
 }> {
+    // 1. Get endpoint details to find the operator's active channel
     const endpointResult = await getAriEndpointDetails(connection, extension);
-
     if (!endpointResult.success || !endpointResult.data) {
         return { success: false, error: endpointResult.error || 'Could not get endpoint details.' };
     }
     const endpoint = endpointResult.data;
     
-    const channelId = endpoint.channel_ids.length > 0 ? endpoint.channel_ids[0] : undefined;
-
-    if (!channelId) {
+    // If no active channel, just return the basic endpoint state (e.g., 'available', 'offline')
+    const operatorChannelId = endpoint.channel_ids.length > 0 ? endpoint.channel_ids[0] : undefined;
+    if (!operatorChannelId) {
         return { 
             success: true, 
             data: { 
@@ -163,52 +163,106 @@ export async function getOperatorState(
         };
     }
 
-    const [operatorChannelResult, crmSourceVarResult, uniqueIdVarResult] = await Promise.all([
-        fetchFromAri(
-            connection,
-            `channels/${channelId}`,
-            AriChannelSchema
-        ),
-        fetchFromAri(
-            connection,
-            `channels/${channelId}/variable?variable=CRM_SOURCE`,
-            AriChannelVarSchema
-        ),
-        fetchFromAri(
-            connection,
-            `channels/${channelId}/variable?variable=CDR(uniqueid)`,
-            AriChannelVarSchema
-        ),
-    ]);
+    // 2. Get the operator's channel details
+    const operatorChannelResult = await fetchFromAri(
+        connection,
+        `channels/${operatorChannelId}`,
+        AriChannelSchema
+    );
 
     if (!operatorChannelResult.success || !operatorChannelResult.data) {
-        // Still return endpoint state even if channel fetch fails
+        // Fallback to endpoint state if channel somehow disappeared between calls
         return { success: true, data: { endpointState: endpoint.state } };
     }
-
     const operatorChannel = operatorChannelResult.data;
-    
-    let effectiveCallerId = '';
 
-    if (crmSourceVarResult.success && crmSourceVarResult.data?.value) {
-        effectiveCallerId = crmSourceVarResult.data.value;
-    } else {
-        effectiveCallerId = operatorChannel.caller.number;
+    // Set default/fallback values from the operator's channel itself
+    let effectiveCallerId = operatorChannel.caller.number;
+    let uniqueId = operatorChannel.id; // This is the uniqueid of the operator's leg of the call
+    let queue = operatorChannel.dialplan?.context;
+
+    // 3. The "Bridge" Method: The most reliable way to find the caller's info.
+    // When a call is answered, Asterisk puts both channels (caller and operator) into a bridge.
+    const bridgeId = operatorChannel.bridge_ids?.[0];
+    if (bridgeId) {
+        const bridgeResult = await fetchFromAri(
+            connection,
+            `bridges/${bridgeId}`,
+            AriBridgeSchema
+        );
+        
+        if (bridgeResult.success && bridgeResult.data) {
+            // Find the *other* channel in the bridge (the one that is not the operator)
+            const otherChannelId = bridgeResult.data.channels.find(
+                (id) => id !== operatorChannelId
+            );
+
+            if (otherChannelId) {
+                // 4. Fetch the other channel's details - this is the original caller's channel.
+                const callerChannelResult = await fetchFromAri(
+                    connection,
+                    `channels/${otherChannelId}`,
+                    AriChannelSchema
+                );
+
+                if (callerChannelResult.success && callerChannelResult.data) {
+                    const callerChannel = callerChannelResult.data;
+                    // This is the correct data we need for CDR matching and display.
+                    // The ID of the original channel is the `uniqueid` in the CDR log.
+                    uniqueId = callerChannel.id;
+                    effectiveCallerId = callerChannel.caller.number;
+                    // The queue context is often more accurately found on the caller's channel
+                    queue = callerChannel.dialplan?.context || queue;
+                }
+            }
+        }
     }
     
-    // The CDR uniqueid is the most reliable. If not available, use the channel's own ID as a fallback.
-    const uniqueId = (uniqueIdVarResult.success && uniqueIdVarResult.data?.value)
-        ? uniqueIdVarResult.data.value
-        : operatorChannel.id;
+    // 5. The "Variable" Method: As a fallback, check for a dialplan variable.
+    // This is useful if the bridge isn't formed yet (e.g., during ringing).
+    // If the caller ID still looks like the operator's own extension, try getting it from a variable.
+    if (effectiveCallerId === extension) { 
+        const crmSourceVarResult = await fetchFromAri(
+            connection,
+            `channels/${operatorChannelId}/variable?variable=CRM_SOURCE`,
+            AriChannelVarSchema
+        );
+         if (crmSourceVarResult.success && crmSourceVarResult.data?.value) {
+            effectiveCallerId = crmSourceVarResult.data.value;
+        }
+    }
+    
+    // Determine the final status based on channel/endpoint states
+    const stateToUse = operatorChannel.state || endpoint.state;
+    const normalizedState = stateToUse?.toLowerCase();
+    let status: string = 'offline';
+    
+    switch (normalizedState) {
+        case 'ring':
+        case 'ringing':
+            status = 'ringing';
+            break;
+        case 'up': case 'busy': case 'offhook': case 'dialing':
+            status = 'on-call';
+            break;
+        case 'down': case 'rsrvd': case 'online': case 'not_inuse': case 'not in use':
+            status = 'available';
+            break;
+        case 'unavailable': case 'invalid': case 'offline':
+            status = 'offline';
+            break;
+        default:
+            status = operatorChannelId ? 'on-call' : 'available';
+    }
     
     return {
         success: true,
         data: {
-            endpointState: endpoint.state,
-            channelId: channelId,
+            endpointState: status, // Return the unified status
+            channelId: operatorChannelId,
             channelName: operatorChannel.name,
             channelState: operatorChannel.state,
-            queue: operatorChannel.dialplan?.context,
+            queue: queue,
             callerId: effectiveCallerId, 
             uniqueId: uniqueId,
         },
