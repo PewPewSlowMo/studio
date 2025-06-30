@@ -117,7 +117,13 @@ function runAmiAction(
         reject(err);
       });
       
+      // LOGGING ADDED
+      console.log('[AMI ACTION] Sending:', action);
+
       ami.action(action, (err: Error | null, res: any) => {
+        // LOGGING ADDED
+        console.log('[AMI ACTION] Received:', { err, res });
+        
         ami.disconnect();
         if (err) {
           // This handles transport-level errors (e.g., connection refused)
