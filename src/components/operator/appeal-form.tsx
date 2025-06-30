@@ -1,5 +1,6 @@
 'use client';
 
+import { useState, useEffect, useRef } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -24,7 +25,10 @@ import { Textarea } from '@/components/ui/textarea';
 import { saveAppeal, type AppealFormData } from '@/actions/appeals';
 import { useToast } from '@/hooks/use-toast';
 import type { User } from '@/lib/types';
-import { Loader2, Save } from 'lucide-react';
+import { Loader2, Save, Timer } from 'lucide-react';
+import { Progress } from '@/components/ui/progress';
+
+const WRAP_UP_SECONDS = 60;
 
 const formSchema = z.object({
   appealType: z.enum(['complaint', 'service', 'other'], { required_error: 'Please select a type.' }),
@@ -38,10 +42,14 @@ interface AppealFormProps {
   callId: string;
   callerNumber: string;
   operator: User;
+  isWrapUp: boolean;
+  onWrapUpEnd: () => void;
 }
 
-export function AppealForm({ callId, callerNumber, operator }: AppealFormProps) {
+export function AppealForm({ callId, callerNumber, operator, isWrapUp, onWrapUpEnd }: AppealFormProps) {
   const { toast } = useToast();
+  const [timeLeft, setTimeLeft] = useState(WRAP_UP_SECONDS);
+  const timerRef = useRef<NodeJS.Timeout | null>(null);
   
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -52,7 +60,67 @@ export function AppealForm({ callId, callerNumber, operator }: AppealFormProps) 
     },
   });
 
-  const { isSubmitting } = form.formState;
+  const { isSubmitting, getValues } = form;
+
+  const handleAutoSubmit = async () => {
+      const values = getValues();
+      if (!values.appealType || !values.description) {
+           toast({
+              title: 'Автосохранение отменено',
+              description: 'Недостаточно данных для сохранения обращения.',
+              variant: 'destructive'
+            });
+           onWrapUpEnd();
+           return;
+      }
+
+      const appealData: AppealFormData = {
+        ...values,
+        callId,
+        callerNumber,
+        operatorId: operator.id,
+        operatorName: operator.name,
+      };
+      
+      const result = await saveAppeal(appealData);
+
+      if (result.success) {
+        toast({
+          title: 'Обращение автосохранено',
+          description: 'Карточка обращения была сохранена автоматически.',
+        });
+      } else {
+        toast({
+          variant: 'destructive',
+          title: 'Ошибка автосохранения',
+          description: result.error || 'Не удалось автоматически сохранить обращение.',
+        });
+      }
+      onWrapUpEnd();
+  };
+
+  useEffect(() => {
+    if (isWrapUp) {
+      setTimeLeft(WRAP_UP_SECONDS);
+      timerRef.current = setInterval(() => {
+        setTimeLeft(prev => {
+          if (prev <= 1) {
+            if (timerRef.current) clearInterval(timerRef.current);
+            handleAutoSubmit();
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+    } else {
+        if(timerRef.current) clearInterval(timerRef.current);
+    }
+    return () => {
+        if(timerRef.current) clearInterval(timerRef.current);
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isWrapUp]);
+
 
   async function onSubmit(values: FormValues) {
     const appealData: AppealFormData = {
@@ -71,6 +139,9 @@ export function AppealForm({ callId, callerNumber, operator }: AppealFormProps) 
         description: 'Карточка обращения успешно создана.',
       });
       form.reset();
+      if(isWrapUp) {
+          onWrapUpEnd();
+      }
     } else {
       toast({
         variant: 'destructive',
@@ -84,7 +155,19 @@ export function AppealForm({ callId, callerNumber, operator }: AppealFormProps) 
     <Card>
       <CardHeader>
         <CardTitle>Карточка обращения</CardTitle>
-        <CardDescription>Заполните информацию по текущему звонку.</CardDescription>
+        <CardDescription>Заполните информацию по текущему или последнему звонку.</CardDescription>
+        {isWrapUp && (
+          <div className="pt-4 space-y-2">
+            <div className="flex items-center justify-between text-sm text-muted-foreground">
+               <div className="flex items-center gap-2">
+                  <Timer className="h-4 w-4" />
+                  <span>Время на заполнение</span>
+               </div>
+               <span className="font-mono font-semibold">{timeLeft}с</span>
+            </div>
+            <Progress value={(timeLeft / WRAP_UP_SECONDS) * 100} className="h-2" />
+          </div>
+        )}
       </CardHeader>
       <CardContent>
         <Form {...form}>

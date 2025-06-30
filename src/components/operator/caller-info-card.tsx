@@ -10,7 +10,7 @@ import {
   AlertDialogFooter,
 } from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
-import { User, Phone, MapPin, BadgeInfo, History, Calendar, PhoneOff } from 'lucide-react';
+import { User, Phone, MapPin, BadgeInfo, History, Calendar, X } from 'lucide-react';
 import { PhoneIncoming as PhoneIncomingIcon } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -20,14 +20,12 @@ import { ru } from 'date-fns/locale';
 interface CallerInfoCardProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
-  onAnswer: () => void;
-  onHangup: () => void;
   contact: CrmContact | null;
   history: Call[];
   callerId: string;
 }
 
-export function CallerInfoCard({ isOpen, onOpenChange, onAnswer, onHangup, contact, history, callerId }: CallerInfoCardProps) {
+export function CallerInfoCard({ isOpen, onOpenChange, contact, history, callerId }: CallerInfoCardProps) {
   
   const formatDate = (dateString: string) => {
     const date = parseISO(dateString);
@@ -43,7 +41,7 @@ export function CallerInfoCard({ isOpen, onOpenChange, onAnswer, onHangup, conta
             Входящий звонок от {contact?.name || callerId}
           </AlertDialogTitle>
           <AlertDialogDescription>
-            Информация о клиенте и история обращений.
+            Информация о клиенте и история обращений. Примите вызов на вашем софтфоне.
           </AlertDialogDescription>
         </AlertDialogHeader>
 
@@ -92,8 +90,7 @@ export function CallerInfoCard({ isOpen, onOpenChange, onAnswer, onHangup, conta
         </div>
 
         <AlertDialogFooter>
-          <Button variant="destructive" onClick={onHangup} className="flex-1 sm:flex-none"><PhoneOff className="mr-2"/> Отклонить</Button>
-          <Button onClick={onAnswer} className="flex-1 sm:flex-none bg-green-600 hover:bg-green-700 text-white"><PhoneIncomingIcon className="mr-2" /> Ответить</Button>
+          <Button variant="outline" onClick={() => onOpenChange(false)}><X className="mr-2 h-4 w-4" /> Закрыть</Button>
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>
