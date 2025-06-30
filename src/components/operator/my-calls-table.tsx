@@ -9,18 +9,13 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from '@/components/ui/collapsible';
-import { Button } from '@/components/ui/button';
 import { ChevronsUpDown, FileText } from 'lucide-react';
 import type { Call } from '@/lib/types';
 import { Badge } from '@/components/ui/badge';
 import { format, parseISO, isValid } from 'date-fns';
 import { ru } from 'date-fns/locale';
 import { Skeleton } from '../ui/skeleton';
+import { cn } from '@/lib/utils';
 
 type EnrichedCall = Call & {
     callerName?: string;
@@ -34,6 +29,10 @@ interface MyCallsTableProps {
 
 export function MyCallsTable({ calls, isLoading }: MyCallsTableProps) {
   const [openRow, setOpenRow] = React.useState<string | null>(null);
+
+  const toggleRow = (id: string) => {
+    setOpenRow(prev => prev === id ? null : id);
+  }
 
   const formatDate = (dateString: string) => {
     const date = parseISO(dateString);
@@ -91,32 +90,27 @@ export function MyCallsTable({ calls, isLoading }: MyCallsTableProps) {
           <TableBody>
             {calls.length > 0 ? (
               calls.map((call) => (
-                <Collapsible key={call.id} asChild open={openRow === call.id} onOpenChange={() => setOpenRow(openRow === call.id ? null : call.id)}>
-                  <>
-                    <CollapsibleTrigger asChild>
-                      <TableRow className="cursor-pointer">
-                        <TableCell>
-                          <Button variant="ghost" size="sm" className="w-9 p-0">
-                            <ChevronsUpDown className="h-4 w-4" />
-                            <span className="sr-only">Раскрыть</span>
-                          </Button>
-                        </TableCell>
-                        <TableCell className="font-medium">{call.callerNumber}</TableCell>
-                        <TableCell>{call.callerName || <span className="text-muted-foreground">Неизвестно</span>}</TableCell>
-                        <TableCell>
-                          <Badge
-                            variant={call.status === 'ANSWERED' ? 'success' : 'destructive'}
-                            className="capitalize"
-                          >
-                            {call.status}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>{formatDate(call.startTime)}</TableCell>
-                        <TableCell className="text-right">{formatDuration(call.billsec)}</TableCell>
-                      </TableRow>
-                    </CollapsibleTrigger>
-                    <CollapsibleContent asChild>
-                      <TableRow>
+                <React.Fragment key={call.id}>
+                  <TableRow onClick={() => toggleRow(call.id)} className="cursor-pointer data-[state=open]:bg-muted/50" data-state={openRow === call.id ? 'open' : 'closed'}>
+                    <TableCell>
+                      <ChevronsUpDown className="h-4 w-4 transition-transform" style={{transform: openRow === call.id ? 'rotate(180deg)' : 'none'}}/>
+                      <span className="sr-only">Раскрыть</span>
+                    </TableCell>
+                    <TableCell className="font-medium">{call.callerNumber}</TableCell>
+                    <TableCell>{call.callerName || <span className="text-muted-foreground">Неизвестно</span>}</TableCell>
+                    <TableCell>
+                      <Badge
+                        variant={call.status === 'ANSWERED' ? 'success' : 'destructive'}
+                        className="capitalize"
+                      >
+                        {call.status}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>{formatDate(call.startTime)}</TableCell>
+                    <TableCell className="text-right">{formatDuration(call.billsec)}</TableCell>
+                  </TableRow>
+                  {openRow === call.id && (
+                    <TableRow>
                         <TableCell colSpan={6}>
                           <div className="p-4 bg-muted/50 rounded-md">
                             <h4 className="font-semibold flex items-center gap-2 mb-2"><FileText className="h-4 w-4" /> Суть обращения:</h4>
@@ -128,9 +122,8 @@ export function MyCallsTable({ calls, isLoading }: MyCallsTableProps) {
                           </div>
                         </TableCell>
                       </TableRow>
-                    </CollapsibleContent>
-                  </>
-                </Collapsible>
+                  )}
+                </React.Fragment>
               ))
             ) : (
               <TableRow>
