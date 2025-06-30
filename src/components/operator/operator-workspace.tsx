@@ -146,19 +146,20 @@ export function OperatorWorkspace({ user, amiConnection, ariConnection }: Operat
     const result = await getOperatorState(ariConnection, user.extension);
     if (result.success && result.data) {
         const { endpointState, channelId, callerId } = result.data;
+        const normalizedState = endpointState?.toLowerCase();
         
-        let newStatus: CallState['status'] = 'available';
-        if (endpointState?.includes('unavailable') || endpointState?.includes('invalid')) {
+        let newStatus: CallState['status'] = 'available'; // Safer default
+        if (normalizedState === 'unavailable' || normalizedState === 'invalid') {
             newStatus = 'offline';
-        } else if (endpointState === 'ringing') {
+        } else if (normalizedState === 'ringing') {
             newStatus = 'ringing';
-        } else if (endpointState === 'inuse' || endpointState === 'busy') {
+        } else if (normalizedState === 'inuse' || normalizedState === 'busy') {
             newStatus = 'on-call';
-        } else if (endpointState === 'not_inuse') {
+        } else if (normalizedState === 'not_inuse') {
              newStatus = 'available';
-        } else if (endpointState){
-             newStatus = 'connecting';
         }
+        // The problematic `else { newStatus = 'connecting' }` is removed.
+        // Any other state from Asterisk will now correctly default to 'available'.
 
         setState(prevState => ({ ...prevState, status: newStatus, channel: channelId, callerId }));
     } else {
