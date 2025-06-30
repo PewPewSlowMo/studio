@@ -124,6 +124,7 @@ export async function getOperatorState(
     data?: {
         endpointState: string;
         channelId?: string;
+        channelName?: string;
         channelState?: string;
         callerId?: string;
     };
@@ -151,6 +152,7 @@ export async function getOperatorState(
                 data: {
                     endpointState: endpoint.state,
                     channelId: channelId,
+                    channelName: channelResult.data.name,
                     channelState: channelResult.data.state,
                     callerId: channelResult.data.caller.number,
                 },

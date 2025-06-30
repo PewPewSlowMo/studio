@@ -146,7 +146,7 @@ export function OperatorWorkspace({ user, amiConnection, ariConnection }: Operat
     const result = await getOperatorState(ariConnection, user.extension);
 
     if (result.success && result.data) {
-      const { endpointState, channelId, channelState, callerId } = result.data;
+      const { endpointState, channelId, channelName, channelState, callerId } = result.data;
       
       const stateToUse = channelState || endpointState;
       const normalizedState = stateToUse?.toLowerCase();
@@ -188,7 +188,8 @@ export function OperatorWorkspace({ user, amiConnection, ariConnection }: Operat
       setState(prevState => ({
         ...prevState,
         status: newStatus,
-        channel: channelId,
+        channelId: channelId,
+        channelName: channelName,
         callerId: newStatus === 'ringing' || newStatus === 'on-call' ? callerId : undefined,
       }));
     } else {
@@ -236,10 +237,10 @@ export function OperatorWorkspace({ user, amiConnection, ariConnection }: Operat
   };
   
   const handleAnswer = async () => {
-    if (!state.channel) return;
+    if (!state.channelName) return;
     setIsProcessing(true);
     setIsCallerInfoOpen(false);
-    const result = await answerCall(amiConnection, state.channel);
+    const result = await answerCall(amiConnection, state.channelName);
     if (!result.success) {
        toast({ variant: 'destructive', title: 'Answer Failed', description: result.error });
     }
@@ -248,10 +249,10 @@ export function OperatorWorkspace({ user, amiConnection, ariConnection }: Operat
   };
   
   const handleHangup = async () => {
-    if (!state.channel) return;
+    if (!state.channelName) return;
     setIsProcessing(true);
     setIsCallerInfoOpen(false);
-    const result = await hangupCall(amiConnection, state.channel);
+    const result = await hangupCall(amiConnection, state.channelName);
     if (!result.success) {
       toast({ variant: 'destructive', title: 'Hangup Failed', description: result.error });
     }
@@ -261,9 +262,9 @@ export function OperatorWorkspace({ user, amiConnection, ariConnection }: Operat
   };
 
   const RightPanel = () => {
-    if (state.status === 'on-call' && state.channel && state.callerId) {
+    if (state.status === 'on-call' && state.channelId && state.callerId) {
         return <AppealForm 
-            callId={state.channel} 
+            callId={state.channelId} 
             callerNumber={state.callerId} 
             operator={user} 
         />;
