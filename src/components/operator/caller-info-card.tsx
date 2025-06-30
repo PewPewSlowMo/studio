@@ -187,7 +187,6 @@ export function CallerInfoCard({ isOpen, onClose, contact, onContactUpdate, hist
           <div className="space-y-4">
             <div className="flex justify-between items-center">
                 <h3 className="font-semibold text-lg">Информация о звонящем</h3>
-                <span className="text-xs font-mono text-muted-foreground">ID: {callState.uniqueId || '...'}</span>
             </div>
             <div className="space-y-3 p-3 bg-muted/50 rounded-lg text-sm">
                 <div className="flex items-center gap-3"><Phone className="h-4 w-4 text-muted-foreground" /> <span>{callState.callerNumber}</span></div>

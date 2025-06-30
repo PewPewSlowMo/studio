@@ -187,32 +187,19 @@ export async function getOperatorState(
 
     // --- New, more robust data extraction ---
     
-    // 3. Find the true initiating channel to get the correct context
-    let initiatingChannelId: string | undefined = undefined;
-    if (operatorChannel.creator) {
-        initiatingChannelId = operatorChannel.creator;
-    } else if (operatorChannel.bridge_ids && operatorChannel.bridge_ids.length > 0) {
-        const bridgeId = operatorChannel.bridge_ids[0];
-        const bridgeResult = await fetchFromAri(connection, `bridges/${bridgeId}`, AriBridgeSchema);
-        if (bridgeResult.success && bridgeResult.data) {
-            initiatingChannelId = bridgeResult.data.channels.find(id => id !== operatorChannelId);
-        }
-    }
-    
-    const channelToQueryForIds = initiatingChannelId || operatorChannelId;
+    // 3. Get the correct UniqueID. The `CDR(linkedid)` on the operator's channel
+    // points to the `CDR(uniqueid)` of the caller's channel, which is what's
+    // logged in the main CDR record. This is the most reliable way to link them.
+    const linkedIdResult = await getAriChannelVar(connection, operatorChannelId, 'CDR(linkedid)');
+    let uniqueId = linkedIdResult.success ? linkedIdResult.data?.value : undefined;
 
-    // 4. Get the CDR(uniqueid) - this is the MOST important ID for linking records
-    const cdrUniqueIdResult = await getAriChannelVar(connection, channelToQueryForIds, 'CDR(uniqueid)');
-    let uniqueId: string | undefined = cdrUniqueIdResult.success ? cdrUniqueIdResult.data?.value : undefined;
-
-    // Fallback for cases where CDR(uniqueid) might not be set yet.
-    // TOUCH_MONITOR is often set early with the same value.
-    if (!uniqueId) {
-        const touchMonitorResult = await getAriChannelVar(connection, channelToQueryForIds, 'TOUCH_MONITOR');
-        if (touchMonitorResult.success && touchMonitorResult.data?.value) {
-            uniqueId = touchMonitorResult.data.value;
-        }
+    // 4. If there is no `linkedid` (e.g., a direct call, not from a queue),
+    // it means the operator's channel IS the main channel, so we use its own `uniqueid`.
+    if (!uniqueId || uniqueId === '') {
+        const cdrUniqueIdResult = await getAriChannelVar(connection, operatorChannelId, 'CDR(uniqueid)');
+        uniqueId = cdrUniqueIdResult.success ? cdrUniqueIdResult.data?.value : undefined;
     }
+
 
     // 5. Get the Caller ID, prioritizing the custom CRM_SOURCE variable
     let effectiveCallerId: string | undefined = undefined;
@@ -221,6 +208,17 @@ export async function getOperatorState(
         effectiveCallerId = crmSourceVarResult.data.value;
     } else {
         // Fallback: get details from the initiating channel
+        let initiatingChannelId: string | undefined = undefined;
+        if (operatorChannel.creator) {
+            initiatingChannelId = operatorChannel.creator;
+        } else if (operatorChannel.bridge_ids && operatorChannel.bridge_ids.length > 0) {
+            const bridgeId = operatorChannel.bridge_ids[0];
+            const bridgeResult = await fetchFromAri(connection, `bridges/${bridgeId}`, AriBridgeSchema);
+            if (bridgeResult.success && bridgeResult.data) {
+                initiatingChannelId = bridgeResult.data.channels.find(id => id !== operatorChannelId);
+            }
+        }
+        
         if (initiatingChannelId) {
             const callerChannelResult = await fetchFromAri(connection, `channels/${initiatingChannelId}`, AriChannelSchema);
             if (callerChannelResult.success && callerChannelResult.data) {
