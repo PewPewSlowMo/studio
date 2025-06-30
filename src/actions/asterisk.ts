@@ -155,7 +155,7 @@ export async function getOperatorState(
         channelState?: string;
         callerId?: string;
         queue?: string;
-        uniqueId?: string;
+        uniqueId?: string; // This is the CDR uniqueid
     };
     error?: string;
 }> {
@@ -166,16 +166,10 @@ export async function getOperatorState(
     }
     const endpoint = endpointResult.data;
     
-    // If no active channel, operator is available or offline based on endpoint state
     const operatorChannelId = endpoint.channel_ids.length > 0 ? endpoint.channel_ids[0] : undefined;
     if (!operatorChannelId) {
         const status = (endpoint.state === 'unavailable' || endpoint.state === 'invalid') ? 'offline' : 'available';
-        return { 
-            success: true, 
-            data: { 
-                endpointState: status 
-            } 
-        };
+        return { success: true, data: { endpointState: status } };
     }
 
     // 2. Get the operator's channel details
@@ -185,64 +179,54 @@ export async function getOperatorState(
         AriChannelSchema
     );
 
-    // If channel has disappeared, fall back to endpoint state
     if (!operatorChannelResult.success || !operatorChannelResult.data) {
         const status = (endpoint.state === 'unavailable' || endpoint.state === 'invalid') ? 'offline' : 'available';
         return { success: true, data: { endpointState: status } };
     }
     const operatorChannel = operatorChannelResult.data;
 
-    // --- Data Extraction ---
-    let effectiveCallerId = operatorChannel.caller.number;
-    let uniqueId = operatorChannel.id;
-    let queue = operatorChannel.dialplan?.context;
-
-    // --- Find the Initiating Channel (the real caller) to get correct UniqueID and fallback CallerID
+    // --- New, more robust data extraction ---
+    
+    // 3. Find the true initiating channel to get the correct context
     let initiatingChannelId: string | undefined = undefined;
-
-    // Method A (Primary): Use the 'creator' field. It's the most direct link.
     if (operatorChannel.creator) {
         initiatingChannelId = operatorChannel.creator;
-    }
-    // Method B (Fallback): If no creator, find the peer in the bridge.
-    else if (operatorChannel.bridge_ids && operatorChannel.bridge_ids.length > 0) {
+    } else if (operatorChannel.bridge_ids && operatorChannel.bridge_ids.length > 0) {
         const bridgeId = operatorChannel.bridge_ids[0];
-        const bridgeResult = await fetchFromAri(
-            connection,
-            `bridges/${bridgeId}`,
-            AriBridgeSchema
-        );
+        const bridgeResult = await fetchFromAri(connection, `bridges/${bridgeId}`, AriBridgeSchema);
         if (bridgeResult.success && bridgeResult.data) {
-            initiatingChannelId = bridgeResult.data.channels.find(
-                (id) => id !== operatorChannelId
-            );
+            initiatingChannelId = bridgeResult.data.channels.find(id => id !== operatorChannelId);
         }
     }
     
-    // Primary Method for Caller ID: Check for __CRM_SOURCE on operator's channel
+    const channelToQueryForIds = initiatingChannelId || operatorChannelId;
+
+    // 4. Get the CDR(uniqueid) - this is the MOST important ID for linking records
+    const cdrUniqueIdResult = await getAriChannelVar(connection, channelToQueryForIds, 'CDR(uniqueid)');
+    const uniqueId = cdrUniqueIdResult.success ? cdrUniqueIdResult.data?.value : channelToQueryForIds;
+
+    // 5. Get the Caller ID, prioritizing the custom CRM_SOURCE variable
+    let effectiveCallerId: string | undefined = undefined;
     const crmSourceVarResult = await getAriChannelVar(connection, operatorChannelId, '__CRM_SOURCE');
     if (crmSourceVarResult.success && crmSourceVarResult.data?.value) {
         effectiveCallerId = crmSourceVarResult.data.value;
-    }
-
-    // Get Details from the Initiating Channel if found
-    if (initiatingChannelId) {
-        const callerChannelResult = await fetchFromAri(
-            connection,
-            `channels/${initiatingChannelId}`,
-            AriChannelSchema
-        );
-        if (callerChannelResult.success && callerChannelResult.data) {
-            const callerChannel = callerChannelResult.data;
-            uniqueId = callerChannel.id; // This is the uniqueid that will be in the CDR log.
-            queue = callerChannel.dialplan?.context || queue;
-            // Fallback Caller ID if __CRM_SOURCE was not found
-            if (!crmSourceVarResult.success || !crmSourceVarResult.data?.value) {
-                effectiveCallerId = callerChannel.caller.number;
+    } else {
+        // Fallback: get details from the initiating channel
+        if (initiatingChannelId) {
+            const callerChannelResult = await fetchFromAri(connection, `channels/${initiatingChannelId}`, AriChannelSchema);
+            if (callerChannelResult.success && callerChannelResult.data) {
+                effectiveCallerId = callerChannelResult.data.caller.number;
             }
         }
+        // If all else fails, use the operator's channel caller info
+        if (!effectiveCallerId) {
+            effectiveCallerId = operatorChannel.caller.number;
+        }
     }
-    
+
+    // 6. Get other details
+    const queue = operatorChannel.dialplan?.context;
+
     // --- Determine Final Status ---
     const stateToUse = operatorChannel.state || endpoint.state;
     const normalizedState = stateToUse?.toLowerCase();
