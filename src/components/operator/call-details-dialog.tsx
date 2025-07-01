@@ -15,6 +15,8 @@ import { getAppeals } from '@/actions/appeals';
 import { findContactByPhone } from '@/actions/crm';
 import { CrmEditor } from './crm-editor';
 import { Separator } from '@/components/ui/separator';
+import { format, parseISO, isValid } from 'date-fns';
+import { ru } from 'date-fns/locale';
 
 interface CallDetailsDialogProps {
   isOpen: boolean;
@@ -22,6 +24,25 @@ interface CallDetailsDialogProps {
   call: Call | null;
   isCrmEditable?: boolean;
 }
+
+const statusMap: Record<string, string> = {
+    ANSWERED: 'Отвечен',
+    'NO ANSWER': 'Без ответа',
+    BUSY: 'Занято',
+    FAILED: 'Ошибка',
+};
+
+const formatDate = (dateString: string) => {
+    const date = parseISO(dateString);
+    return isValid(date) ? format(date, 'dd.MM.yyyy HH:mm:ss', { locale: ru }) : 'Неверная дата';
+};
+
+const formatDuration = (seconds: number | undefined) => {
+    if (seconds === undefined || seconds === null) return '00:00';
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+};
 
 export function CallDetailsDialog({ isOpen, onOpenChange, call, isCrmEditable = true }: CallDetailsDialogProps) {
   const [appeal, setAppeal] = useState<Appeal | null>(null);
@@ -100,6 +121,19 @@ export function CallDetailsDialog({ isOpen, onOpenChange, call, isCrmEditable = 
           </div>
         ) : (
           <div className="grid gap-6 py-4">
+            <div className="space-y-4">
+                <h3 className="font-semibold text-lg">Информация о звонке</h3>
+                <Separator />
+                <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
+                    <p><strong>Оператор:</strong> {call?.operatorName || 'N/A'}</p>
+                    <p><strong>Статус:</strong> {call?.status ? <Badge variant={call.status === 'ANSWERED' ? 'success' : 'destructive'}>{statusMap[call.status] || call.status}</Badge> : 'N/A'}</p>
+                    <p><strong>Дата:</strong> {call ? formatDate(call.startTime) : 'N/A'}</p>
+                    <p><strong>Очередь:</strong> {call?.queue || 'Без очереди'}</p>
+                    <p><strong>Время разговора:</strong> {call ? formatDuration(call.billsec) : 'N/A'}</p>
+                    <p><strong>Время ожидания:</strong> {call ? formatDuration(call.waitTime) : 'N/A'}</p>
+                </div>
+            </div>
+
             <div className="space-y-4">
                 <div className="flex justify-between items-center">
                     <h3 className="font-semibold text-lg">Детали обращения</h3>
