@@ -1,3 +1,4 @@
+
 'use server';
 
 import { z } from 'zod';
@@ -120,12 +121,15 @@ export async function getCallById(connection: CdrConnection, callId: string): Pr
     try {
         dbConnection = await createCdrConnection(connection);
         
+        const callIdBase = callId.includes('.') ? callId.substring(0, callId.lastIndexOf('.')) : callId;
+        const searchTerm = `${callIdBase}.%`;
+
         const sql = `SELECT 
                 calldate, clid, src, dst, dcontext, channel, dstchannel, 
                 lastapp, lastdata, duration, billsec, disposition, uniqueid 
-             FROM cdr WHERE uniqueid = ? OR linkedid = ? ORDER BY calldate DESC LIMIT 1`;
+             FROM cdr WHERE (uniqueid LIKE ? OR linkedid LIKE ? OR uniqueid = ? OR linkedid = ?) ORDER BY calldate DESC LIMIT 1`;
         
-        const [rows] = await dbConnection.execute(sql, [callId, callId]);
+        const [rows] = await dbConnection.execute(sql, [searchTerm, searchTerm, callId, callId]);
         const results = rows as any[];
 
         if (results.length === 0) {
