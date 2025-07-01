@@ -104,15 +104,17 @@ export async function getFollowUpAppeals(operatorId: string): Promise<(Appeal & 
     const crmMap = new Map(crmData.map(c => [c.phoneNumber, c.name]));
 
     const followUpAppeals = appeals
-        .filter(appeal => appeal.operatorId === operatorId && appeal.followUp)
+        .filter(appeal => 
+            appeal.operatorId === operatorId && // Belongs to this operator
+            appeal.followUp &&                  // Follow-up is required
+            !appeal.followUpCompleted           // And it's not completed yet
+        )
         .map(appeal => ({
             ...appeal,
             callerName: crmMap.get(appeal.callerNumber)
         }))
         .sort((a, b) => {
-            if (a.followUpCompleted !== b.followUpCompleted) {
-                return a.followUpCompleted ? 1 : -1;
-            }
+            // Sort by creation date, newest first
             return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
         });
 
