@@ -50,20 +50,45 @@ export async function saveAppeal(data: AppealFormData): Promise<{ success: boole
     const validatedData = AppealFormSchema.parse(data);
     const appeals = await readAppeals();
 
-    const newAppeal: Appeal = {
-      id: crypto.randomUUID(),
-      ...validatedData,
-      resolution: validatedData.resolution || '',
-      notes: validatedData.notes || '',
-      createdAt: new Date().toISOString(),
-      followUpCompleted: false,
-    };
+    const existingAppealIndex = appeals.findIndex(a => a.callId === validatedData.callId);
 
-    appeals.unshift(newAppeal);
+    let finalAppeal: Appeal;
+
+    if (existingAppealIndex > -1) {
+      // Update existing appeal
+      const existingAppeal = appeals[existingAppealIndex];
+      finalAppeal = {
+        ...existingAppeal, // Preserve id, createdAt, etc.
+        ...validatedData,   // Apply new data from the form
+        resolution: validatedData.resolution || '', // Ensure fields are not undefined
+        notes: validatedData.notes || '',
+      };
+      // Explicitly check if `followUp` is false to reset completed status
+      if (validatedData.followUp === false) {
+          finalAppeal.followUpCompleted = false;
+      }
+
+      appeals[existingAppealIndex] = finalAppeal;
+    } else {
+      // Create new appeal
+      finalAppeal = {
+        id: crypto.randomUUID(),
+        ...validatedData,
+        resolution: validatedData.resolution || '',
+        notes: validatedData.notes || '',
+        createdAt: new Date().toISOString(),
+        followUpCompleted: false, // Default for new appeals
+      };
+      appeals.unshift(finalAppeal);
+    }
+    
     await writeAppeals(appeals);
     
+    // Revalidate paths that consume this data
     revalidatePath('/operator');
-    return { success: true, appeal: newAppeal };
+    revalidatePath('/my-calls');
+    
+    return { success: true, appeal: finalAppeal };
   } catch (e) {
     const message = e instanceof Error ? e.message : 'An unknown error occurred.';
     console.error('saveAppeal failed:', message);
