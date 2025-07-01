@@ -117,7 +117,8 @@
     "satisfaction": "n/a",
     "notes": "123123123",
     "followUp": true,
-    "createdAt": "2025-06-30T13:19:12.785Z"
+    "createdAt": "2025-06-30T13:19:12.785Z",
+    "followUpCompleted": true
   },
   {
     "id": "7f8b9c36-9eee-46a9-8ecd-b88a92a29f25",
@@ -132,7 +133,8 @@
     "satisfaction": "n/a",
     "notes": "123123123",
     "followUp": true,
-    "createdAt": "2025-06-30T13:19:06.821Z"
+    "createdAt": "2025-06-30T13:19:06.821Z",
+    "followUpCompleted": true
   },
   {
     "id": "66f79442-0180-4e64-bfb7-7ae24f5bced6",

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback, useRef, Suspense, useMemo } from 'react';
-import type { User, Call, CrmContact, CallState, AppConfig } from '@/lib/types';
+import type { User, Call, CrmContact, CallState, AppConfig, Appeal } from '@/lib/types';
 import { getConfig } from '@/actions/config';
 import { getOperatorState } from '@/actions/asterisk';
 import { findContactByPhone } from '@/actions/crm';
@@ -13,9 +13,12 @@ import { cn } from '@/lib/utils';
 import { FollowUpList } from '@/components/operator/follow-up-list';
 import { DateRangePicker } from '@/components/shared/date-range-picker';
 import { useSearchParams } from 'next/navigation';
-import { getCallHistory, type DateRangeParams } from '@/actions/cdr';
+import { getCallHistory, getCallById, type DateRangeParams } from '@/actions/cdr';
 import { subDays, format, parseISO, isValid } from 'date-fns';
 import { Skeleton } from '@/components/ui/skeleton';
+import { CallDetailsDialog } from '@/components/operator/call-details-dialog';
+import { useToast } from '@/hooks/use-toast';
+import { getUsers } from '@/actions/users';
 
 function OperatorStatusCard({ user, status }: { user: User; status: CallState['status'] | 'wrap-up' }) {
     const statusConfig = {
@@ -202,6 +205,10 @@ export default function OperatorPage() {
     const [callHistory, setCallHistory] = useState<Call[]>([]);
     const [isModalOpen, setIsModalOpen] = useState(false);
     
+    const [selectedCall, setSelectedCall] = useState<Call | null>(null);
+    const [isDetailsOpen, setIsDetailsOpen] = useState(false);
+    const { toast } = useToast();
+    
     const previousStatusRef = useRef<string | null>(null);
 
     useEffect(() => {
@@ -303,6 +310,31 @@ export default function OperatorPage() {
     const handleContactUpdate = (updatedContact: CrmContact) => {
         setCrmContact(updatedContact);
     }
+
+    const handleFollowUpClick = async (appeal: Appeal) => {
+        if (!config) return;
+        const callResult = await getCallById(config.cdr, appeal.callId);
+        
+        if (callResult.success && callResult.data) {
+            const users = await getUsers();
+            const userMap = new Map(users.filter(u => u.extension).map(user => [user.extension, user.name]));
+            const enrichedCall = {
+                ...callResult.data,
+                operatorName: callResult.data.operatorExtension
+                    ? (userMap.get(callResult.data.operatorExtension) || `Ext. ${callResult.data.operatorExtension}`)
+                    : 'N/A',
+            };
+
+            setSelectedCall(enrichedCall);
+            setIsDetailsOpen(true);
+        } else {
+            toast({
+                variant: 'destructive',
+                title: 'Ошибка',
+                description: 'Не удалось загрузить детали звонка для этого обращения.',
+            });
+        }
+    };
     
     if (isLoading) {
         return (
@@ -360,6 +392,12 @@ export default function OperatorPage() {
                     isWrapUp={isWrapUp}
                 />
             )}
+             <CallDetailsDialog
+                isOpen={isDetailsOpen}
+                onOpenChange={setIsDetailsOpen}
+                call={selectedCall}
+                isCrmEditable={false}
+            />
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 <div className="lg:col-span-2 space-y-6">
                     <OperatorStatusCard user={user} status={isWrapUp ? 'wrap-up' : callState.status} />
@@ -367,7 +405,7 @@ export default function OperatorPage() {
                 </div>
                 <div className="lg:col-span-1">
                      <Suspense fallback={<Card><CardContent className="flex justify-center items-center h-72"><Loader2 className="animate-spin" /></CardContent></Card>}>
-                        <FollowUpList operatorId={user.id} />
+                        <FollowUpList operatorId={user.id} onItemClick={handleFollowUpClick} />
                     </Suspense>
                 </div>
             </div>

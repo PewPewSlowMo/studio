@@ -6,15 +6,17 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { toggleFollowUpStatus, getFollowUpAppeals } from '@/actions/appeals';
 import { useToast } from '@/hooks/use-toast';
-import { PhoneOutgoing, MessageCircleWarning, Loader2 } from 'lucide-react';
+import { MessageCircleWarning, Loader2 } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 type AppealWithCaller = Appeal & { callerName?: string };
 
 interface FollowUpListProps {
     operatorId: string;
+    onItemClick: (appeal: AppealWithCaller) => void;
 }
 
-export function FollowUpList({ operatorId }: FollowUpListProps) {
+export function FollowUpList({ operatorId, onItemClick }: FollowUpListProps) {
     const [appeals, setAppeals] = useState<AppealWithCaller[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [isPending, startTransition] = useTransition();
@@ -73,30 +75,28 @@ export function FollowUpList({ operatorId }: FollowUpListProps) {
             <CardContent>
                 <ScrollArea className="h-[calc(100vh-22rem)]">
                     {appeals.length > 0 ? (
-                        <div className="space-y-4">
+                        <div className="space-y-2">
                             {appeals.map((appeal) => (
-                                <div key={appeal.id} className="flex items-center">
+                                <div key={appeal.id} className="flex items-start gap-3 p-2 rounded-md hover:bg-muted">
                                     <Checkbox
                                         id={`follow-up-${appeal.id}`}
+                                        className="mt-1"
                                         checked={!!appeal.followUpCompleted}
                                         onCheckedChange={() => handleToggle(appeal.id)}
                                         aria-label="Mark as completed"
                                         disabled={isPending}
                                     />
-                                    <div className="ml-4 grid gap-1.5 leading-none">
-                                        <label
-                                            htmlFor={`follow-up-${appeal.id}`}
-                                            className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                                        >
+                                    <Button variant="link" className="grid flex-1 gap-0.5 p-0 h-auto text-left leading-none whitespace-normal" onClick={() => onItemClick(appeal)}>
+                                        <span className="font-medium text-foreground">
                                             {appeal.callerName || appeal.callerNumber}
-                                        </label>
-                                        <p className="text-sm text-muted-foreground truncate">
+                                        </span>
+                                        <span className="text-sm text-muted-foreground">
+                                            Тел: {appeal.callerNumber}
+                                        </span>
+                                        <p className="text-sm text-muted-foreground truncate max-w-full">
                                             {appeal.description}
                                         </p>
-                                    </div>
-                                    <button className="ml-auto p-1 text-muted-foreground hover:text-foreground">
-                                        <PhoneOutgoing className="h-4 w-4" />
-                                    </button>
+                                    </Button>
                                 </div>
                             ))}
                         </div>

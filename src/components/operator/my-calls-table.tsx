@@ -15,13 +15,16 @@ import { format, parseISO, isValid } from 'date-fns';
 import { ru } from 'date-fns/locale';
 import { Skeleton } from '../ui/skeleton';
 import { Button } from '../ui/button';
-import { ArrowUp, ArrowDown, FileText } from 'lucide-react';
+import { ArrowUp, ArrowDown, FileText, PhoneOutgoing } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 type EnrichedCall = Call & {
     callerName?: string;
     cardFilled?: boolean;
     category?: Appeal['category'];
+    followUp?: boolean;
+    followUpCompleted?: boolean;
 };
 
 interface MyCallsTableProps {
@@ -144,6 +147,7 @@ export function MyCallsTable({ calls, isLoading, onRowClick }: MyCallsTableProps
   );
 
   return (
+    <TooltipProvider>
     <div className="rounded-md border">
       {isLoading ? <TableSkeleton /> : (
         <Table>
@@ -163,7 +167,24 @@ export function MyCallsTable({ calls, isLoading, onRowClick }: MyCallsTableProps
                 <TableRow key={call.id + call.startTime} onClick={() => onRowClick(call)} className="cursor-pointer">
                     <TableCell className="font-medium">
                         <div className="flex items-center gap-2">
-                           <FileText className={cn('h-4 w-4 shrink-0', call.cardFilled ? 'text-green-500' : 'text-red-500')} />
+                            <Tooltip>
+                                <TooltipTrigger>
+                                    <FileText className={cn('h-4 w-4 shrink-0', call.cardFilled ? 'text-green-500' : 'text-red-500')} />
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                    <p>{call.cardFilled ? 'Карточка заполнена' : 'Карточка не заполнена'}</p>
+                                </TooltipContent>
+                            </Tooltip>
+                            {call.followUp && (
+                                <Tooltip>
+                                    <TooltipTrigger>
+                                        <PhoneOutgoing className={cn('h-4 w-4 shrink-0', call.followUpCompleted ? 'text-green-500' : 'text-yellow-500')} />
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                        <p>{call.followUpCompleted ? 'Перезвон выполнен' : 'Требуется перезвон'}</p>
+                                    </TooltipContent>
+                                </Tooltip>
+                            )}
                            <span>{call.callerNumber}</span>
                         </div>
                     </TableCell>
@@ -197,5 +218,6 @@ export function MyCallsTable({ calls, isLoading, onRowClick }: MyCallsTableProps
         </Table>
       )}
     </div>
+    </TooltipProvider>
   );
 }

@@ -115,6 +115,54 @@ export async function getCallHistory(connection: CdrConnection, dateRange?: Date
     }
 }
 
+export async function getCallById(connection: CdrConnection, callId: string): Promise<{ success: boolean; data?: Call, error?: string }> {
+    let dbConnection;
+    try {
+        dbConnection = await createCdrConnection(connection);
+        
+        const sql = `SELECT 
+                calldate, clid, src, dst, dcontext, channel, dstchannel, 
+                lastapp, lastdata, duration, billsec, disposition, uniqueid 
+             FROM cdr WHERE uniqueid = ? LIMIT 1`;
+        
+        const [rows] = await dbConnection.execute(sql, [callId]);
+        const results = rows as any[];
+
+        if (results.length === 0) {
+            return { success: false, error: 'Call not found' };
+        }
+
+        const row = results[0];
+        const operatorExtMatch = row.dstchannel?.match(/(?:PJSIP|SIP)\/(\w+)/);
+        const operatorExtension = operatorExtMatch ? operatorExtMatch[1] : undefined;
+        const waitTime = row.duration - row.billsec;
+
+        const call: Call = {
+            id: row.uniqueid,
+            callerNumber: row.src,
+            calledNumber: row.dst,
+            operatorExtension: operatorExtension,
+            status: row.disposition,
+            startTime: row.calldate.toISOString(),
+            duration: row.duration,
+            billsec: row.billsec,
+            waitTime: waitTime >= 0 ? waitTime : 0,
+            queue: row.dcontext,
+        };
+
+        return { success: true, data: call };
+
+    } catch (e) {
+        const message = e instanceof Error ? e.message : 'An unknown error occurred.';
+        console.error('getCallById failed:', message);
+        return { success: false, error: message };
+    } finally {
+        if (dbConnection) {
+            await dbConnection.end();
+        }
+    }
+}
+
 export async function getMissedCalls(connection: CdrConnection, dateRange?: DateRangeParams): Promise<{ success: boolean; data?: Call[], error?: string }> {
     let dbConnection;
     try {

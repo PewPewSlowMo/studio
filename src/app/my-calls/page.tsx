@@ -18,6 +18,8 @@ type EnrichedCall = Call & {
     callerName?: string;
     cardFilled?: boolean;
     category?: Appeal['category'];
+    followUp?: boolean;
+    followUpCompleted?: boolean;
 };
 
 export default function MyCallsPage() {
@@ -80,6 +82,8 @@ export default function MyCallsPage() {
                             callerName: contactMap.get(call.callerNumber),
                             cardFilled: !!appeal,
                             category: appeal?.category,
+                            followUp: appeal?.followUp,
+                            followUpCompleted: appeal?.followUpCompleted,
                         }
                     });
 
