@@ -6,6 +6,7 @@ import crypto from 'crypto';
 import { z } from 'zod';
 import type { Appeal } from '@/lib/types';
 import { revalidatePath } from 'next/cache';
+import { getContacts } from './crm';
 
 const APPEALS_DB_PATH = path.join(process.cwd(), 'data', 'appeals.json');
 
@@ -55,11 +56,13 @@ export async function saveAppeal(data: AppealFormData): Promise<{ success: boole
       resolution: validatedData.resolution || '',
       notes: validatedData.notes || '',
       createdAt: new Date().toISOString(),
+      followUpCompleted: false,
     };
 
     appeals.unshift(newAppeal);
     await writeAppeals(appeals);
     
+    revalidatePath('/operator');
     return { success: true, appeal: newAppeal };
   } catch (e) {
     const message = e instanceof Error ? e.message : 'An unknown error occurred.';
@@ -70,4 +73,48 @@ export async function saveAppeal(data: AppealFormData): Promise<{ success: boole
 
 export async function getAppeals(): Promise<Appeal[]> {
     return readAppeals();
+}
+
+export async function toggleFollowUpStatus(appealId: string): Promise<{ success: boolean; error?: string }> {
+  try {
+    const appeals = await readAppeals();
+    const appealIndex = appeals.findIndex(a => a.id === appealId);
+
+    if (appealIndex === -1) {
+      return { success: false, error: 'Appeal not found.' };
+    }
+
+    appeals[appealIndex].followUpCompleted = !appeals[appealIndex].followUpCompleted;
+    await writeAppeals(appeals);
+
+    revalidatePath('/operator');
+    return { success: true };
+  } catch (e) {
+    const message = e instanceof Error ? e.message : 'An unknown error occurred.';
+    return { success: false, error: message };
+  }
+}
+
+export async function getFollowUpAppeals(operatorId: string): Promise<(Appeal & { callerName?: string })[]> {
+    const [appeals, crmData] = await Promise.all([
+        readAppeals(),
+        getContacts()
+    ]);
+    
+    const crmMap = new Map(crmData.map(c => [c.phoneNumber, c.name]));
+
+    const followUpAppeals = appeals
+        .filter(appeal => appeal.operatorId === operatorId && appeal.followUp)
+        .map(appeal => ({
+            ...appeal,
+            callerName: crmMap.get(appeal.callerNumber)
+        }))
+        .sort((a, b) => {
+            if (a.followUpCompleted !== b.followUpCompleted) {
+                return a.followUpCompleted ? 1 : -1;
+            }
+            return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+        });
+
+    return followUpAppeals;
 }

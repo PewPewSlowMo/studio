@@ -24,6 +24,8 @@ import {
   Sun,
   Cpu,
   Loader2,
+  History,
+  UserSearch,
 } from 'lucide-react';
 import { usePathname, useRouter } from 'next/navigation';
 import Link from 'next/link';
@@ -43,6 +45,8 @@ import { useTheme } from 'next-themes';
 
 const allMenuItems: Array<{ href: string; label: string; icon: React.ElementType; roles: UserRole[] }> = [
     { href: '/operator', label: 'Рабочее место', icon: Cpu, roles: ['operator'] },
+    { href: '/my-calls', label: 'Мои звонки', icon: History, roles: ['operator'] },
+    { href: '/crm-search', label: 'Поиск CRM', icon: UserSearch, roles: ['operator'] },
     { href: '/', label: 'Дашборд', icon: LayoutDashboard, roles: ['admin', 'supervisor', 'manager'] },
     { href: '/reports', label: 'Отчет по операторам', icon: Users, roles: ['admin', 'supervisor', 'manager'] },
     { href: '/queue-reports', label: 'Отчет по очередям', icon: Phone, roles: ['admin', 'supervisor', 'manager'] },
@@ -105,6 +109,8 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
     if (pathname.startsWith('/queue-reports')) return 'Отчет по очередям';
     if (pathname.startsWith('/analytics')) return 'Аналитика';
     if (pathname.startsWith('/operator')) return 'Рабочее место';
+    if (pathname.startsWith('/my-calls')) return 'Мои звонки';
+    if (pathname.startsWith('/crm-search')) return 'Поиск CRM';
     return 'Дашборд';
   }
   

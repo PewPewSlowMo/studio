@@ -1,15 +1,186 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { OperatorWorkspace } from '@/components/operator/operator-workspace';
-import { getConfig, type AppConfig } from '@/actions/config';
-import { AlertTriangle, Loader2 } from 'lucide-react';
+import { useState, useEffect, useCallback, useRef, Suspense } from 'react';
+import type { User, Call, CrmContact, CallState, AppConfig } from '@/lib/types';
+import { getConfig } from '@/actions/config';
+import { getOperatorState } from '@/actions/asterisk';
+import { findContactByPhone } from '@/actions/crm';
+import { CallerInfoCard } from '@/components/operator/caller-info-card';
+import { AlertTriangle, Loader2, User as UserIcon, Phone, Clock, MessageSquare } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import type { User } from '@/lib/types';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { MyCallsTab } from '@/components/operator/my-calls-tab';
-import { MyKpiTab } from '@/components/operator/my-kpi-tab';
-import { CrmTab } from '@/components/operator/crm-tab';
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
+import { cn } from '@/lib/utils';
+import { FollowUpList } from '@/components/operator/follow-up-list';
+import { DateRangePicker } from '@/components/shared/date-range-picker';
+import { useSearchParams } from 'next/navigation';
+import { getCallHistory, type DateRangeParams } from '@/actions/cdr';
+import { subDays, format, parseISO, isValid } from 'date-fns';
+import { Skeleton } from '@/components/ui/skeleton';
+
+function OperatorStatusCard({ user, status }: { user: User; status: CallState['status'] | 'wrap-up' }) {
+    const statusConfig = {
+      offline: { text: 'Оффлайн', color: 'bg-gray-500' },
+      available: { text: 'Доступен', color: 'bg-green-500' },
+      ringing: { text: 'Входящий звонок', color: 'bg-yellow-500 animate-pulse' },
+      'on-call': { text: 'В разговоре', color: 'bg-red-500' },
+      connecting: { text: 'Соединение...', color: 'bg-blue-500' },
+      'wrap-up': { text: 'Пост-обработка', color: 'bg-indigo-500' },
+    };
+  
+    const currentStatus = statusConfig[status] || statusConfig.offline;
+  
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>Статус оператора</CardTitle>
+          <CardDescription>Ваше текущее состояние в системе.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-center justify-between p-4 rounded-lg bg-muted">
+            <div className="flex items-center gap-3">
+              <UserIcon className="h-5 w-5 text-muted-foreground" />
+              <span className="font-semibold">
+                {user.name} (доб. {user.extension})
+              </span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className={cn('h-3 w-3 rounded-full', currentStatus.color)} />
+              <span className="font-medium text-sm">{currentStatus.text}</span>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    );
+}
+
+function KpiCard({ title, value, icon: Icon }: { title: string, value: string, icon: React.ElementType }) {
+    return (
+        <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">{title}</CardTitle>
+                <Icon className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+                <div className="text-2xl font-bold">{value}</div>
+            </CardContent>
+        </Card>
+    );
+}
+
+function KpiSkeleton() {
+    return (
+        <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <Skeleton className="h-4 w-24" />
+                <Skeleton className="h-4 w-4" />
+            </CardHeader>
+            <CardContent>
+                <Skeleton className="h-8 w-16" />
+            </CardContent>
+        </Card>
+    );
+}
+
+function MyKpiComponent({ user }: { user: User }) {
+    const searchParams = useSearchParams();
+    const [calls, setCalls] = useState<Call[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
+
+    useEffect(() => {
+        const fetchCalls = async () => {
+            if (!user.extension) {
+                setError('У пользователя нет внутреннего номера.');
+                setIsLoading(false);
+                return;
+            }
+            setIsLoading(true);
+            setError(null);
+            try {
+                const toParam = searchParams.get('to');
+                const fromParam = searchParams.get('from');
+
+                const to = toParam && isValid(parseISO(toParam)) ? parseISO(toParam) : new Date();
+                const from = fromParam && isValid(parseISO(fromParam)) ? parseISO(fromParam) : subDays(to, 6);
+                const dateRange: DateRangeParams = { from: format(from, 'yyyy-MM-dd'), to: format(to, 'yyyy-MM-dd') };
+
+                const config = await getConfig();
+                const result = await getCallHistory(config.cdr, dateRange);
+                if (result.success && result.data) {
+                    const filteredCalls = result.data.filter(call => call.operatorExtension === user.extension);
+                    setCalls(filteredCalls);
+                } else {
+                    setError(result.error || 'Не удалось загрузить историю звонков.');
+                }
+            } catch (e) {
+                setError(e instanceof Error ? e.message : 'Произошла неизвестная ошибка.');
+            } finally {
+                setIsLoading(false);
+            }
+        };
+
+        fetchCalls();
+    }, [user, searchParams]);
+
+    const kpiData = useMemo(() => {
+        const formatTime = (seconds: number) => {
+            const hours = Math.floor(seconds / 3600);
+            const minutes = Math.floor((seconds % 3600) / 60);
+            const secs = Math.floor(seconds % 60);
+            let result = '';
+            if (hours > 0) result += `${hours}ч `;
+            if (minutes > 0 || hours > 0) result += `${minutes}м `;
+            result += `${secs}с`;
+            return result.trim();
+        };
+
+        const answeredCalls = calls.filter(c => c.status === 'ANSWERED' && c.billsec !== undefined);
+        const totalAnswered = answeredCalls.length;
+        const totalTalkTime = answeredCalls.reduce((acc, c) => acc + (c.billsec || 0), 0);
+        const avgHandleTime = totalAnswered > 0 ? totalTalkTime / totalAnswered : 0;
+
+        return {
+            totalAnswered: totalAnswered.toString(),
+            totalTalkTime: formatTime(totalTalkTime),
+            avgHandleTime: formatTime(avgHandleTime),
+        };
+    }, [calls]);
+
+    return (
+        <Card>
+            <CardHeader>
+                <div className="flex justify-between items-start">
+                    <div>
+                        <CardTitle>Мои показатели эффективности</CardTitle>
+                        <CardDescription>Ваши KPI за выбранный период.</CardDescription>
+                    </div>
+                    <DateRangePicker />
+                </div>
+            </CardHeader>
+            <CardContent>
+                 {isLoading ? (
+                     <div className="grid gap-4 md:grid-cols-3">
+                        <KpiSkeleton />
+                        <KpiSkeleton />
+                        <KpiSkeleton />
+                    </div>
+                ) : error ? (
+                    <Alert variant="destructive">
+                        <AlertTriangle className="h-4 w-4" />
+                        <AlertTitle>Ошибка загрузки KPI</AlertTitle>
+                        <AlertDescription>{error}</AlertDescription>
+                    </Alert>
+                ) : (
+                    <div className="grid gap-4 md:grid-cols-3">
+                        <KpiCard title="Всего отвечено" value={kpiData.totalAnswered} icon={Phone} />
+                        <KpiCard title="Общее время разговора" value={kpiData.totalTalkTime} icon={MessageSquare} />
+                        <KpiCard title="Среднее время обработки" value={kpiData.avgHandleTime} icon={Clock} />
+                    </div>
+                )}
+            </CardContent>
+        </Card>
+    );
+}
 
 
 export default function OperatorPage() {
@@ -18,19 +189,30 @@ export default function OperatorPage() {
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
+    const [callState, setCallState] = useState<CallState>({ status: 'offline' });
+    const [isWrapUp, setIsWrapUp] = useState(false);
+    const [activeCallData, setActiveCallData] = useState<{
+        uniqueId: string;
+        channelId: string;
+        callerNumber: string;
+        queue?: string;
+    } | null>(null);
+
+    const [crmContact, setCrmContact] = useState<CrmContact | null>(null);
+    const [callHistory, setCallHistory] = useState<Call[]>([]);
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    
+    const previousStatusRef = useRef<string | null>(null);
+
     useEffect(() => {
         const initialize = async () => {
             try {
                 const storedUser = localStorage.getItem('loggedInUser');
                 if (storedUser) {
                     const parsedUser: User = JSON.parse(storedUser);
-                    if (parsedUser.role === 'operator') {
-                        setUser(parsedUser);
-                    } else {
-                         setError('Вы не авторизованы как оператор.');
-                    }
+                    setUser(parsedUser);
                 } else {
-                    setError('Пользователь не авторизован.');
+                     setError('Пользователь не авторизован.');
                 }
                 
                 const appConfig = await getConfig();
@@ -38,7 +220,6 @@ export default function OperatorPage() {
 
             } catch (e) {
                 const message = e instanceof Error ? e.message : 'An unknown error occurred';
-                console.error("Failed to initialize operator page", message);
                 setError(message)
             } finally {
                 setIsLoading(false);
@@ -47,6 +228,82 @@ export default function OperatorPage() {
         initialize();
     }, []);
 
+    useEffect(() => {
+        if (!user?.extension || !config?.ari) return;
+
+        const poll = async () => {
+            const result = await getOperatorState(config.ari, user.extension!);
+            let newStatus: CallState['status'] = 'offline';
+            let newCallStateData: Partial<CallState> = {};
+            
+            if (result.success && result.data) {
+                const { endpointState, channelId, channelName, callerId, queue, uniqueId } = result.data;
+                newStatus = endpointState as CallState['status'] || 'offline';
+                newCallStateData = { channelId, channelName, callerId, queue, uniqueId };
+            } else {
+                console.error('Polling failed:', result.error);
+            }
+
+            setCallState(prevState => {
+                const newState = { ...prevState, status: newStatus, ...newCallStateData };
+                if (JSON.stringify(prevState) !== JSON.stringify(newState)) {
+                    return newState as CallState;
+                }
+                return prevState;
+            });
+        };
+
+        poll();
+        const intervalId = setInterval(poll, 2000);
+        return () => clearInterval(intervalId);
+    }, [user, config]);
+
+    useEffect(() => {
+        if (!config?.ari) return;
+
+        const currentStatus = callState.status;
+        const prevStatus = previousStatusRef.current;
+        
+        if ((currentStatus === 'ringing' || currentStatus === 'on-call') && callState.uniqueId && callState.callerId) {
+            setIsWrapUp(false);
+            if (!isModalOpen) setIsModalOpen(true);
+            
+            if (activeCallData?.uniqueId !== callState.uniqueId) {
+                 setActiveCallData({
+                     uniqueId: callState.uniqueId,
+                     channelId: callState.channelId!,
+                     callerNumber: callState.callerId,
+                     queue: callState.queue,
+                 });
+                 findContactByPhone(callState.callerId).then(({ contact, history }) => {
+                    setCrmContact(contact);
+                    setCallHistory(history);
+                });
+            }
+        } 
+        else if ((prevStatus === 'on-call' || prevStatus === 'ringing') && currentStatus !== 'on-call' && currentStatus !== 'ringing' && activeCallData) {
+            setIsWrapUp(true);
+        } 
+        else if (!isWrapUp) {
+            if (isModalOpen) handleCloseModal();
+        }
+
+        previousStatusRef.current = currentStatus;
+    }, [callState, isModalOpen, isWrapUp, activeCallData, config]);
+
+
+    const handleCloseModal = () => {
+        setIsWrapUp(false);
+        setIsModalOpen(false);
+        setActiveCallData(null);
+        setCrmContact(null);
+        setCallHistory([]);
+    };
+
+    const handleContactUpdate = (updatedContact: CrmContact) => {
+        setCrmContact(updatedContact);
+    }
+    
     if (isLoading) {
         return (
             <div className="flex justify-center items-center h-64">
@@ -69,28 +326,14 @@ export default function OperatorPage() {
         );
     }
 
-    if (user.role === 'operator' && !user.extension) {
+    if (user.role !== 'operator' || !user.extension) {
         return (
             <div className="container mx-auto max-w-lg mt-10">
                 <Alert variant="destructive">
                     <AlertTriangle className="h-4 w-4" />
-                    <AlertTitle>Отсутствует внутренний номер</AlertTitle>
+                    <AlertTitle>Доступ запрещен или неверная конфигурация</AlertTitle>
                     <AlertDescription>
-                        Вашей учетной записи не назначен внутренний номер (extension). Пожалуйста, обратитесь к администратору для его назначения.
-                    </AlertDescription>
-                </Alert>
-            </div>
-        );
-    }
-    
-    if (!config) {
-         return (
-            <div className="container mx-auto max-w-lg mt-10">
-                <Alert variant="destructive">
-                    <AlertTriangle className="h-4 w-4" />
-                    <AlertTitle>Ошибка конфигурации</AlertTitle>
-                    <AlertDescription>
-                        Не удалось загрузить конфигурацию приложения.
+                        Эта страница доступна только для операторов с назначенным внутренним номером.
                     </AlertDescription>
                 </Alert>
             </div>
@@ -98,25 +341,36 @@ export default function OperatorPage() {
     }
 
     return (
-        <Tabs defaultValue="workspace" className="w-full">
-            <TabsList className="grid w-full grid-cols-4 max-w-xl mx-auto">
-                <TabsTrigger value="workspace">Рабочее место</TabsTrigger>
-                <TabsTrigger value="calls">Мои звонки</TabsTrigger>
-                <TabsTrigger value="kpi">Мои KPI</TabsTrigger>
-                <TabsTrigger value="crm">Поиск в CRM</TabsTrigger>
-            </TabsList>
-            <TabsContent value="workspace" className="mt-6">
-                <OperatorWorkspace user={user} amiConnection={config.ami} ariConnection={config.ari} />
-            </TabsContent>
-            <TabsContent value="calls" className="mt-6">
-                <MyCallsTab user={user} />
-            </TabsContent>
-            <TabsContent value="kpi" className="mt-6">
-                <MyKpiTab user={user} />
-            </TabsContent>
-            <TabsContent value="crm" className="mt-6">
-                <CrmTab />
-            </TabsContent>
-        </Tabs>
+        <>
+            {isModalOpen && activeCallData && (
+                <CallerInfoCard
+                    isOpen={isModalOpen}
+                    onClose={handleCloseModal}
+                    contact={crmContact}
+                    onContactUpdate={handleContactUpdate}
+                    history={callHistory}
+                    callState={{
+                        callId: activeCallData.uniqueId,
+                        callerNumber: activeCallData.callerNumber,
+                        queue: activeCallData.queue,
+                        status: callState.status,
+                        uniqueId: activeCallData.uniqueId
+                    }}
+                    operator={user}
+                    isWrapUp={isWrapUp}
+                />
+            )}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <div className="lg:col-span-2 space-y-6">
+                    <OperatorStatusCard user={user} status={isWrapUp ? 'wrap-up' : callState.status} />
+                    <MyKpiComponent user={user} />
+                </div>
+                <div className="lg:col-span-1">
+                     <Suspense fallback={<Card><CardContent className="flex justify-center items-center h-72"><Loader2 className="animate-spin" /></CardContent></Card>}>
+                        <FollowUpList operatorId={user.id} />
+                    </Suspense>
+                </div>
+            </div>
+        </>
     );
 }

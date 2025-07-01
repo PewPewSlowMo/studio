@@ -101,4 +101,5 @@ export interface Appeal {
   satisfaction: 'satisfied' | 'neutral' | 'dissatisfied' | 'n/a';
   notes: string;
   followUp: boolean;
+  followUpCompleted?: boolean;
 }
