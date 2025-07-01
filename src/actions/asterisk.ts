@@ -222,33 +222,37 @@ export async function getOperatorState(
     }
 
 
-    // --- Get CallerID ---
-    // Priority 1: Use the custom variable set by the dialplan.
-    const crmSourceVarResult = await getAriChannelVar(connection, operatorChannelId, '__CRM_SOURCE');
-    if (crmSourceVarResult.success && crmSourceVarResult.data?.value) {
-        effectiveCallerId = crmSourceVarResult.data.value;
-    }
-    // Priority 2: Use the peer channel from the bridge if we found it.
-    else if (peerChannelId) {
+    // --- REVISED Get CallerID Logic ---
+    // The previous logic had a faulty fallback. This is a more robust, hierarchical approach.
+
+    // Priority 1: Use the peer channel from the bridge. This is the most reliable when the call is answered.
+    if (peerChannelId) {
         const peerChannelResult = await fetchFromAri(connection, `channels/${peerChannelId}`, AriChannelSchema);
         if (peerChannelResult.success && peerChannelResult.data) {
             effectiveCallerId = peerChannelResult.data.caller.number;
         }
     }
-    // Priority 3: Fallback to creator channel.
-    else if (operatorChannel.creator) {
+
+    // Priority 2: If no bridge yet (e.g., ringing), check the CONNECTEDLINE variable.
+    if (!effectiveCallerId) {
+        const connectedLineResult = await getAriChannelVar(connection, operatorChannelId, 'CONNECTEDLINE(num)');
+        if (connectedLineResult.success && connectedLineResult.data?.value) {
+            effectiveCallerId = connectedLineResult.data.value;
+        }
+    }
+
+    // Priority 3: As a further fallback, check the creator channel.
+    if (!effectiveCallerId && operatorChannel.creator) {
         const creatorChannelResult = await fetchFromAri(connection, `channels/${operatorChannel.creator}`, AriChannelSchema);
         if (creatorChannelResult.success && creatorChannelResult.data) {
             effectiveCallerId = creatorChannelResult.data.caller.number;
         }
     }
 
-    // Last resort: If still no ID, use the one from the operator's channel itself.
-    if (!effectiveCallerId) {
-        effectiveCallerId = operatorChannel.caller.number;
-    }
+    // REMOVED: The unreliable fallback to operatorChannel.caller.number, which often showed the queue's extension.
+    // If none of the above methods work, effectiveCallerId will be undefined, and the UI will show "Unknown".
+    // This is better than showing an incorrect internal number.
     
-    // 5. Get other details
     const queue = operatorChannel.dialplan?.context;
 
     // --- Determine Final Status ---
