@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback, useRef, Suspense } from 'react';
+import { useState, useEffect, useCallback, useRef, Suspense, useMemo } from 'react';
 import type { User, Call, CrmContact, CallState, AppConfig } from '@/lib/types';
 import { getConfig } from '@/actions/config';
 import { getOperatorState } from '@/actions/asterisk';
