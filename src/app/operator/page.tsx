@@ -400,13 +400,13 @@ export default function OperatorPage() {
             />
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 <div className="lg:col-span-2 space-y-6">
-                    <OperatorStatusCard user={user} status={isWrapUp ? 'wrap-up' : callState.status} />
                     <MyKpiComponent user={user} />
-                </div>
-                <div className="lg:col-span-1">
-                     <Suspense fallback={<Card><CardContent className="flex justify-center items-center h-72"><Loader2 className="animate-spin" /></CardContent></Card>}>
+                    <Suspense fallback={<Card><CardHeader><CardTitle>Задачи на перезвон</CardTitle><CardDescription>Список клиентов, с которыми нужно связаться.</CardDescription></CardHeader><CardContent className="flex justify-center items-center h-72"><Loader2 className="animate-spin" /></CardContent></Card>}>
                         <FollowUpList operatorId={user.id} onItemClick={handleFollowUpClick} />
                     </Suspense>
+                </div>
+                <div className="lg:col-span-1">
+                    <OperatorStatusCard user={user} status={isWrapUp ? 'wrap-up' : callState.status} />
                 </div>
             </div>
         </>

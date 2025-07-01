@@ -59,7 +59,7 @@ export function FollowUpList({ operatorId, onItemClick }: FollowUpListProps) {
                     <CardTitle>Задачи на перезвон</CardTitle>
                     <CardDescription>Список клиентов, с которыми нужно связаться.</CardDescription>
                 </CardHeader>
-                <CardContent className="h-[calc(100vh-22rem)] flex items-center justify-center">
+                <CardContent className="h-[500px] flex items-center justify-center">
                     <Loader2 className="h-8 w-8 animate-spin" />
                 </CardContent>
             </Card>
@@ -73,7 +73,7 @@ export function FollowUpList({ operatorId, onItemClick }: FollowUpListProps) {
                 <CardDescription>Список клиентов, с которыми нужно связаться.</CardDescription>
             </CardHeader>
             <CardContent>
-                <ScrollArea className="h-[calc(100vh-22rem)]">
+                <ScrollArea className="h-[500px]">
                     {appeals.length > 0 ? (
                         <div className="space-y-2">
                             {appeals.map((appeal) => (
