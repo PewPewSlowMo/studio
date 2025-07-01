@@ -20,7 +20,8 @@ interface MyCallsTabProps {
 
 type EnrichedCall = Call & {
     callerName?: string;
-    appealDescription?: string;
+    cardFilled?: boolean;
+    category?: Appeal['category'];
 };
 
 export function MyCallsTab({ user }: MyCallsTabProps) {
@@ -60,15 +61,19 @@ export function MyCallsTab({ user }: MyCallsTabProps) {
                 }
                 
                 const contactMap = new Map(contacts.map(c => [c.phoneNumber, c.name]));
-                const appealMap = new Map(appeals.map(a => [a.callId, a.description]));
+                const appealMap = new Map(appeals.map(a => [a.callId, a]));
 
                 const userCalls = callsResult.data
                     .filter(call => call.operatorExtension === user.extension)
-                    .map((call): EnrichedCall => ({
-                        ...call,
-                        callerName: contactMap.get(call.callerNumber),
-                        appealDescription: appealMap.get(call.id)
-                    }));
+                    .map((call): EnrichedCall => {
+                        const appeal = appealMap.get(call.id);
+                        return {
+                            ...call,
+                            callerName: contactMap.get(call.callerNumber),
+                            cardFilled: !!appeal,
+                            category: appeal?.category,
+                        }
+                    });
 
                 setCalls(userCalls);
 
