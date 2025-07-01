@@ -40,6 +40,13 @@ const categoryMap: Record<string, string> = {
     other: 'Другое',
 };
 
+const statusMap: Record<string, string> = {
+    ANSWERED: 'Отвечен',
+    'NO ANSWER': 'Без ответа',
+    BUSY: 'Занято',
+    FAILED: 'Ошибка',
+};
+
 
 export function MyCallsTable({ calls, isLoading, onRowClick }: MyCallsTableProps) {
     const [sortConfig, setSortConfig] = React.useState<{ key: SortKey; direction: 'ascending' | 'descending' } | null>({ key: 'startTime', direction: 'descending' });
@@ -171,9 +178,8 @@ export function MyCallsTable({ calls, isLoading, onRowClick }: MyCallsTableProps
                     <TableCell>
                       <Badge
                         variant={call.status === 'ANSWERED' ? 'success' : 'destructive'}
-                        className="capitalize"
                       >
-                        {call.status}
+                        {statusMap[call.status] || call.status}
                       </Badge>
                     </TableCell>
                     <TableCell>{formatDate(call.startTime)}</TableCell>

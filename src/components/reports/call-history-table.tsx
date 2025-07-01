@@ -17,6 +17,13 @@ import { Skeleton } from '../ui/skeleton';
 import { cn } from '@/lib/utils';
 import { ru } from 'date-fns/locale';
 
+const statusMap: Record<string, string> = {
+    ANSWERED: 'Отвечен',
+    'NO ANSWER': 'Без ответа',
+    BUSY: 'Занято',
+    FAILED: 'Ошибка',
+};
+
 export function CallHistoryTable({ calls, isLoading, onRowClick }: { calls: Call[], isLoading: boolean, onRowClick?: (call: Call) => void }) {
   const [filter, setFilter] = React.useState('');
   
@@ -95,11 +102,10 @@ export function CallHistoryTable({ calls, isLoading, onRowClick }: { calls: Call
                       <TableCell>
                         <Badge
                           variant={
-                            call.status.toLowerCase() !== 'answered' ? 'destructive' : 'success'
+                            call.status !== 'ANSWERED' ? 'destructive' : 'success'
                           }
-                          className="capitalize"
                         >
-                          {call.status}
+                          {statusMap[call.status] || call.status}
                         </Badge>
                       </TableCell>
                       <TableCell>
