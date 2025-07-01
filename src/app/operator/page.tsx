@@ -19,6 +19,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { CallDetailsDialog } from '@/components/operator/call-details-dialog';
 import { useToast } from '@/hooks/use-toast';
 import { getUsers } from '@/actions/users';
+import { Separator } from '@/components/ui/separator';
 
 function OperatorStatusCard({ user, status }: { user: User; status: CallState['status'] | 'wrap-up' }) {
     const statusConfig = {
@@ -35,22 +36,21 @@ function OperatorStatusCard({ user, status }: { user: User; status: CallState['s
     return (
       <Card>
         <CardHeader>
-          <CardTitle>Статус оператора</CardTitle>
-          <CardDescription>Ваше текущее состояние в системе.</CardDescription>
+           <CardTitle>Статус</CardTitle>
         </CardHeader>
-        <CardContent>
-          <div className="flex items-center justify-between p-4 rounded-lg bg-muted">
-            <div className="flex items-center gap-3">
-              <UserIcon className="h-5 w-5 text-muted-foreground" />
-              <span className="font-semibold">
-                {user.name} (доб. {user.extension})
-              </span>
+        <CardContent className="space-y-4">
+            <div>
+              <p className="text-sm font-medium text-muted-foreground">Оператор</p>
+              <p className="font-semibold">{user.name} (доб. {user.extension})</p>
             </div>
-            <div className="flex items-center gap-2">
-              <div className={cn('h-3 w-3 rounded-full', currentStatus.color)} />
-              <span className="font-medium text-sm">{currentStatus.text}</span>
+            <Separator />
+            <div>
+              <p className="text-sm font-medium text-muted-foreground">Текущий статус</p>
+              <div className="flex items-center gap-2 pt-1">
+                 <div className={cn('h-3 w-3 rounded-full', currentStatus.color)} />
+                 <span className="font-semibold">{currentStatus.text}</span>
+              </div>
             </div>
-          </div>
         </CardContent>
       </Card>
     );
@@ -398,15 +398,15 @@ export default function OperatorPage() {
                 call={selectedCall}
                 isCrmEditable={false}
             />
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                <div className="lg:col-span-2 space-y-6">
+            <div className="flex flex-col lg:flex-row gap-6">
+                <div className="flex-grow space-y-6">
                     <MyKpiComponent user={user} />
                     <Suspense fallback={<Card><CardHeader><CardTitle>Задачи на перезвон</CardTitle><CardDescription>Список клиентов, с которыми нужно связаться.</CardDescription></CardHeader><CardContent className="flex justify-center items-center h-72"><Loader2 className="animate-spin" /></CardContent></Card>}>
                         <FollowUpList operatorId={user.id} onItemClick={handleFollowUpClick} />
                     </Suspense>
                 </div>
-                <div className="lg:col-span-1">
-                    <OperatorStatusCard user={user} status={isWrapUp ? 'wrap-up' : callState.status} />
+                <div className="lg:w-80 xl:w-96 flex-shrink-0">
+                     <OperatorStatusCard user={user} status={isWrapUp ? 'wrap-up' : callState.status} />
                 </div>
             </div>
         </>
