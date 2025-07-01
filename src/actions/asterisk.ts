@@ -185,49 +185,69 @@ export async function getOperatorState(
     }
     const operatorChannel = operatorChannelResult.data;
 
-    // --- New, more robust data extraction ---
-    
-    // 3. Get the correct UniqueID for saving. The `CDR(linkedid)` on the operator's channel
-    // points to the `CDR(uniqueid)` of the caller's channel. This is the most reliable.
-    const linkedIdResult = await getAriChannelVar(connection, operatorChannelId, 'CDR(linkedid)');
-    let uniqueId = linkedIdResult.success ? linkedIdResult.data?.value : undefined;
+    // --- New, more robust data extraction for UniqueID and CallerID ---
+    let mainUniqueId: string | undefined = undefined;
+    let effectiveCallerId: string | undefined = undefined;
+    let peerChannelId: string | undefined = undefined;
 
-    // If there is no `linkedid` (e.g., a direct call), use the operator's own `uniqueid`.
-    if (!uniqueId || uniqueId === '') {
-        const cdrUniqueIdResult = await getAriChannelVar(connection, operatorChannelId, 'CDR(uniqueid)');
-        uniqueId = cdrUniqueIdResult.success ? cdrUniqueIdResult.data?.value : undefined;
+    // Method 1 for UniqueID: The most reliable way. Find the peer channel in the bridge.
+    const bridgeId = operatorChannel.bridge_ids?.[0];
+    if (bridgeId) {
+        const bridgeResult = await fetchFromAri(connection, `bridges/${bridgeId}`, AriBridgeSchema);
+        if (bridgeResult.success && bridgeResult.data) {
+            peerChannelId = bridgeResult.data.channels.find(id => id !== operatorChannelId);
+            if (peerChannelId) {
+                const peerUniqueIdResult = await getAriChannelVar(connection, peerChannelId, 'CDR(uniqueid)');
+                if (peerUniqueIdResult.success && peerUniqueIdResult.data?.value) {
+                    mainUniqueId = peerUniqueIdResult.data.value;
+                }
+            }
+        }
+    }
+
+    // Method 2 for UniqueID: Fallback to linkedid if bridge method fails.
+    if (!mainUniqueId) {
+        const linkedIdResult = await getAriChannelVar(connection, operatorChannelId, 'CDR(linkedid)');
+        if (linkedIdResult.success && linkedIdResult.data?.value && linkedIdResult.data.value !== '') {
+            mainUniqueId = linkedIdResult.data.value;
+        }
+    }
+    
+    // Method 3 for UniqueID: Final fallback to the channel's own uniqueid.
+    if (!mainUniqueId) {
+        const ownUniqueIdResult = await getAriChannelVar(connection, operatorChannelId, 'CDR(uniqueid)');
+        if (ownUniqueIdResult.success && ownUniqueIdResult.data?.value) {
+            mainUniqueId = ownUniqueIdResult.data.value;
+        }
     }
 
 
-    // 4. Get the Caller ID using a hierarchy of reliability.
-    let effectiveCallerId: string | undefined = undefined;
+    // --- Get CallerID ---
     // Priority 1: Use the custom variable set by the dialplan.
     const crmSourceVarResult = await getAriChannelVar(connection, operatorChannelId, '__CRM_SOURCE');
     if (crmSourceVarResult.success && crmSourceVarResult.data?.value) {
         effectiveCallerId = crmSourceVarResult.data.value;
-    } else {
-        // Priority 2: Use the linked channel's details.
-        // The channel ID of the other party is often the same as the linkedid.
-        if (linkedIdResult.success && linkedIdResult.data?.value) {
-             const callerChannelResult = await fetchFromAri(connection, `channels/${linkedIdResult.data.value}`, AriChannelSchema);
-             if (callerChannelResult.success && callerChannelResult.data) {
-                effectiveCallerId = callerChannelResult.data.caller.number;
-             }
-        }
-        // Priority 3: Fallback to creator channel if linked channel fails.
-        if (!effectiveCallerId && operatorChannel.creator) {
-            const creatorChannelResult = await fetchFromAri(connection, `channels/${operatorChannel.creator}`, AriChannelSchema);
-            if (creatorChannelResult.success && creatorChannelResult.data) {
-                effectiveCallerId = creatorChannelResult.data.caller.number;
-            }
+    }
+    // Priority 2: Use the peer channel from the bridge if we found it.
+    else if (peerChannelId) {
+        const peerChannelResult = await fetchFromAri(connection, `channels/${peerChannelId}`, AriChannelSchema);
+        if (peerChannelResult.success && peerChannelResult.data) {
+            effectiveCallerId = peerChannelResult.data.caller.number;
         }
     }
-    
+    // Priority 3: Fallback to creator channel.
+    else if (operatorChannel.creator) {
+        const creatorChannelResult = await fetchFromAri(connection, `channels/${operatorChannel.creator}`, AriChannelSchema);
+        if (creatorChannelResult.success && creatorChannelResult.data) {
+            effectiveCallerId = creatorChannelResult.data.caller.number;
+        }
+    }
+
     // Last resort: If still no ID, use the one from the operator's channel itself.
     if (!effectiveCallerId) {
         effectiveCallerId = operatorChannel.caller.number;
     }
-
+    
     // 5. Get other details
     const queue = operatorChannel.dialplan?.context;
 
@@ -278,7 +298,7 @@ export async function getOperatorState(
             channelState: operatorChannel.state,
             queue: queue,
             callerId: effectiveCallerId, 
-            uniqueId: uniqueId,
+            uniqueId: mainUniqueId,
         },
     };
 }
