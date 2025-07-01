@@ -85,7 +85,7 @@ export async function getCallHistory(connection: CdrConnection, dateRange?: Date
         const [rows] = await dbConnection.execute(sql, params);
 
         const calls = (rows as any[]).map((row): Call => {
-            const operatorExtMatch = row.dstchannel?.match(/(?:PJSIP|SIP)\/(\w+)/);
+            const operatorExtMatch = row.dstchannel?.match(/(?:PJSIP|SIP)\/(\d+)/);
             const operatorExtension = operatorExtMatch ? operatorExtMatch[1] : undefined;
             const waitTime = row.duration - row.billsec;
 
@@ -137,7 +137,7 @@ export async function getCallById(connection: CdrConnection, callId: string): Pr
         }
 
         const row = results[0];
-        const operatorExtMatch = row.dstchannel?.match(/(?:PJSIP|SIP)\/(\w+)/);
+        const operatorExtMatch = row.dstchannel?.match(/(?:PJSIP|SIP)\/(\d+)/);
         const operatorExtension = operatorExtMatch ? operatorExtMatch[1] : undefined;
         const waitTime = row.duration - row.billsec;
 
