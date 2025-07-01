@@ -15,7 +15,8 @@ import { format, parseISO, isValid } from 'date-fns';
 import { ru } from 'date-fns/locale';
 import { Skeleton } from '../ui/skeleton';
 import { Button } from '../ui/button';
-import { ArrowUp, ArrowDown } from 'lucide-react';
+import { ArrowUp, ArrowDown, FileText } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 type EnrichedCall = Call & {
     callerName?: string;
@@ -114,7 +115,6 @@ export function MyCallsTable({ calls, isLoading, onRowClick }: MyCallsTableProps
         <TableRow>
           <TableHead>Номер</TableHead>
           <TableHead>ФИО</TableHead>
-          <TableHead>Карточка</TableHead>
           <TableHead>Категория</TableHead>
           <TableHead>Статус</TableHead>
           <TableHead>Дата и время</TableHead>
@@ -126,7 +126,6 @@ export function MyCallsTable({ calls, isLoading, onRowClick }: MyCallsTableProps
           <TableRow key={i}>
             <TableCell><Skeleton className="h-4 w-24" /></TableCell>
             <TableCell><Skeleton className="h-4 w-32" /></TableCell>
-            <TableCell><Skeleton className="h-6 w-24 rounded-full" /></TableCell>
             <TableCell><Skeleton className="h-6 w-28 rounded-full" /></TableCell>
             <TableCell><Skeleton className="h-6 w-20 rounded-full" /></TableCell>
             <TableCell><Skeleton className="h-4 w-40" /></TableCell>
@@ -145,7 +144,6 @@ export function MyCallsTable({ calls, isLoading, onRowClick }: MyCallsTableProps
             <TableRow>
                 <SortableHeader sortKey="callerNumber">Номер</SortableHeader>
                 <SortableHeader sortKey="callerName">ФИО</SortableHeader>
-                <SortableHeader sortKey="cardFilled">Карточка</SortableHeader>
                 <SortableHeader sortKey="category">Категория</SortableHeader>
                 <SortableHeader sortKey="status">Статус</SortableHeader>
                 <SortableHeader sortKey="startTime">Дата и время</SortableHeader>
@@ -156,13 +154,13 @@ export function MyCallsTable({ calls, isLoading, onRowClick }: MyCallsTableProps
             {sortedCalls.length > 0 ? (
               sortedCalls.map((call) => (
                 <TableRow key={call.id + call.startTime} onClick={() => onRowClick(call)} className="cursor-pointer">
-                    <TableCell className="font-medium">{call.callerNumber}</TableCell>
-                    <TableCell>{call.callerName || <span className="text-muted-foreground">Неизвестно</span>}</TableCell>
-                    <TableCell>
-                        <Badge variant={call.cardFilled ? 'success' : 'secondary'}>
-                            {call.cardFilled ? 'Заполнена' : 'Нет'}
-                        </Badge>
+                    <TableCell className="font-medium">
+                        <div className="flex items-center gap-2">
+                           <FileText className={cn('h-4 w-4 shrink-0', call.cardFilled ? 'text-green-500' : 'text-red-500')} />
+                           <span>{call.callerNumber}</span>
+                        </div>
                     </TableCell>
+                    <TableCell>{call.callerName || <span className="text-muted-foreground">Неизвестно</span>}</TableCell>
                     <TableCell>
                         {call.category ? (
                             <Badge variant="outline" className="capitalize">{categoryMap[call.category] || call.category}</Badge>
@@ -184,7 +182,7 @@ export function MyCallsTable({ calls, isLoading, onRowClick }: MyCallsTableProps
               ))
             ) : (
               <TableRow>
-                <TableCell colSpan={7} className="h-24 text-center">
+                <TableCell colSpan={6} className="h-24 text-center">
                   Звонки за выбранный период не найдены.
                 </TableCell>
               </TableRow>
