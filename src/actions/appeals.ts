@@ -83,8 +83,11 @@ export async function toggleFollowUpStatus(appealId: string): Promise<{ success:
     if (appealIndex === -1) {
       return { success: false, error: 'Appeal not found.' };
     }
+    
+    // Ensure the property exists before toggling
+    const currentStatus = appeals[appealIndex].followUpCompleted || false;
+    appeals[appealIndex].followUpCompleted = !currentStatus;
 
-    appeals[appealIndex].followUpCompleted = !appeals[appealIndex].followUpCompleted;
     await writeAppeals(appeals);
 
     revalidatePath('/operator');
@@ -106,8 +109,8 @@ export async function getFollowUpAppeals(operatorId: string): Promise<(Appeal & 
     const followUpAppeals = appeals
         .filter(appeal => 
             appeal.operatorId === operatorId && // Belongs to this operator
-            appeal.followUp &&                  // Follow-up is required
-            !appeal.followUpCompleted           // And it's not completed yet
+            appeal.followUp === true &&         // Follow-up is explicitly required
+            appeal.followUpCompleted === false  // And it's explicitly not completed yet
         )
         .map(appeal => ({
             ...appeal,
