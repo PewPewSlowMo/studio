@@ -123,9 +123,9 @@ export async function getCallById(connection: CdrConnection, callId: string): Pr
         const sql = `SELECT 
                 calldate, clid, src, dst, dcontext, channel, dstchannel, 
                 lastapp, lastdata, duration, billsec, disposition, uniqueid 
-             FROM cdr WHERE uniqueid = ? LIMIT 1`;
+             FROM cdr WHERE uniqueid = ? OR linkedid = ? ORDER BY calldate DESC LIMIT 1`;
         
-        const [rows] = await dbConnection.execute(sql, [callId]);
+        const [rows] = await dbConnection.execute(sql, [callId, callId]);
         const results = rows as any[];
 
         if (results.length === 0) {
