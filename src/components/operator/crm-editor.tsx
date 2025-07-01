@@ -21,11 +21,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Loader2, Save } from 'lucide-react';
+import { Loader2, Save, User } from 'lucide-react';
 import { addOrUpdateContact } from '@/actions/crm';
 import { useToast } from '@/hooks/use-toast';
 import type { CrmContact } from '@/lib/types';
 import { Separator } from '@/components/ui/separator';
+import { Badge } from '@/components/ui/badge';
 
 const crmFormSchema = z.object({
   name: z.string().min(2, 'Имя должно содержать не менее 2 символов.'),
@@ -41,11 +42,42 @@ interface CrmEditorProps {
   contact: CrmContact | null;
   phoneNumber: string;
   onSave?: (contact: CrmContact) => void;
+  isEditable?: boolean;
 }
 
 const contactTypes = ['контингент', 'фсмс', 'платный', 'иной'];
 
-export function CrmEditor({ contact, phoneNumber, onSave }: CrmEditorProps) {
+function CrmDataViewer({ contact, phoneNumber }: { contact: CrmContact | null, phoneNumber: string }) {
+  if (!contact) {
+    return (
+      <div className="space-y-4">
+        <h3 className="font-semibold text-lg">Данные клиента</h3>
+        <Separator />
+        <div className="text-center text-muted-foreground p-4 border border-dashed rounded-md">
+            <User className="mx-auto h-8 w-8 mb-2" />
+            <p>Клиент с номером {phoneNumber} не найден в базе CRM.</p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-4">
+        <h3 className="font-semibold text-lg">Данные клиента</h3>
+        <Separator />
+        <div className="grid grid-cols-1 gap-y-2 gap-x-4 sm:grid-cols-2 text-sm">
+            <div><strong className="text-muted-foreground block font-normal">Номер телефона:</strong> {contact.phoneNumber}</div>
+            <div><strong className="text-muted-foreground block font-normal">Статус клиента:</strong> <Badge variant="outline" className="capitalize">{contact.type}</Badge></div>
+            <div className="sm:col-span-2 pt-2"><strong className="text-muted-foreground block font-normal">Ф.И.О.:</strong> {contact.name}</div>
+            <div className="sm:col-span-2"><strong className="text-muted-foreground block font-normal">Email:</strong> {contact.email || 'Не указан'}</div>
+            <div className="sm:col-span-2"><strong className="text-muted-foreground block font-normal">Адрес:</strong> {contact.address}</div>
+        </div>
+    </div>
+  );
+}
+
+
+export function CrmEditor({ contact, phoneNumber, onSave, isEditable = true }: CrmEditorProps) {
   const { toast } = useToast();
   const form = useForm<CrmFormData>({
     resolver: zodResolver(crmFormSchema),
@@ -96,6 +128,10 @@ export function CrmEditor({ contact, phoneNumber, onSave }: CrmEditorProps) {
         description: result.error || 'Не удалось сохранить контакт.',
       });
     }
+  }
+
+  if (!isEditable) {
+    return <CrmDataViewer contact={contact} phoneNumber={phoneNumber} />;
   }
 
   return (

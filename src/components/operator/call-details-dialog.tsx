@@ -20,9 +20,10 @@ interface CallDetailsDialogProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
   call: Call | null;
+  isCrmEditable?: boolean;
 }
 
-export function CallDetailsDialog({ isOpen, onOpenChange, call }: CallDetailsDialogProps) {
+export function CallDetailsDialog({ isOpen, onOpenChange, call, isCrmEditable = true }: CallDetailsDialogProps) {
   const [appeal, setAppeal] = useState<Appeal | null>(null);
   const [contact, setContact] = useState<CrmContact | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -130,7 +131,12 @@ export function CallDetailsDialog({ isOpen, onOpenChange, call }: CallDetailsDia
                 )}
             </div>
             
-            <CrmEditor contact={contact} phoneNumber={call?.callerNumber || ''} onSave={handleSaveContact} />
+            <CrmEditor
+                contact={contact}
+                phoneNumber={call?.callerNumber || ''}
+                onSave={handleSaveContact}
+                isEditable={isCrmEditable}
+            />
 
           </div>
         )}

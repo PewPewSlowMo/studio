@@ -108,6 +108,7 @@ export function MyCallsTab({ user }: MyCallsTabProps) {
                 isOpen={isDetailsOpen}
                 onOpenChange={setIsDetailsOpen}
                 call={selectedCall}
+                isCrmEditable={false}
             />
             <Card>
                 <CardHeader>
