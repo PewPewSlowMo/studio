@@ -7,7 +7,6 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { toggleFollowUpStatus, getFollowUpAppeals } from '@/actions/appeals';
 import { useToast } from '@/hooks/use-toast';
 import { MessageCircleWarning, Loader2 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
 
 type AppealWithCaller = Appeal & { callerName?: string };
 
@@ -75,28 +74,34 @@ export function FollowUpList({ operatorId, onItemClick }: FollowUpListProps) {
             <CardContent>
                 <ScrollArea className="h-[500px]">
                     {appeals.length > 0 ? (
-                        <div className="space-y-2">
+                        <div className="space-y-3">
                             {appeals.map((appeal) => (
-                                <div key={appeal.id} className="flex items-start gap-3 p-2 rounded-md hover:bg-muted">
+                                <div
+                                    key={appeal.id}
+                                    className="flex items-center gap-4 p-3 rounded-lg border cursor-pointer hover:bg-muted/50 transition-colors"
+                                    onClick={() => onItemClick(appeal)}
+                                >
                                     <Checkbox
                                         id={`follow-up-${appeal.id}`}
-                                        className="mt-1"
                                         checked={!!appeal.followUpCompleted}
                                         onCheckedChange={() => handleToggle(appeal.id)}
                                         aria-label="Mark as completed"
                                         disabled={isPending}
+                                        onClick={(e) => e.stopPropagation()} // Prevent triggering the main onClick
                                     />
-                                    <Button variant="link" className="grid flex-1 gap-0.5 p-0 h-auto text-left leading-none whitespace-normal" onClick={() => onItemClick(appeal)}>
-                                        <span className="font-medium text-foreground">
-                                            {appeal.callerName || appeal.callerNumber}
-                                        </span>
-                                        <span className="text-sm text-muted-foreground">
-                                            Тел: {appeal.callerNumber}
-                                        </span>
-                                        <p className="text-sm text-muted-foreground truncate max-w-full">
-                                            {appeal.description}
+                                    <div className="flex-1 grid gap-1">
+                                        <div className="flex items-baseline justify-between">
+                                            <p className="font-semibold text-primary truncate">
+                                                {appeal.callerName || appeal.callerNumber}
+                                            </p>
+                                            <p className="text-xs text-muted-foreground font-mono">
+                                                {appeal.callerNumber}
+                                            </p>
+                                        </div>
+                                        <p className="text-sm text-muted-foreground truncate">
+                                            {appeal.description || 'Нет описания'}
                                         </p>
-                                    </Button>
+                                    </div>
                                 </div>
                             ))}
                         </div>
