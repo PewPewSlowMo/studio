@@ -20,6 +20,10 @@ export interface DateRangeParams {
     to: string;   // ISO string date
 }
 
+export interface GetCallHistoryParams extends DateRangeParams {
+    operatorExtension?: string;
+}
+
 async function createCdrConnection(connection: CdrConnection) {
     const validatedConnection = CdrConnectionSchema.parse(connection);
     return await mysql.createConnection({
@@ -55,34 +59,44 @@ export async function testCdrConnection(
   }
 }
 
-export async function getCallHistory(connection: CdrConnection, dateRange?: DateRangeParams): Promise<{ success: boolean; data?: Call[], error?: string }> {
+export async function getCallHistory(connection: CdrConnection, params: GetCallHistoryParams): Promise<{ success: boolean; data?: Call[], error?: string }> {
     let dbConnection;
     try {
         dbConnection = await createCdrConnection(connection);
+        
+        const sqlParams: any[] = [];
+        let whereClauses: string[] = [];
+
+        if (params.from && params.to) {
+            whereClauses.push(`calldate BETWEEN ? AND ?`);
+            const fromDate = new Date(params.from);
+            fromDate.setHours(0, 0, 0, 0);
+
+            const toDate = new Date(params.to);
+            toDate.setHours(23, 59, 59, 999);
+            
+            sqlParams.push(fromDate, toDate);
+        } else {
+             whereClauses.push(`calldate >= NOW() - INTERVAL 1 DAY`);
+        }
+
+        if (params.operatorExtension) {
+            whereClauses.push(`(dstchannel LIKE ? OR (dcontext = 'from-internal' AND src = ?))`);
+            sqlParams.push(`%/${params.operatorExtension}%`, params.operatorExtension);
+        }
         
         let sql = `SELECT 
                 calldate, clid, src, dst, dcontext, channel, dstchannel, 
                 lastapp, lastdata, duration, billsec, disposition, uniqueid, linkedid, userfield
              FROM cdr`;
         
-        const params: any[] = [];
-        
-        if (dateRange?.from && dateRange?.to) {
-            sql += ` WHERE calldate BETWEEN ? AND ?`;
-            const fromDate = new Date(dateRange.from);
-            fromDate.setHours(0, 0, 0, 0);
-
-            const toDate = new Date(dateRange.to);
-            toDate.setHours(23, 59, 59, 999);
-
-            params.push(fromDate, toDate);
-        } else {
-             sql += ` WHERE calldate >= NOW() - INTERVAL 1 DAY`;
+        if (whereClauses.length > 0) {
+            sql += ` WHERE ${whereClauses.join(' AND ')}`;
         }
 
         sql += ` ORDER BY calldate DESC`;
         
-        const [rows] = await dbConnection.execute(sql, params);
+        const [rows] = await dbConnection.execute(sql, sqlParams);
 
         const calls = (rows as any[]).map((row): Call => {
             const operatorExtMatch = row.dstchannel?.match(/(?:PJSIP|SIP)\/(\d+)/);

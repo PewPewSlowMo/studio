@@ -20,6 +20,7 @@ import { Badge } from '../ui/badge';
 interface OperatorReportTableProps {
     data: OperatorReportData[];
     isLoading: boolean;
+    onOperatorClick: (operatorId: string) => void;
 }
 
 type SortKey = keyof OperatorReportData;
@@ -71,7 +72,7 @@ const TableSkeleton = () => (
 );
 
 
-export function OperatorReportTable({ data, isLoading }: OperatorReportTableProps) {
+export function OperatorReportTable({ data, isLoading, onOperatorClick }: OperatorReportTableProps) {
     const [sortConfig, setSortConfig] = React.useState<{ key: SortKey; direction: 'ascending' | 'descending' }>({ key: 'operatorName', direction: 'ascending' });
 
     const sortedData = React.useMemo(() => {
@@ -142,7 +143,11 @@ export function OperatorReportTable({ data, isLoading }: OperatorReportTableProp
                             <TableRow key={op.operatorId}>
                                 <TableCell className="font-medium">{op.operatorName}</TableCell>
                                 <TableCell>{formatDateTime(op.firstCallTime)} - {formatDateTime(op.lastCallTime)}</TableCell>
-                                <TableCell>{op.answeredIncomingCount}</TableCell>
+                                <TableCell>
+                                    <Button variant="link" className="p-0 h-auto" onClick={() => onOperatorClick(op.operatorId)}>
+                                        {op.answeredIncomingCount}
+                                    </Button>
+                                </TableCell>
                                 <TableCell>{op.outgoingCount}</TableCell>
                                 <TableCell>
                                     <Badge variant={op.missedCallsPercentage > 10 ? 'destructive' : 'secondary'}>

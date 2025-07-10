@@ -13,6 +13,7 @@ import { DateRangePicker } from '@/components/shared/date-range-picker';
 import { subDays, format, parseISO, isValid } from 'date-fns';
 import { OperatorReportTable, type OperatorReportData } from '@/components/reports/operator-report-table';
 import { Button } from '@/components/ui/button';
+import { OperatorCallsDialog } from '@/components/reports/operator-calls-dialog';
 
 export default function ReportsPage() {
     const searchParams = useSearchParams();
@@ -20,19 +21,23 @@ export default function ReportsPage() {
     const [error, setError] = useState<string | null>(null);
     const [calls, setCalls] = useState<Call[]>([]);
     const [users, setUsers] = useState<User[]>([]);
+
+    const [isDetailsOpen, setIsDetailsOpen] = useState(false);
+    const [selectedOperator, setSelectedOperator] = useState<User | null>(null);
     
+    const dateRange = useMemo(() => {
+        const toParam = searchParams.get('to');
+        const fromParam = searchParams.get('from');
+        const to = toParam && isValid(parseISO(toParam)) ? parseISO(toParam) : new Date();
+        const from = fromParam && isValid(parseISO(fromParam)) ? parseISO(fromParam) : subDays(to, 6);
+        return { from: format(from, 'yyyy-MM-dd'), to: format(to, 'yyyy-MM-dd') };
+    }, [searchParams]);
+
     useEffect(() => {
         const fetchData = async () => {
             setIsLoading(true);
             setError(null);
             try {
-                const toParam = searchParams.get('to');
-                const fromParam = searchParams.get('from');
-
-                const to = toParam && isValid(parseISO(toParam)) ? parseISO(toParam) : new Date();
-                const from = fromParam && isValid(parseISO(fromParam)) ? parseISO(fromParam) : subDays(to, 6);
-                const dateRange: DateRangeParams = { from: format(from, 'yyyy-MM-dd'), to: format(to, 'yyyy-MM-dd') };
-
                 const config = await getConfig();
                 const [callsResult, usersResult] = await Promise.all([
                     getCallHistory(config.cdr, dateRange),
@@ -51,7 +56,15 @@ export default function ReportsPage() {
             }
         };
         fetchData();
-    }, [searchParams]);
+    }, [dateRange]);
+
+    const handleOperatorClick = (operatorId: string) => {
+        const user = users.find(u => u.id === operatorId);
+        if (user) {
+            setSelectedOperator(user);
+            setIsDetailsOpen(true);
+        }
+    };
 
     const operatorReportData = useMemo(() => {
         const operators = users.filter(u => u.role === 'operator' && u.extension);
@@ -111,6 +124,13 @@ export default function ReportsPage() {
     }
 
     return (
+        <>
+        <OperatorCallsDialog 
+            isOpen={isDetailsOpen}
+            onOpenChange={setIsDetailsOpen}
+            operator={selectedOperator}
+            dateRange={dateRange}
+        />
         <div className="space-y-6">
             <div className="flex flex-wrap items-center justify-between gap-4">
                 <div>
@@ -138,9 +158,10 @@ export default function ReportsPage() {
                     </div>
                 </CardHeader>
                 <CardContent>
-                   <OperatorReportTable data={operatorReportData} isLoading={isLoading} />
+                   <OperatorReportTable data={operatorReportData} isLoading={isLoading} onOperatorClick={handleOperatorClick} />
                 </CardContent>
             </Card>
         </div>
+        </>
     );
 }
