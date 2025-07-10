@@ -11,7 +11,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Wifi, Database, Loader2, Server } from 'lucide-react';
+import { Wifi, Database, Loader2, Server, Link as LinkIcon } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 
 interface ConnectionProps {
@@ -37,9 +37,11 @@ interface OnDbChangeProps extends OnChangeProps {
 }
 
 interface SystemSettingsProps {
+  ariConnection: ConnectionProps;
   amiConnection: ConnectionProps;
   cdrConnection: DbConnectionProps;
   appDbConnection: DbConnectionProps;
+  onAriChange: OnChangeProps;
   onAmiChange: OnChangeProps;
   onCdrChange: OnDbChangeProps;
   onAppDbChange: OnDbChangeProps;
@@ -47,7 +49,7 @@ interface SystemSettingsProps {
   isSaving: boolean;
 }
 
-export function SystemSettings({ amiConnection, cdrConnection, appDbConnection, onAmiChange, onCdrChange, onAppDbChange, onSave, isSaving }: SystemSettingsProps) {
+export function SystemSettings({ ariConnection, amiConnection, cdrConnection, appDbConnection, onAriChange, onAmiChange, onCdrChange, onAppDbChange, onSave, isSaving }: SystemSettingsProps) {
 
   return (
     <Card>
@@ -58,6 +60,37 @@ export function SystemSettings({ amiConnection, cdrConnection, appDbConnection, 
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-8">
+        {/* ARI Settings */}
+        <div className="space-y-4">
+            <div className="flex items-center gap-4">
+                <LinkIcon className="h-8 w-8 text-muted-foreground" />
+                <div>
+                    <h3 className="text-lg font-semibold">Asterisk REST Interface (ARI)</h3>
+                    <p className="text-sm text-muted-foreground">Для доступа к записям разговоров и управления вызовами.</p>
+                </div>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2">
+                <div className="space-y-2">
+                <Label htmlFor="ari-host">Хост</Label>
+                <Input id="ari-host" value={ariConnection.host} onChange={(e) => onAriChange.setHost(e.target.value)} />
+                </div>
+                <div className="space-y-2">
+                <Label htmlFor="ari-port">Порт</Label>
+                <Input id="ari-port" type="number" value={ariConnection.port} onChange={(e) => onAriChange.setPort(e.target.value)} />
+                </div>
+                <div className="space-y-2">
+                <Label htmlFor="ari-username">Пользователь</Label>
+                <Input id="ari-username" value={ariConnection.username} onChange={(e) => onAriChange.setUsername(e.target.value)} />
+                </div>
+                <div className="space-y-2">
+                <Label htmlFor="ari-password">Пароль</Label>
+                <Input id="ari-password" type="password" value={ariConnection.password} onChange={(e) => onAriChange.setPassword(e.target.value)} />
+                </div>
+            </div>
+        </div>
+        
+        <Separator />
+
         {/* AMI Settings */}
         <div className="space-y-4">
             <div className="flex items-center gap-4">

@@ -43,9 +43,9 @@ const defaultConfig: AppConfig = {
   cdr: {
     host: '92.46.62.34',
     port: '3306',
-    username: 'freepbxuser',
-    password: '42e09f1b23ced2f4cc474a04b4505313',
-    database: 'asterisk',
+    username: 'smartcallcenter',
+    password: 'StrongPassword123!',
+    database: 'asteriskcdrdb',
   },
   app_db: {
     host: '127.0.0.1',

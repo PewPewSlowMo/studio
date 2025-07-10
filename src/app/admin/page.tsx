@@ -6,6 +6,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { UserManagement } from '@/components/admin/user-management';
 import { SystemSettings } from '@/components/admin/system-settings';
 import { ConnectionStatusCard } from '@/components/admin/connection-status-card';
+import { testAriConnection } from '@/actions/ari';
 import { testAmiConnection } from '@/actions/ami';
 import { testCdrConnection } from '@/actions/cdr';
 import { testAppDbConnection } from '@/actions/app-db';
@@ -101,14 +102,15 @@ export default function AdminPage() {
       setAppDbPassword(config.app_db.password);
       setAppDbDatabase(config.app_db.database);
       
-      const [amiResult, cdrResult, appDbResult] = await Promise.all([
+      const [ariResult, amiResult, cdrResult, appDbResult] = await Promise.all([
+        testAriConnection(config.ari),
         testAmiConnection(config.ami),
         testCdrConnection(config.cdr),
         testAppDbConnection(config.app_db),
       ]);
       
+      setAriStatus(ariResult.success ? 'Connected' : 'Failed');
       setAmiStatus(amiResult.success ? 'Connected' : 'Failed');
-      setAriStatus(amiResult.success ? 'Connected' : 'Failed'); // ARI is related to AMI
       setCdrStatus(cdrResult.success ? 'Connected' : 'Failed');
       setAppDbStatus(appDbResult.success ? 'Connected' : 'Failed');
       
@@ -120,6 +122,20 @@ export default function AdminPage() {
 
     initializeAndCheck();
   }, []);
+
+  const handleTestAri = async () => {
+    setIsTestingAri(true);
+    setAriStatus('Unknown');
+    const result = await testAriConnection(ariConnection);
+    if (result.success) {
+      setAriStatus('Connected');
+      toast({ title: 'ARI Connection Successful', description: 'Successfully connected to the Asterisk REST Interface.' });
+    } else {
+      setAriStatus('Failed');
+      toast({ variant: 'destructive', title: 'ARI Connection Failed', description: result.error });
+    }
+    setIsTestingAri(false);
+  };
 
   const handleTestAmi = async () => {
     setIsTestingAmi(true);
@@ -225,7 +241,15 @@ export default function AdminPage() {
         </TabsList>
 
         <TabsContent value="settings" className="mt-6 space-y-8">
-            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-4">
+                <ConnectionStatusCard
+                    icon={LinkIcon}
+                    title="Asterisk (ARI)"
+                    status={ariStatus}
+                    port={ariPort}
+                    onTest={handleTestAri}
+                    isTesting={isTestingAri}
+                />
                 <ConnectionStatusCard
                     icon={Wifi}
                     title="Asterisk (AMI)"
@@ -253,9 +277,11 @@ export default function AdminPage() {
                 />
             </div>
             <SystemSettings
+                ariConnection={ariConnection}
                 amiConnection={amiConnection}
                 cdrConnection={cdrConnection}
                 appDbConnection={appDbConnection}
+                onAriChange={{ setHost: setAriHost, setPort: setAriPort, setUsername: setAriUsername, setPassword: setAriPassword }}
                 onAmiChange={{ setHost: setAmiHost, setPort: setAmiPort, setUsername: setAmiUsername, setPassword: setAmiPassword }}
                 onCdrChange={{ setHost: setCdrHost, setPort: setCdrPort, setUsername: setCdrUsername, setPassword: setCdrPassword, setDatabase: setCdrDatabase }}
                 onAppDbChange={{ setHost: setAppDbHost, setPort: setAppDbPort, setUsername: setAppDbUsername, setPassword: setAppDbPassword, setDatabase: setAppDbDatabase }}
