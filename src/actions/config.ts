@@ -22,7 +22,6 @@ const ConfigSchema = z.object({
   ari: ConnectionSchema,
   ami: ConnectionSchema,
   cdr: DbConnectionSchema,
-  app_db: DbConnectionSchema,
 });
 
 export type AppConfig = z.infer<typeof ConfigSchema>;
@@ -47,20 +46,17 @@ const defaultConfig: AppConfig = {
     password: 'StrongPassword123!',
     database: 'asteriskcdrdb',
   },
-  app_db: {
-    host: '127.0.0.1',
-    port: '3306',
-    username: 'app_user',
-    password: 'app_password',
-    database: 'call_center_db',
-  }
 };
 
 export async function getConfig(): Promise<AppConfig> {
   try {
     await fs.mkdir(path.dirname(CONFIG_PATH), { recursive: true });
     const data = await fs.readFile(CONFIG_PATH, 'utf-8');
-    return ConfigSchema.parse(JSON.parse(data));
+    // Ensure data is parsed and then validated.
+    const parsedData = JSON.parse(data);
+    // Merge with defaults to ensure all keys are present
+    const mergedConfig = { ...defaultConfig, ...parsedData };
+    return ConfigSchema.parse(mergedConfig);
   } catch (error) {
     // If file doesn't exist or is invalid, write the default and return it
     await fs.writeFile(CONFIG_PATH, JSON.stringify(defaultConfig, null, 2), 'utf-8');
@@ -68,7 +64,7 @@ export async function getConfig(): Promise<AppConfig> {
   }
 }
 
-export async function saveConfig(newConfig: AppConfig): Promise<{ success: boolean; error?: string }> {
+export async function saveConfig(newConfig: Omit<AppConfig, 'app_db'>): Promise<{ success: boolean; error?: string }> {
   try {
     const validatedConfig = ConfigSchema.parse(newConfig);
     await fs.writeFile(CONFIG_PATH, JSON.stringify(validatedConfig, null, 2), 'utf-8');

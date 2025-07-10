@@ -38,12 +38,6 @@ export default function AdminPage() {
   const [cdrUsername, setCdrUsername] = useState('');
   const [cdrPassword, setCdrPassword] = useState('');
   const [cdrDatabase, setCdrDatabase] = useState('');
-
-  const [appDbHost, setAppDbHost] = useState('');
-  const [appDbPort, setAppDbPort] = useState('');
-  const [appDbUsername, setAppDbUsername] = useState('');
-  const [appDbPassword, setAppDbPassword] = useState('');
-  const [appDbDatabase, setAppDbDatabase] = useState('');
   
   // State for connection testing
   const [isTestingAri, setIsTestingAri] = useState(false);
@@ -57,6 +51,7 @@ export default function AdminPage() {
 
   const [isTestingAppDb, setIsTestingAppDb] = useState(false);
   const [appDbStatus, setAppDbStatus] = useState<ConnectionStatus>('Unknown');
+  const [appDbVersion, setAppDbVersion] = useState<string>('');
 
   const [isSaving, setIsSaving] = useState(false);
 
@@ -64,7 +59,6 @@ export default function AdminPage() {
   const ariConnection = useMemo(() => ({ host: ariHost, port: ariPort, username: ariUsername, password: ariPassword }), [ariHost, ariPort, ariUsername, ariPassword]);
   const amiConnection = useMemo(() => ({ host: amiHost, port: amiPort, username: amiUsername, password: amiPassword }), [amiHost, amiPort, amiUsername, amiPassword]);
   const cdrConnection = useMemo(() => ({ host: cdrHost, port: cdrPort, username: cdrUsername, password: cdrPassword, database: cdrDatabase }), [cdrHost, cdrPort, cdrUsername, cdrPassword, cdrDatabase]);
-  const appDbConnection = useMemo(() => ({ host: appDbHost, port: appDbPort, username: appDbUsername, password: appDbPassword, database: appDbDatabase }), [appDbHost, appDbPort, appDbUsername, appDbPassword, appDbDatabase]);
 
   // Load config and perform initial healthcheck on mount
   useEffect(() => {
@@ -73,11 +67,7 @@ export default function AdminPage() {
       setIsTestingAmi(true);
       setIsTestingCdr(true);
       setIsTestingAppDb(true);
-      setAriStatus('Unknown');
-      setAmiStatus('Unknown');
-      setCdrStatus('Unknown');
-      setAppDbStatus('Unknown');
-
+      
       const config = await getConfig();
       
       setAriHost(config.ari.host);
@@ -96,23 +86,18 @@ export default function AdminPage() {
       setCdrPassword(config.cdr.password);
       setCdrDatabase(config.cdr.database);
       
-      setAppDbHost(config.app_db.host);
-      setAppDbPort(config.app_db.port);
-      setAppDbUsername(config.app_db.username);
-      setAppDbPassword(config.app_db.password);
-      setAppDbDatabase(config.app_db.database);
-      
       const [ariResult, amiResult, cdrResult, appDbResult] = await Promise.all([
         testAriConnection(config.ari),
         testAmiConnection(config.ami),
         testCdrConnection(config.cdr),
-        testAppDbConnection(config.app_db),
+        testAppDbConnection(),
       ]);
       
       setAriStatus(ariResult.success ? 'Connected' : 'Failed');
       setAmiStatus(amiResult.success ? 'Connected' : 'Failed');
       setCdrStatus(cdrResult.success ? 'Connected' : 'Failed');
       setAppDbStatus(appDbResult.success ? 'Connected' : 'Failed');
+      if (appDbResult.success) setAppDbVersion(appDbResult.data?.version);
       
       setIsTestingAri(false);
       setIsTestingAmi(false);
@@ -168,10 +153,11 @@ export default function AdminPage() {
   const handleTestAppDb = async () => {
     setIsTestingAppDb(true);
     setAppDbStatus('Unknown');
-    const result = await testAppDbConnection(appDbConnection);
+    const result = await testAppDbConnection();
     if (result.success) {
       setAppDbStatus('Connected');
-      toast({ title: 'App DB Connection Successful', description: 'Successfully connected to the application database.' });
+      setAppDbVersion(result.data?.version);
+      toast({ title: 'App DB Connection Successful', description: 'Successfully connected to the application SQLite database.' });
     } else {
       setAppDbStatus('Failed');
       toast({ variant: 'destructive', title: 'App DB Connection Failed', description: result.error });
@@ -185,7 +171,6 @@ export default function AdminPage() {
       ari: ariConnection,
       ami: amiConnection,
       cdr: cdrConnection,
-      app_db: appDbConnection,
     };
     const result = await saveConfig(newConfig);
     if (result.success) {
@@ -260,7 +245,7 @@ export default function AdminPage() {
                 />
                 <ConnectionStatusCard
                     icon={Database}
-                    title="CDR База данных"
+                    title="CDR База данных (MySQL)"
                     status={cdrStatus}
                     port={cdrPort}
                     onTest={handleTestCdr}
@@ -268,9 +253,9 @@ export default function AdminPage() {
                 />
                  <ConnectionStatusCard
                     icon={Server}
-                    title="База данных приложения"
+                    title="База приложения (SQLite)"
                     status={appDbStatus}
-                    port={appDbPort}
+                    port={appDbVersion ? `v${appDbVersion}` : '...'}
                     onTest={handleTestAppDb}
                     isTesting={isTestingAppDb}
                     variant="success"
@@ -280,11 +265,9 @@ export default function AdminPage() {
                 ariConnection={ariConnection}
                 amiConnection={amiConnection}
                 cdrConnection={cdrConnection}
-                appDbConnection={appDbConnection}
                 onAriChange={{ setHost: setAriHost, setPort: setAriPort, setUsername: setAriUsername, setPassword: setAriPassword }}
                 onAmiChange={{ setHost: setAmiHost, setPort: setAmiPort, setUsername: setAmiUsername, setPassword: setAmiPassword }}
                 onCdrChange={{ setHost: setCdrHost, setPort: setCdrPort, setUsername: setCdrUsername, setPassword: setCdrPassword, setDatabase: setCdrDatabase }}
-                onAppDbChange={{ setHost: setAppDbHost, setPort: setAppDbPort, setUsername: setAppDbUsername, setPassword: setAppDbPassword, setDatabase: setAppDbDatabase }}
                 onSave={handleSaveSettings}
                 isSaving={isSaving}
             />

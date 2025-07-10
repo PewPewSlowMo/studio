@@ -11,7 +11,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Wifi, Database, Loader2, Server, Link as LinkIcon } from 'lucide-react';
+import { Wifi, Database, Loader2, Link as LinkIcon } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 
 interface ConnectionProps {
@@ -40,23 +40,21 @@ interface SystemSettingsProps {
   ariConnection: ConnectionProps;
   amiConnection: ConnectionProps;
   cdrConnection: DbConnectionProps;
-  appDbConnection: DbConnectionProps;
   onAriChange: OnChangeProps;
   onAmiChange: OnChangeProps;
   onCdrChange: OnDbChangeProps;
-  onAppDbChange: OnDbChangeProps;
   onSave: () => Promise<void>;
   isSaving: boolean;
 }
 
-export function SystemSettings({ ariConnection, amiConnection, cdrConnection, appDbConnection, onAriChange, onAmiChange, onCdrChange, onAppDbChange, onSave, isSaving }: SystemSettingsProps) {
+export function SystemSettings({ ariConnection, amiConnection, cdrConnection, onAriChange, onAmiChange, onCdrChange, onSave, isSaving }: SystemSettingsProps) {
 
   return (
     <Card>
       <CardHeader>
         <CardTitle>Конфигурация подключений</CardTitle>
         <CardDescription>
-        Настройки для подключения к Asterisk и базам данных.
+        Настройки для подключения к Asterisk и базам данных. База данных приложения (SQLite) настраивается автоматически.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-8">
@@ -127,7 +125,7 @@ export function SystemSettings({ ariConnection, amiConnection, cdrConnection, ap
             <div className="flex items-center gap-4">
                 <Database className="h-8 w-8 text-muted-foreground" />
                 <div>
-                    <h3 className="text-lg font-semibold">База данных CDR</h3>
+                    <h3 className="text-lg font-semibold">База данных CDR (MySQL)</h3>
                     <p className="text-sm text-muted-foreground">Подключение к базе данных истории звонков (Call Detail Record).</p>
                 </div>
             </div>
@@ -151,41 +149,6 @@ export function SystemSettings({ ariConnection, amiConnection, cdrConnection, ap
                 <div className="space-y-2 md:col-span-2">
                     <Label htmlFor="cdr-database">Имя базы данных</Label>
                     <Input id="cdr-database" value={cdrConnection.database} onChange={(e) => onCdrChange.setDatabase(e.target.value)} />
-                </div>
-            </div>
-        </div>
-
-        <Separator />
-
-        {/* App DB Settings */}
-        <div className="space-y-4">
-            <div className="flex items-center gap-4">
-                <Server className="h-8 w-8 text-muted-foreground" />
-                <div>
-                    <h3 className="text-lg font-semibold">База данных приложения</h3>
-                    <p className="text-sm text-muted-foreground">База для хранения пользователей, CRM, обращений и других данных приложения.</p>
-                </div>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2">
-                <div className="space-y-2">
-                    <Label htmlFor="appdb-host">Хост</Label>
-                    <Input id="appdb-host" value={appDbConnection.host} onChange={(e) => onAppDbChange.setHost(e.target.value)} />
-                </div>
-                <div className="space-y-2">
-                    <Label htmlFor="appdb-port">Порт</Label>
-                    <Input id="appdb-port" type="number" value={appDbConnection.port} onChange={(e) => onAppDbChange.setPort(e.target.value)} />
-                </div>
-                <div className="space-y-2">
-                    <Label htmlFor="appdb-username">Пользователь</Label>
-                    <Input id="appdb-username" value={appDbConnection.username} onChange={(e) => onAppDbChange.setUsername(e.target.value)} />
-                </div>
-                <div className="space-y-2">
-                    <Label htmlFor="appdb-password">Пароль</Label>
-                    <Input id="appdb-password" type="password" value={appDbConnection.password} onChange={(e) => onAppDbChange.setPassword(e.target.value)} />
-                </div>
-                <div className="space-y-2 md:col-span-2">
-                    <Label htmlFor="appdb-database">Имя базы данных</Label>
-                    <Input id="appdb-database" value={appDbConnection.database} onChange={(e) => onAppDbChange.setDatabase(e.target.value)} />
                 </div>
             </div>
         </div>
