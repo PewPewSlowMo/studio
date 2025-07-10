@@ -9,7 +9,7 @@ import { ConnectionStatusCard } from '@/components/admin/connection-status-card'
 import { testAriConnection } from '@/actions/ari';
 import { testAmiConnection } from '@/actions/ami';
 import { testCdrConnection } from '@/actions/cdr';
-import { testAppDbConnection } from '@/actions/app-db';
+import { initializeDatabase, testAppDbConnection } from '@/actions/app-db';
 import { getConfig, saveConfig } from '@/actions/config';
 import { toast } from '@/hooks/use-toast';
 import type { User } from '@/lib/types';
@@ -68,6 +68,9 @@ export default function AdminPage() {
       setIsTestingCdr(true);
       setIsTestingAppDb(true);
       
+      // Ensure DB is initialized before any other action
+      await initializeDatabase();
+
       const config = await getConfig();
       
       setAriHost(config.ari.host);
@@ -279,3 +282,5 @@ export default function AdminPage() {
     </div>
   );
 }
+
+    

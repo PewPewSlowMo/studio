@@ -23,6 +23,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { format, parseISO, isValid, subHours } from 'date-fns';
 import type { Call, User, AsteriskEndpoint, AsteriskQueue, CallState } from '@/lib/types';
 import { getOperatorState } from '@/actions/asterisk';
+import { initializeDatabase } from '@/actions/app-db';
 
 function KpiCardSkeleton() {
   return (
@@ -55,6 +56,8 @@ export default function DashboardPage() {
       setIsLoading(true);
       setError(null);
       try {
+        await initializeDatabase();
+        
         const config = await getConfig();
         const oneHourAgo = subHours(new Date(), 1).toISOString();
         const dateRange = { from: oneHourAgo, to: new Date().toISOString() };
@@ -90,13 +93,12 @@ export default function DashboardPage() {
   
     const pollStates = async () => {
       try {
-        const config = await getConfig();
         const operatorExtensions = data.users
           .filter(u => u.role === 'operator' && u.extension)
           .map(u => u.extension!);
   
         const statePromises = operatorExtensions.map(ext => 
-          getOperatorState(config.ari, ext).then(res => 
+          getOperatorState(ext).then(res => 
             res.success && res.data ? { ...res.data, extension: ext } as CallState & { extension: string } : null
           )
         );
@@ -293,3 +295,5 @@ export default function DashboardPage() {
     </div>
   );
 }
+
+    

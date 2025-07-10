@@ -1,7 +1,17 @@
+'use client';
+
 import { LoginForm } from '@/components/auth/login-form';
 import { BarChart } from 'lucide-react';
+import { useEffect } from 'react';
+import { initializeDatabase } from '@/actions/app-db';
 
 export default function LoginPage() {
+
+  useEffect(() => {
+    // This ensures the database and tables are created on the very first run.
+    initializeDatabase();
+  }, []);
+
   return (
     <div className="relative flex min-h-screen flex-col items-center justify-center bg-background p-4">
       <div className="w-full max-w-md space-y-6">
