@@ -14,6 +14,8 @@ const stateConfig: Record<string, { label: string; colorClass: string }> = {
   'ringing': { label: 'В разговоре', colorClass: 'bg-yellow-500' },
   'in use': { label: 'В разговоре', colorClass: 'bg-yellow-500' },
   'busy': { label: 'В разговоре', colorClass: 'bg-yellow-500' },
+  'away': { label: 'Отошел', colorClass: 'bg-blue-500' },
+  'dnd': { label: 'Не беспокоить', colorClass: 'bg-orange-500' },
   'unavailable': { label: 'Оффлайн', colorClass: 'bg-red-500' },
   'invalid': { label: 'Оффлайн', colorClass: 'bg-red-500' },
   'unknown': { label: 'Неизвестно', colorClass: 'bg-gray-400' },
