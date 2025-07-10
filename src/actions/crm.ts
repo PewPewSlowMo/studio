@@ -1,98 +1,94 @@
 'use server';
 
-import fs from 'fs/promises';
-import path from 'path';
 import { z } from 'zod';
 import type { Call, CrmContact } from '@/lib/types';
 import { getConfig } from './config';
 import { getCallHistory } from './cdr';
 import { getUsers } from './users';
-
-const CRM_DB_PATH = path.join(process.cwd(), 'data', 'crm.json');
+import { getDbConnection } from './app-db';
 
 const CrmContactSchema = z.object({
   phoneNumber: z.string().min(1, 'Phone number is required'),
   name: z.string().min(1, 'Name is required'),
-  address: z.string().min(1, 'Address is required'),
-  type: z.string().min(1, 'Type is required'),
+  address: z.string().optional(),
+  type: z.string().optional(),
   email: z.string().email('Invalid email address').optional().or(z.literal('')),
   notes: z.string().optional(),
 });
-
-async function readCrmData(): Promise<CrmContact[]> {
-  try {
-    await fs.mkdir(path.dirname(CRM_DB_PATH), { recursive: true });
-    const data = await fs.readFile(CRM_DB_PATH, 'utf-8');
-    return JSON.parse(data) as CrmContact[];
-  } catch (error: any) {
-    if (error.code === 'ENOENT') {
-      await fs.writeFile(CRM_DB_PATH, JSON.stringify([]), 'utf-8');
-      return [];
-    }
-    console.error('Error reading CRM database:', error);
-    throw new Error('Could not read from the CRM database.');
-  }
-}
-
-async function writeCrmData(contacts: CrmContact[]): Promise<void> {
-  await fs.writeFile(CRM_DB_PATH, JSON.stringify(contacts, null, 2), 'utf-8');
-}
-
 
 export async function findContactByPhone(phoneNumber: string): Promise<{ contact: CrmContact | null, history: Call[] }> {
     if (!phoneNumber || phoneNumber === 'anonymous') {
         return { contact: null, history: [] };
     }
+    
+    const db = await getDbConnection();
+    try {
+      const contact = await db.get<CrmContact>('SELECT * FROM crm_contacts WHERE phoneNumber = ?', phoneNumber);
+      
+      const [config, users] = await Promise.all([
+          getConfig(),
+          getUsers(),
+      ]);
 
-    const [crmData, config, users] = await Promise.all([
-        readCrmData(),
-        getConfig(),
-        getUsers(),
-    ]);
-    
-    const contact = crmData.find(c => c.phoneNumber === phoneNumber) || null;
-    
-    const callHistoryResult = await getCallHistory(config.cdr); // Fetches last 24h by default
-    
-    let history: Call[] = [];
-    if (callHistoryResult.success && callHistoryResult.data) {
-        const userMap = new Map(users.filter(u => u.extension).map(user => [user.extension, user.name]));
-        history = callHistoryResult.data
-            .filter(call => call.callerNumber === phoneNumber)
-            .map(call => ({
-                ...call,
-                operatorName: call.operatorExtension 
-                    ? (userMap.get(call.operatorExtension) || `Ext. ${call.operatorExtension}`) 
-                    : 'N/A',
-            }))
-            .slice(0, 5); // Limit to last 5 calls for the popup
+      const callHistoryResult = await getCallHistory(config.cdr); // Fetches last 24h by default
+      
+      let history: Call[] = [];
+      if (callHistoryResult.success && callHistoryResult.data) {
+          const userMap = new Map(users.filter(u => u.extension).map(user => [user.extension, user.name]));
+          history = callHistoryResult.data
+              .filter(call => call.callerNumber === phoneNumber)
+              .map(call => ({
+                  ...call,
+                  operatorName: call.operatorExtension 
+                      ? (userMap.get(call.operatorExtension) || `Ext. ${call.operatorExtension}`) 
+                      : 'N/A',
+              }))
+              .slice(0, 5); // Limit to last 5 calls for the popup
+      }
+
+      return { contact: contact || null, history };
+    } finally {
+      await db.close();
     }
-
-    return { contact, history };
 }
 
 export async function addOrUpdateContact(contactData: CrmContact): Promise<{ success: boolean; error?: string }> {
+  const db = await getDbConnection();
   try {
     const validatedData = CrmContactSchema.parse(contactData);
-    const contacts = await readCrmData();
-    const index = contacts.findIndex(c => c.phoneNumber === validatedData.phoneNumber);
 
-    if (index !== -1) {
-      // Update existing contact
-      contacts[index] = { ...contacts[index], ...validatedData };
-    } else {
-      // Add new contact
-      contacts.unshift(validatedData);
-    }
-
-    await writeCrmData(contacts);
+    await db.run(
+      `INSERT INTO crm_contacts (phoneNumber, name, address, type, email, notes)
+       VALUES (?, ?, ?, ?, ?, ?)
+       ON CONFLICT(phoneNumber) DO UPDATE SET
+         name = excluded.name,
+         address = excluded.address,
+         type = excluded.type,
+         email = excluded.email,
+         notes = excluded.notes`,
+      validatedData.phoneNumber,
+      validatedData.name,
+      validatedData.address || null,
+      validatedData.type || null,
+      validatedData.email || null,
+      validatedData.notes || null,
+    );
+    
     return { success: true };
   } catch (e) {
     const message = e instanceof Error ? e.message : 'An unknown error occurred.';
     return { success: false, error: message };
+  } finally {
+    await db.close();
   }
 }
 
 export async function getContacts(): Promise<CrmContact[]> {
-    return readCrmData();
+    const db = await getDbConnection();
+    try {
+        const contacts = await db.all<CrmContact[]>('SELECT * FROM crm_contacts ORDER BY name ASC');
+        return contacts;
+    } finally {
+        await db.close();
+    }
 }

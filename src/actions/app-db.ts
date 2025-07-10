@@ -4,11 +4,14 @@ import { open } from 'sqlite';
 import sqlite3 from 'sqlite3';
 import path from 'path';
 import fs from 'fs/promises';
-import type { User } from '@/lib/types';
+import type { User, CrmContact, Appeal } from '@/lib/types';
 
 // The database file will be stored in the `data` directory.
 const DB_PATH = path.join(process.cwd(), 'data', 'app.db');
 const USERS_JSON_PATH = path.join(process.cwd(), 'data', 'users.json');
+const CRM_JSON_PATH = path.join(process.cwd(), 'data', 'crm.json');
+const APPEALS_JSON_PATH = path.join(process.cwd(), 'data', 'appeals.json');
+
 
 /**
  * Creates and returns a database connection instance.
@@ -30,6 +33,9 @@ export async function getDbConnection() {
 export async function initializeDatabase() {
   const db = await getDbConnection();
   
+  // Enable foreign key support
+  await db.exec('PRAGMA foreign_keys = ON;');
+
   await db.exec(`
     CREATE TABLE IF NOT EXISTS users (
       id TEXT PRIMARY KEY,
@@ -46,8 +52,8 @@ export async function initializeDatabase() {
     CREATE TABLE IF NOT EXISTS crm_contacts (
       phoneNumber TEXT PRIMARY KEY,
       name TEXT NOT NULL,
-      address TEXT NOT NULL,
-      type TEXT NOT NULL,
+      address TEXT,
+      type TEXT,
       email TEXT,
       notes TEXT
     );
@@ -58,52 +64,75 @@ export async function initializeDatabase() {
       operatorId TEXT NOT NULL,
       operatorName TEXT NOT NULL,
       callerNumber TEXT NOT NULL,
-      description TEXT NOT NULL,
-      resolution TEXT NOT NULL,
-      category TEXT NOT NULL,
-      priority TEXT NOT NULL,
-      satisfaction TEXT NOT NULL,
+      description TEXT,
+      resolution TEXT,
+      category TEXT,
+      priority TEXT,
+      satisfaction TEXT,
       notes TEXT,
       followUp BOOLEAN NOT NULL DEFAULT FALSE,
       followUpCompleted BOOLEAN NOT NULL DEFAULT FALSE,
-      createdAt TEXT NOT NULL
+      createdAt TEXT NOT NULL,
+      FOREIGN KEY (operatorId) REFERENCES users (id) ON DELETE SET NULL,
+      FOREIGN KEY (callerNumber) REFERENCES crm_contacts (phoneNumber) ON DELETE CASCADE
     );
   `);
-
-  // One-time migration for users
-  const userCount = await db.get('SELECT COUNT(*) as count FROM users');
-  if (userCount.count === 0) {
-      console.log('Users table is empty. Attempting to migrate from users.json...');
-      try {
-          const data = await fs.readFile(USERS_JSON_PATH, 'utf-8');
-          const users: User[] = JSON.parse(data);
-          
-          if (users.length > 0) {
-              const stmt = await db.prepare('INSERT INTO users (id, username, email, name, role, isActive, createdAt, extension, password) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)');
-              for (const user of users) {
-                  await stmt.run(
-                      user.id,
-                      user.username,
-                      user.email,
-                      user.name,
-                      user.role,
-                      user.isActive,
-                      user.createdAt, // Assumes createdAt is already an ISO string
-                      user.extension || null,
-                      user.password
-                  );
+  
+  // One-time migration functions
+  const migrateFromJson = async (tableName: string, jsonPath: string, insertStatement: string, dataMapper: (item: any) => any[]) => {
+      const countResult = await db.get(`SELECT COUNT(*) as count FROM ${tableName}`);
+      if (countResult.count === 0) {
+          console.log(`${tableName} table is empty. Attempting to migrate from ${path.basename(jsonPath)}...`);
+          try {
+              const data = await fs.readFile(jsonPath, 'utf-8');
+              const items = JSON.parse(data);
+              
+              if (items.length > 0) {
+                  const stmt = await db.prepare(insertStatement);
+                  for (const item of items) {
+                      await stmt.run(...dataMapper(item));
+                  }
+                  await stmt.finalize();
+                  console.log(`Successfully migrated ${items.length} items to ${tableName} from ${path.basename(jsonPath)}.`);
               }
-              await stmt.finalize();
-              console.log(`Successfully migrated ${users.length} users from users.json.`);
-          }
-      } catch (error) {
-          if ((error as NodeJS.ErrnoException).code !== 'ENOENT') {
-              console.error('Failed to migrate users from users.json:', error);
-          } else {
-              console.log('users.json not found, skipping migration.');
+          } catch (error) {
+              if ((error as NodeJS.ErrnoException).code !== 'ENOENT') {
+                  console.error(`Failed to migrate to ${tableName} from ${path.basename(jsonPath)}:`, error);
+              } else {
+                  console.log(`${path.basename(jsonPath)} not found, skipping migration.`);
+              }
           }
       }
-  }
+  };
+
+  // Migrate Users
+  await migrateFromJson(
+      'users', 
+      USERS_JSON_PATH, 
+      'INSERT INTO users (id, username, email, name, role, isActive, createdAt, extension, password) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      (user: User) => [user.id, user.username, user.email, user.name, user.role, user.isActive, user.createdAt, user.extension || null, user.password]
+  );
+  
+  // Migrate CRM Contacts
+  await migrateFromJson(
+      'crm_contacts',
+      CRM_JSON_PATH,
+      'INSERT INTO crm_contacts (phoneNumber, name, address, type, email, notes) VALUES (?, ?, ?, ?, ?, ?)',
+      (contact: CrmContact) => [contact.phoneNumber, contact.name, contact.address, contact.type, contact.email || null, contact.notes || null]
+  );
+
+  // Migrate Appeals
+  await migrateFromJson(
+      'appeals',
+      APPEALS_JSON_PATH,
+      'INSERT INTO appeals (id, callId, operatorId, operatorName, callerNumber, description, resolution, category, priority, satisfaction, notes, followUp, followUpCompleted, createdAt) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      (appeal: Appeal) => [
+          appeal.id, appeal.callId, appeal.operatorId, appeal.operatorName, appeal.callerNumber,
+          appeal.description, appeal.resolution, appeal.category, appeal.priority, appeal.satisfaction,
+          appeal.notes || null, appeal.followUp, appeal.followUpCompleted || false, appeal.createdAt
+      ]
+  );
+
 
   await db.close();
 }
