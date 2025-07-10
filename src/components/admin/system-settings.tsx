@@ -11,16 +11,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Link, Database, Loader2 } from 'lucide-react';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { cn } from '@/lib/utils';
+import { Wifi, Database, Loader2, Server } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 
 interface ConnectionProps {
@@ -37,129 +28,77 @@ interface OnChangeProps {
     setPassword: (password: string) => void;
 }
 
-interface CdrConnectionProps {
-    host: string;
-    port: string;
-    username: string;
-    password: string;
+interface DbConnectionProps extends ConnectionProps {
     database: string;
 }
 
-interface OnCdrChangeProps {
-    setHost: (host: string) => void;
-    setPort: (port: string) => void;
-    setUsername: (username: string) => void;
-    setPassword: (password: string) => void;
+interface OnDbChangeProps extends OnChangeProps {
     setDatabase: (database: string) => void;
 }
 
 interface SystemSettingsProps {
-  ariConnection: ConnectionProps;
   amiConnection: ConnectionProps;
-  cdrConnection: CdrConnectionProps;
-  onAriChange: OnChangeProps;
+  cdrConnection: DbConnectionProps;
+  appDbConnection: DbConnectionProps;
   onAmiChange: OnChangeProps;
-  onCdrChange: OnCdrChangeProps;
+  onCdrChange: OnDbChangeProps;
+  onAppDbChange: OnDbChangeProps;
   onSave: () => Promise<void>;
   isSaving: boolean;
 }
 
-type InterfaceType = 'ami' | 'ari';
-
-export function SystemSettings({ ariConnection, amiConnection, cdrConnection, onAriChange, onAmiChange, onCdrChange, onSave, isSaving }: SystemSettingsProps) {
-  const [interfaceType, setInterfaceType] = useState<InterfaceType>('ami');
-  
-  const connection = interfaceType === 'ami' ? amiConnection : ariConnection;
-  const onConnectionChange = interfaceType === 'ami' ? onAmiChange : onAriChange;
+export function SystemSettings({ amiConnection, cdrConnection, appDbConnection, onAmiChange, onCdrChange, onAppDbChange, onSave, isSaving }: SystemSettingsProps) {
 
   return (
     <Card>
       <CardHeader>
-        <div className="flex items-center gap-4">
-            <Link className="h-8 w-8 text-muted-foreground" />
-            <div>
-                <CardTitle>Конфигурация подключений</CardTitle>
-                <CardDescription>
-                Настройки подключения к Asterisk PBX и базе данных CDR.
-                </CardDescription>
-            </div>
-        </div>
+        <CardTitle>Конфигурация подключений</CardTitle>
+        <CardDescription>
+        Настройки для подключения к Asterisk и базам данных.
+        </CardDescription>
       </CardHeader>
-      <CardContent className="space-y-6">
-        <div>
-            <Label>Тип интерфейса Asterisk</Label>
-            <Select value={interfaceType} onValueChange={(value) => setInterfaceType(value as InterfaceType)}>
-                <SelectTrigger className="mt-2">
-                    <SelectValue placeholder="Выберите тип интерфейса" />
-                </SelectTrigger>
-                <SelectContent>
-                    <SelectItem value="ami">AMI (рекомендуется для колл-центра)</SelectItem>
-                    <SelectItem value="ari">ARI (для расширенной разработки)</SelectItem>
-                </SelectContent>
-            </Select>
-        </div>
-
-        <div className="grid grid-cols-2 gap-2 rounded-md bg-muted p-1">
-            <Button variant={interfaceType === 'ami' ? 'default' : 'ghost'} onClick={() => setInterfaceType('ami')} className="shadow-sm data-[state=active]:bg-background data-[state=active]:text-foreground" data-state={interfaceType === 'ami' ? 'active' : 'inactive'}>AMI Настройки</Button>
-            <Button variant={interfaceType === 'ari' ? 'default' : 'ghost'} onClick={() => setInterfaceType('ari')} className="shadow-sm data-[state=active]:bg-background data-[state=active]:text-foreground" data-state={interfaceType === 'ari' ? 'active' : 'inactive'}>ARI Настройки</Button>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4">
-             <div className="space-y-2">
-              <Label htmlFor="host">Хост</Label>
-              <Input
-                id="host"
-                value={connection.host}
-                onChange={(e) => onConnectionChange.setHost(e.target.value)}
-              />
+      <CardContent className="space-y-8">
+        {/* AMI Settings */}
+        <div className="space-y-4">
+            <div className="flex items-center gap-4">
+                <Wifi className="h-8 w-8 text-muted-foreground" />
+                <div>
+                    <h3 className="text-lg font-semibold">Asterisk Manager Interface (AMI)</h3>
+                    <p className="text-sm text-muted-foreground">Для управления и мониторинга Asterisk в реальном времени.</p>
+                </div>
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="port">{interfaceType.toUpperCase()} Порт</Label>
-              <Input
-                id="port"
-                type="number"
-                value={connection.port}
-                onChange={(e) => onConnectionChange.setPort(e.target.value)}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="username">{interfaceType.toUpperCase()} Пользователь</Label>
-              <Input
-                id="username"
-                value={connection.username}
-                onChange={(e) => onConnectionChange.setUsername(e.target.value)}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="password">{interfaceType.toUpperCase()} Пароль</Label>
-              <Input
-                id="password"
-                type="password"
-                value={connection.password}
-                onChange={(e) => onConnectionChange.setPassword(e.target.value)}
-              />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2">
+                <div className="space-y-2">
+                <Label htmlFor="ami-host">Хост</Label>
+                <Input id="ami-host" value={amiConnection.host} onChange={(e) => onAmiChange.setHost(e.target.value)} />
+                </div>
+                <div className="space-y-2">
+                <Label htmlFor="ami-port">Порт</Label>
+                <Input id="ami-port" type="number" value={amiConnection.port} onChange={(e) => onAmiChange.setPort(e.target.value)} />
+                </div>
+                <div className="space-y-2">
+                <Label htmlFor="ami-username">Пользователь</Label>
+                <Input id="ami-username" value={amiConnection.username} onChange={(e) => onAmiChange.setUsername(e.target.value)} />
+                </div>
+                <div className="space-y-2">
+                <Label htmlFor="ami-password">Пароль</Label>
+                <Input id="ami-password" type="password" value={amiConnection.password} onChange={(e) => onAmiChange.setPassword(e.target.value)} />
+                </div>
             </div>
         </div>
-
-        <Alert className={cn('bg-blue-50 border border-blue-200 text-blue-800', interfaceType === 'ari' && 'hidden')}>
-            <AlertDescription>
-                <span className='font-bold'>AMI преимущества:</span> Более стабильное подключение, нет проблем с HTTP/HTTPS, реальное время событий, лучше подходит для колл-центра.
-            </AlertDescription>
-        </Alert>
         
-        <Separator className="my-8" />
+        <Separator />
         
+        {/* CDR DB Settings */}
         <div className="space-y-4">
             <div className="flex items-center gap-4">
                 <Database className="h-8 w-8 text-muted-foreground" />
                 <div>
-                    <h3 className="text-lg font-semibold">Конфигурация CDR базы данных</h3>
-                    <p className="text-sm text-muted-foreground">
-                        Настройки подключения к базе данных Call Detail Record.
-                    </p>
+                    <h3 className="text-lg font-semibold">База данных CDR</h3>
+                    <p className="text-sm text-muted-foreground">Подключение к базе данных истории звонков (Call Detail Record).</p>
                 </div>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2">
                 <div className="space-y-2">
                     <Label htmlFor="cdr-host">Хост</Label>
                     <Input id="cdr-host" value={cdrConnection.host} onChange={(e) => onCdrChange.setHost(e.target.value)} />
@@ -182,11 +121,46 @@ export function SystemSettings({ ariConnection, amiConnection, cdrConnection, on
                 </div>
             </div>
         </div>
+
+        <Separator />
+
+        {/* App DB Settings */}
+        <div className="space-y-4">
+            <div className="flex items-center gap-4">
+                <Server className="h-8 w-8 text-muted-foreground" />
+                <div>
+                    <h3 className="text-lg font-semibold">База данных приложения</h3>
+                    <p className="text-sm text-muted-foreground">База для хранения пользователей, CRM, обращений и других данных приложения.</p>
+                </div>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2">
+                <div className="space-y-2">
+                    <Label htmlFor="appdb-host">Хост</Label>
+                    <Input id="appdb-host" value={appDbConnection.host} onChange={(e) => onAppDbChange.setHost(e.target.value)} />
+                </div>
+                <div className="space-y-2">
+                    <Label htmlFor="appdb-port">Порт</Label>
+                    <Input id="appdb-port" type="number" value={appDbConnection.port} onChange={(e) => onAppDbChange.setPort(e.target.value)} />
+                </div>
+                <div className="space-y-2">
+                    <Label htmlFor="appdb-username">Пользователь</Label>
+                    <Input id="appdb-username" value={appDbConnection.username} onChange={(e) => onAppDbChange.setUsername(e.target.value)} />
+                </div>
+                <div className="space-y-2">
+                    <Label htmlFor="appdb-password">Пароль</Label>
+                    <Input id="appdb-password" type="password" value={appDbConnection.password} onChange={(e) => onAppDbChange.setPassword(e.target.value)} />
+                </div>
+                <div className="space-y-2 md:col-span-2">
+                    <Label htmlFor="appdb-database">Имя базы данных</Label>
+                    <Input id="appdb-database" value={appDbConnection.database} onChange={(e) => onAppDbChange.setDatabase(e.target.value)} />
+                </div>
+            </div>
+        </div>
       </CardContent>
       <CardFooter className="border-t bg-card px-6 py-4">
         <Button onClick={onSave} disabled={isSaving}>
           {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-          {isSaving ? 'Сохранение...' : 'Сохранить изменения'}
+          {isSaving ? 'Сохранение...' : 'Сохранить все изменения'}
         </Button>
       </CardFooter>
     </Card>

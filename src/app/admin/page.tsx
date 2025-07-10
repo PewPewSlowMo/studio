@@ -1,13 +1,14 @@
 'use client';
 import { useState, useMemo, useCallback, useEffect } from 'react';
-import { Shield, Info, Network, Wifi, Database, Link as LinkIcon } from 'lucide-react';
+import { Shield, Info, Network, Wifi, Database, Link as LinkIcon, Server } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { UserManagement } from '@/components/admin/user-management';
 import { SystemSettings } from '@/components/admin/system-settings';
 import { ConnectionStatusCard } from '@/components/admin/connection-status-card';
-import { getAmiQueues, testAmiConnection } from '@/actions/ami';
+import { testAmiConnection } from '@/actions/ami';
 import { testCdrConnection } from '@/actions/cdr';
+import { testAppDbConnection } from '@/actions/app-db';
 import { getConfig, saveConfig } from '@/actions/config';
 import { toast } from '@/hooks/use-toast';
 import type { User } from '@/lib/types';
@@ -36,6 +37,12 @@ export default function AdminPage() {
   const [cdrUsername, setCdrUsername] = useState('');
   const [cdrPassword, setCdrPassword] = useState('');
   const [cdrDatabase, setCdrDatabase] = useState('');
+
+  const [appDbHost, setAppDbHost] = useState('');
+  const [appDbPort, setAppDbPort] = useState('');
+  const [appDbUsername, setAppDbUsername] = useState('');
+  const [appDbPassword, setAppDbPassword] = useState('');
+  const [appDbDatabase, setAppDbDatabase] = useState('');
   
   // State for connection testing
   const [isTestingAri, setIsTestingAri] = useState(false);
@@ -47,12 +54,16 @@ export default function AdminPage() {
   const [isTestingCdr, setIsTestingCdr] = useState(false);
   const [cdrStatus, setCdrStatus] = useState<ConnectionStatus>('Unknown');
 
+  const [isTestingAppDb, setIsTestingAppDb] = useState(false);
+  const [appDbStatus, setAppDbStatus] = useState<ConnectionStatus>('Unknown');
+
   const [isSaving, setIsSaving] = useState(false);
 
   // Memoize connection objects
   const ariConnection = useMemo(() => ({ host: ariHost, port: ariPort, username: ariUsername, password: ariPassword }), [ariHost, ariPort, ariUsername, ariPassword]);
   const amiConnection = useMemo(() => ({ host: amiHost, port: amiPort, username: amiUsername, password: amiPassword }), [amiHost, amiPort, amiUsername, amiPassword]);
   const cdrConnection = useMemo(() => ({ host: cdrHost, port: cdrPort, username: cdrUsername, password: cdrPassword, database: cdrDatabase }), [cdrHost, cdrPort, cdrUsername, cdrPassword, cdrDatabase]);
+  const appDbConnection = useMemo(() => ({ host: appDbHost, port: appDbPort, username: appDbUsername, password: appDbPassword, database: appDbDatabase }), [appDbHost, appDbPort, appDbUsername, appDbPassword, appDbDatabase]);
 
   // Load config and perform initial healthcheck on mount
   useEffect(() => {
@@ -60,9 +71,11 @@ export default function AdminPage() {
       setIsTestingAri(true);
       setIsTestingAmi(true);
       setIsTestingCdr(true);
+      setIsTestingAppDb(true);
       setAriStatus('Unknown');
       setAmiStatus('Unknown');
       setCdrStatus('Unknown');
+      setAppDbStatus('Unknown');
 
       const config = await getConfig();
       
@@ -82,44 +95,36 @@ export default function AdminPage() {
       setCdrPassword(config.cdr.password);
       setCdrDatabase(config.cdr.database);
       
-      const [ariResult, amiResult, cdrResult] = await Promise.all([
-        testAmiConnection(config.ari), // Testing ARI with an AMI command as it's the primary interface now
-        getAmiQueues(config.ami),
+      setAppDbHost(config.app_db.host);
+      setAppDbPort(config.app_db.port);
+      setAppDbUsername(config.app_db.username);
+      setAppDbPassword(config.app_db.password);
+      setAppDbDatabase(config.app_db.database);
+      
+      const [amiResult, cdrResult, appDbResult] = await Promise.all([
+        testAmiConnection(config.ami),
         testCdrConnection(config.cdr),
+        testAppDbConnection(config.app_db),
       ]);
-
-      setAriStatus(ariResult.success ? 'Connected' : 'Failed');
+      
       setAmiStatus(amiResult.success ? 'Connected' : 'Failed');
+      setAriStatus(amiResult.success ? 'Connected' : 'Failed'); // ARI is related to AMI
       setCdrStatus(cdrResult.success ? 'Connected' : 'Failed');
+      setAppDbStatus(appDbResult.success ? 'Connected' : 'Failed');
       
       setIsTestingAri(false);
       setIsTestingAmi(false);
       setIsTestingCdr(false);
+      setIsTestingAppDb(false);
     };
 
     initializeAndCheck();
   }, []);
 
-  const handleTestAri = async () => {
-    setIsTestingAri(true);
-    setAriStatus('Unknown');
-    // We use testAmiConnection because ARI is now only a part of the Asterisk setup,
-    // and a successful AMI connection is a better indicator of overall health for our app.
-    const result = await testAmiConnection(ariConnection);
-    if (result.success) {
-      setAriStatus('Connected');
-      toast({ title: 'Asterisk Connection Successful', description: `Successfully connected to Asterisk.` });
-    } else {
-      setAriStatus('Failed');
-      toast({ variant: 'destructive', title: 'Asterisk Connection Failed', description: result.error });
-    }
-    setIsTestingAri(false);
-  };
-
   const handleTestAmi = async () => {
     setIsTestingAmi(true);
     setAmiStatus('Unknown');
-    const result = await getAmiQueues(amiConnection);
+    const result = await testAmiConnection(amiConnection);
     if (result.success) {
       setAmiStatus('Connected');
       toast({ title: 'AMI Connection Successful', description: 'Successfully connected to AMI and fetched data.' });
@@ -144,12 +149,27 @@ export default function AdminPage() {
     setIsTestingCdr(false);
   };
 
+  const handleTestAppDb = async () => {
+    setIsTestingAppDb(true);
+    setAppDbStatus('Unknown');
+    const result = await testAppDbConnection(appDbConnection);
+    if (result.success) {
+      setAppDbStatus('Connected');
+      toast({ title: 'App DB Connection Successful', description: 'Successfully connected to the application database.' });
+    } else {
+      setAppDbStatus('Failed');
+      toast({ variant: 'destructive', title: 'App DB Connection Failed', description: result.error });
+    }
+    setIsTestingAppDb(false);
+  };
+
   const handleSaveSettings = async () => {
     setIsSaving(true);
     const newConfig = {
       ari: ariConnection,
       ami: amiConnection,
       cdr: cdrConnection,
+      app_db: appDbConnection,
     };
     const result = await saveConfig(newConfig);
     if (result.success) {
@@ -207,21 +227,12 @@ export default function AdminPage() {
         <TabsContent value="settings" className="mt-6 space-y-8">
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
                 <ConnectionStatusCard
-                    icon={Network}
-                    title="Asterisk (ARI)"
-                    status={ariStatus}
-                    port={ariPort}
-                    onTest={handleTestAri}
-                    isTesting={isTestingAri}
-                />
-                <ConnectionStatusCard
                     icon={Wifi}
                     title="Asterisk (AMI)"
                     status={amiStatus}
                     port={amiPort}
                     onTest={handleTestAmi}
                     isTesting={isTestingAmi}
-                    variant="success"
                 />
                 <ConnectionStatusCard
                     icon={Database}
@@ -231,14 +242,23 @@ export default function AdminPage() {
                     onTest={handleTestCdr}
                     isTesting={isTestingCdr}
                 />
+                 <ConnectionStatusCard
+                    icon={Server}
+                    title="База данных приложения"
+                    status={appDbStatus}
+                    port={appDbPort}
+                    onTest={handleTestAppDb}
+                    isTesting={isTestingAppDb}
+                    variant="success"
+                />
             </div>
             <SystemSettings
-                ariConnection={ariConnection}
                 amiConnection={amiConnection}
                 cdrConnection={cdrConnection}
-                onAriChange={{ setHost: setAriHost, setPort: setAriPort, setUsername: setAriUsername, setPassword: setAriPassword }}
+                appDbConnection={appDbConnection}
                 onAmiChange={{ setHost: setAmiHost, setPort: setAmiPort, setUsername: setAmiUsername, setPassword: setAmiPassword }}
                 onCdrChange={{ setHost: setCdrHost, setPort: setCdrPort, setUsername: setCdrUsername, setPassword: setCdrPassword, setDatabase: setCdrDatabase }}
+                onAppDbChange={{ setHost: setAppDbHost, setPort: setAppDbPort, setUsername: setAppDbUsername, setPassword: setAppDbPassword, setDatabase: setAppDbDatabase }}
                 onSave={handleSaveSettings}
                 isSaving={isSaving}
             />

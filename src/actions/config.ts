@@ -14,14 +14,15 @@ const ConnectionSchema = z.object({
   password: z.string(),
 });
 
-const CdrConnectionSchema = ConnectionSchema.extend({
+const DbConnectionSchema = ConnectionSchema.extend({
   database: z.string(),
 });
 
 const ConfigSchema = z.object({
   ari: ConnectionSchema,
   ami: ConnectionSchema,
-  cdr: CdrConnectionSchema,
+  cdr: DbConnectionSchema,
+  app_db: DbConnectionSchema,
 });
 
 export type AppConfig = z.infer<typeof ConfigSchema>;
@@ -46,6 +47,13 @@ const defaultConfig: AppConfig = {
     password: '42e09f1b23ced2f4cc474a04b4505313',
     database: 'asterisk',
   },
+  app_db: {
+    host: '127.0.0.1',
+    port: '3306',
+    username: 'app_user',
+    password: 'app_password',
+    database: 'call_center_db',
+  }
 };
 
 export async function getConfig(): Promise<AppConfig> {

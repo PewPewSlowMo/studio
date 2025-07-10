@@ -8,8 +8,8 @@ export interface User {
   role: UserRole;
   groupId?: string;
   isActive: boolean;
-  createdAt: string;
-  extension?: string;
+  createdAt: Date; // Changed to Date for SQL
+  extension?: string | null; // Allow null for non-operators
   password?: string;
 }
 
