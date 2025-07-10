@@ -24,7 +24,7 @@ type RecordingStatus = 'checking' | 'exists' | 'not_found' | 'loading' | 'loaded
 
 const getRecordingName = (call: Call): string | null => {
     if (call.recordingfile) {
-        return call.recordingfile.replace(/\.wav$/i, "");
+        return call.recordingfile;
     }
     return null;
 };
