@@ -281,7 +281,7 @@ export default function DashboardPage() {
           <CallVolumeChart data={callVolumeChartData} liveCalls={enrichedLiveCalls.length} />
         </div>
         <div className="lg:col-span-1">
-          <OperatorStatusList users={users} endpoints={data.endpoints} />
+          <OperatorStatusList users={data.users} endpoints={data.endpoints} />
         </div>
       </div>
       <div>
