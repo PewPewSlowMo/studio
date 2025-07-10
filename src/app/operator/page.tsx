@@ -27,6 +27,8 @@ function OperatorStatusCard({ user, status }: { user: User; status: CallState['s
       available: { text: 'Доступен', color: 'bg-green-500', icon: Phone },
       ringing: { text: 'Входящий звонок', color: 'bg-yellow-500 animate-pulse', icon: Phone },
       'on-call': { text: 'В разговоре', color: 'bg-red-500', icon: Phone },
+      busy: { text: 'В разговоre', color: 'bg-red-500', icon: Phone },
+      'in use': { text: 'В разговоre', color: 'bg-red-500', icon: Phone },
       dnd: { text: 'Не беспокоить', color: 'bg-orange-500', icon: UserX },
       connecting: { text: 'Соединение...', color: 'bg-blue-500', icon: Loader2 },
       'wrap-up': { text: 'Пост-обработка', color: 'bg-indigo-500', icon: Clock },
