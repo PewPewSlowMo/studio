@@ -101,7 +101,8 @@ export default function DashboardPage() {
           )
         );
         const results = await Promise.all(statePromises);
-        const activeChannels = results.filter(r => r && (r.status === 'on-call' || r.status === 'ringing')) as (CallState & { extension: string })[];
+        const activeStatuses = ['on-call', 'ringing', 'busy', 'in use'];
+        const activeChannels = results.filter(r => r && activeStatuses.includes(r.endpointState)) as (CallState & { extension: string })[];
         setLiveChannels(activeChannels);
         
       } catch (error) {

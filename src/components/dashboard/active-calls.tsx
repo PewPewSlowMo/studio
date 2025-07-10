@@ -17,7 +17,7 @@ import {
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import type { CallState } from '@/lib/types';
-import { PhoneIncoming, PhoneCall } from 'lucide-react';
+import { PhoneIncoming, PhoneCall, Phone, AlertCircle } from 'lucide-react';
 
 interface ActiveCallsTableProps {
   liveCalls: (CallState & { operatorName: string })[];
@@ -27,12 +27,15 @@ const stateInfo: Record<
   string,
   {
     text: string;
-    variant: 'default' | 'success';
+    variant: 'default' | 'success' | 'destructive';
     icon: React.ElementType;
   }
 > = {
   ringing: { text: 'Входящий', variant: 'default', icon: PhoneIncoming },
   'on-call': { text: 'В разговоре', variant: 'success', icon: PhoneCall },
+  busy: { text: 'В разговоре', variant: 'success', icon: PhoneCall },
+  'in use': { text: 'В разговоре', variant: 'success', icon: PhoneCall },
+  default: { text: 'Неизвестно', variant: 'destructive', icon: AlertCircle },
 };
 
 export function ActiveCallsTable({ liveCalls }: ActiveCallsTableProps) {
@@ -57,7 +60,7 @@ export function ActiveCallsTable({ liveCalls }: ActiveCallsTableProps) {
           <TableBody>
             {liveCalls.length > 0 ? (
               liveCalls.map((call) => {
-                const info = stateInfo[call.status] || stateInfo['on-call'];
+                const info = stateInfo[call.status] || stateInfo['default'];
                 return (
                   <TableRow key={call.uniqueId}>
                     <TableCell>
