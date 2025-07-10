@@ -24,7 +24,7 @@ type RecordingStatus = 'checking' | 'exists' | 'not_found' | 'loading' | 'loaded
 
 const getRecordingName = (call: Call): string | null => {
     if (call.recordingfile) {
-        return call.recordingfile.replace(/\.[^/.]+$/, "");
+        return call.recordingfile.replace(/\.wav$/i, "");
     }
     return null;
 };
@@ -36,6 +36,7 @@ export function CallRowDetails({ call, user, isCrmEditable = true }: CallRowDeta
   const [isLoading, setIsLoading] = useState(true);
   const [recordingStatus, setRecordingStatus] = useState<RecordingStatus>('checking');
   const [audioDataUri, setAudioDataUri] = useState<string | null>(null);
+  const [debugRecordingId, setDebugRecordingId] = useState<string | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -44,9 +45,11 @@ export function CallRowDetails({ call, user, isCrmEditable = true }: CallRowDeta
       setIsLoading(true);
       setRecordingStatus('checking');
       setAudioDataUri(null);
+      setDebugRecordingId(null);
 
       try {
         const recordingName = getRecordingName(call);
+        setDebugRecordingId(recordingName); // For debugging
         
         const config = await getConfig();
         const [appealsResult, contactResult, recordingCheckResult] = await Promise.all([
@@ -113,8 +116,8 @@ export function CallRowDetails({ call, user, isCrmEditable = true }: CallRowDeta
     }
   };
 
-  const priorityMap: Record<Appeal['priority'], string> = { low: 'Низкий', medium: 'Средний', high: 'Высокий' };
-  const satisfactionMap: Record<Appeal['satisfaction'], string> = { yes: 'Да', no: 'Нет' };
+  const priorityMap: Record<any, string> = { low: 'Низкий', medium: 'Средний', high: 'Высокий' };
+  const satisfactionMap: Record<any, string> = { yes: 'Да', no: 'Нет' };
 
   if (isLoading) {
     return (
@@ -148,8 +151,8 @@ export function CallRowDetails({ call, user, isCrmEditable = true }: CallRowDeta
                             />
                         </div>
                     )}
-                    {recordingStatus === 'not_found' && <div className="flex items-center gap-2 text-red-600 font-medium"><XCircle /> Запись отсутствует</div>}
-                    {recordingStatus === 'error' && <div className="flex items-center gap-2 text-red-600 font-medium"><XCircle /> Ошибка получения записи</div>}
+                    {recordingStatus === 'not_found' && <div className="flex flex-col gap-1 w-full text-red-600 font-medium"><div className="flex items-center gap-2"><XCircle /> Запись отсутствует</div><code className="text-xs text-red-400 bg-red-900/20 p-1 rounded-sm">ID: {debugRecordingId || 'N/A'}</code></div>}
+                    {recordingStatus === 'error' && <div className="flex flex-col gap-1 w-full text-red-600 font-medium"><div className="flex items-center gap-2"><XCircle /> Ошибка получения записи</div><code className="text-xs text-red-400 bg-red-900/20 p-1 rounded-sm">ID: {debugRecordingId || 'N/A'}</code></div>}
                 </div>
             </div>
 
