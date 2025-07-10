@@ -62,7 +62,7 @@ export async function getCallHistory(connection: CdrConnection, dateRange?: Date
         
         let sql = `SELECT 
                 calldate, clid, src, dst, dcontext, channel, dstchannel, 
-                lastapp, lastdata, duration, billsec, disposition, uniqueid, linkedid
+                lastapp, lastdata, duration, billsec, disposition, uniqueid, linkedid, userfield
              FROM cdr`;
         
         const params: any[] = [];
@@ -101,6 +101,8 @@ export async function getCallHistory(connection: CdrConnection, dateRange?: Date
                 billsec: row.billsec, // Talk time
                 waitTime: waitTime >= 0 ? waitTime : 0, // wait time before answer
                 queue: row.dcontext,
+                isOutgoing: row.dcontext === 'from-internal',
+                satisfaction: row.userfield,
             }
         });
 
@@ -127,7 +129,7 @@ export async function getCallById(connection: CdrConnection, callId: string): Pr
 
         const sql = `SELECT 
                 calldate, clid, src, dst, dcontext, channel, dstchannel, 
-                lastapp, lastdata, duration, billsec, disposition, uniqueid, linkedid
+                lastapp, lastdata, duration, billsec, disposition, uniqueid, linkedid, userfield
              FROM cdr WHERE (uniqueid LIKE ? OR linkedid LIKE ? OR uniqueid = ? OR linkedid = ?) ORDER BY calldate DESC LIMIT 1`;
         
         const [rows] = await dbConnection.execute(sql, [searchTerm, searchTerm, callId, callId]);
@@ -154,6 +156,8 @@ export async function getCallById(connection: CdrConnection, callId: string): Pr
             billsec: row.billsec,
             waitTime: waitTime >= 0 ? waitTime : 0,
             queue: row.dcontext,
+            isOutgoing: row.dcontext === 'from-internal',
+            satisfaction: row.userfield,
         };
 
         return { success: true, data: call };
@@ -176,7 +180,7 @@ export async function getMissedCalls(connection: CdrConnection, dateRange?: Date
         
         let sql = `SELECT 
                 calldate, clid, src, dst, dcontext, channel, dstchannel, 
-                lastapp, lastdata, duration, billsec, disposition, uniqueid, linkedid
+                lastapp, lastdata, duration, billsec, disposition, uniqueid, linkedid, userfield
              FROM cdr 
              WHERE disposition != 'ANSWERED'`;
         
@@ -211,6 +215,8 @@ export async function getMissedCalls(connection: CdrConnection, dateRange?: Date
                 duration: row.duration,
                 billsec: row.billsec, // Should be 0
                 waitTime: row.duration, // Wait time for missed calls is the full duration
+                isOutgoing: row.dcontext === 'from-internal',
+                satisfaction: row.userfield,
             }
         });
 

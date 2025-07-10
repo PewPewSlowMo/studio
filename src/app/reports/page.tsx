@@ -3,8 +3,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Database, AlertTriangle } from 'lucide-react';
-import { CallHistoryTable } from '@/components/reports/call-history-table';
+import { Users, AlertTriangle, Download } from 'lucide-react';
 import { getCallHistory, type DateRangeParams } from '@/actions/cdr';
 import { getUsers } from '@/actions/users';
 import { getConfig } from '@/actions/config';
@@ -12,7 +11,8 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import type { Call, User } from '@/lib/types';
 import { DateRangePicker } from '@/components/shared/date-range-picker';
 import { subDays, format, parseISO, isValid } from 'date-fns';
-import { CallDetailsDialog } from '@/components/operator/call-details-dialog';
+import { OperatorReportTable, type OperatorReportData } from '@/components/reports/operator-report-table';
+import { Button } from '@/components/ui/button';
 
 export default function ReportsPage() {
     const searchParams = useSearchParams();
@@ -20,9 +20,7 @@ export default function ReportsPage() {
     const [error, setError] = useState<string | null>(null);
     const [calls, setCalls] = useState<Call[]>([]);
     const [users, setUsers] = useState<User[]>([]);
-    const [selectedCall, setSelectedCall] = useState<Call | null>(null);
-    const [isDetailsOpen, setIsDetailsOpen] = useState(false);
-
+    
     useEffect(() => {
         const fetchData = async () => {
             setIsLoading(true);
@@ -55,20 +53,49 @@ export default function ReportsPage() {
         fetchData();
     }, [searchParams]);
 
-    const enrichedCalls = useMemo(() => {
-        const userMap = new Map(users.filter(u => u.extension).map(user => [user.extension, user.name]));
-        return calls.map(call => ({
-            ...call,
-            operatorName: call.operatorExtension 
-                ? (userMap.get(call.operatorExtension) || `Ext. ${call.operatorExtension}`) 
-                : 'N/A',
-        }));
-    }, [calls, users]);
+    const operatorReportData = useMemo(() => {
+        const operators = users.filter(u => u.role === 'operator' && u.extension);
+        
+        return operators.map(operator => {
+            const operatorCalls = calls.filter(c => c.operatorExtension === operator.extension || c.callerNumber === operator.extension);
 
-    const handleRowClick = (call: Call) => {
-        setSelectedCall(call);
-        setIsDetailsOpen(true);
-    }
+            if (operatorCalls.length === 0) {
+                return null; // Skip operators with no calls in the period
+            }
+            
+            const answeredIncomingCalls = operatorCalls.filter(c => c.status === 'ANSWERED' && c.operatorExtension === operator.extension);
+            const outgoingCalls = operatorCalls.filter(c => c.isOutgoing && c.callerNumber === operator.extension);
+            
+            const totalCallsHandled = answeredIncomingCalls.length + outgoingCalls.length;
+            const missedCallsCount = operatorCalls.filter(c => c.operatorExtension === operator.extension && c.status !== 'ANSWERED').length;
+            const missedCallsPercentage = totalCallsHandled + missedCallsCount > 0 ? (missedCallsCount / (totalCallsHandled + missedCallsCount)) * 100 : 0;
+            
+            const totalTalkTime = answeredIncomingCalls.reduce((acc, c) => acc + (c.billsec || 0), 0);
+            const avgTalkTime = answeredIncomingCalls.length > 0 ? totalTalkTime / answeredIncomingCalls.length : 0;
+            
+            const totalWaitTime = answeredIncomingCalls.reduce((acc, c) => acc + (c.waitTime || 0), 0);
+            const avgWaitTime = answeredIncomingCalls.length > 0 ? totalWaitTime / answeredIncomingCalls.length : 0;
+
+            const callTimestamps = operatorCalls.map(c => parseISO(c.startTime).getTime());
+            const firstCallTime = callTimestamps.length > 0 ? new Date(Math.min(...callTimestamps)) : null;
+            const lastCallTime = callTimestamps.length > 0 ? new Date(Math.max(...callTimestamps)) : null;
+            
+            return {
+                operatorId: operator.id,
+                operatorName: operator.name,
+                firstCallTime: firstCallTime ? firstCallTime.toISOString() : null,
+                lastCallTime: lastCallTime ? lastCallTime.toISOString() : null,
+                answeredIncomingCount: answeredIncomingCalls.length,
+                outgoingCount: outgoingCalls.length,
+                missedCallsPercentage: missedCallsPercentage,
+                avgTalkTime: avgTalkTime,
+                avgWaitTime: avgWaitTime,
+                satisfactionScore: 'N/A', // Placeholder
+                transferredToSupervisorCount: 0, // Placeholder
+            };
+        }).filter((data): data is OperatorReportData => data !== null);
+
+    }, [calls, users]);
 
     if (error) {
         return (
@@ -84,38 +111,36 @@ export default function ReportsPage() {
     }
 
     return (
-        <>
-        <CallDetailsDialog
-            isOpen={isDetailsOpen}
-            onOpenChange={setIsDetailsOpen}
-            call={selectedCall}
-        />
         <div className="space-y-6">
             <div className="flex flex-wrap items-center justify-between gap-4">
                 <div>
-                    <h1 className="text-3xl font-bold">Отчеты по истории звонков</h1>
-                    <p className="text-muted-foreground">Журнал всех звонков за выбранный период.</p>
+                    <h1 className="text-3xl font-bold">Отчет по операторам</h1>
+                    <p className="text-muted-foreground">Сводные показатели эффективности по каждому оператору.</p>
                 </div>
-                <DateRangePicker />
+                <div className="flex items-center gap-2">
+                    <DateRangePicker />
+                     <Button variant="outline">
+                        <Download className="mr-2 h-4 w-4" /> CSV
+                    </Button>
+                </div>
             </div>
 
             <Card>
                 <CardHeader>
                     <div className="flex items-center gap-4">
-                        <Database className="h-8 w-8 text-muted-foreground" />
+                        <Users className="h-8 w-8 text-muted-foreground" />
                         <div>
-                            <CardTitle>История звонков</CardTitle>
+                            <CardTitle>Эффективность операторов</CardTitle>
                             <CardDescription>
-                                Журнал звонков за выбранный период. Нажмите на строку для просмотра деталей.
+                               Ключевые показатели для каждого оператора за выбранный период.
                             </CardDescription>
                         </div>
                     </div>
                 </CardHeader>
                 <CardContent>
-                   <CallHistoryTable calls={enrichedCalls} isLoading={isLoading} onRowClick={handleRowClick} />
+                   <OperatorReportTable data={operatorReportData} isLoading={isLoading} />
                 </CardContent>
             </Card>
         </div>
-        </>
     );
 }

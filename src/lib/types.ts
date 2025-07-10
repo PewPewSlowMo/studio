@@ -43,6 +43,8 @@ export interface Call {
   waitTime?: number;
   recordingUrl?: string;
   reason?: string;
+  isOutgoing?: boolean;
+  satisfaction?: string;
   // Add new fields for enriched data
   callerName?: string;
   appealDescription?: string;
@@ -69,6 +71,21 @@ export interface QueueReportData {
   avgWaitTime: number; // In seconds
   avgHandleTime: number; // In seconds
 }
+
+export interface OperatorReportData {
+    operatorId: string;
+    operatorName: string;
+    firstCallTime: string | null;
+    lastCallTime: string | null;
+    answeredIncomingCount: number;
+    outgoingCount: number;
+    missedCallsPercentage: number;
+    avgTalkTime: number;
+    avgWaitTime: number;
+    satisfactionScore: string;
+    transferredToSupervisorCount: number;
+}
+
 
 export interface CallState {
   status: 'offline' | 'available' | 'ringing' | 'on-call' | 'connecting' | 'busy' | 'in use';
