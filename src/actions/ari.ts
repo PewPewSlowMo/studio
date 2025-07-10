@@ -30,7 +30,8 @@ async function fetchFromAri(connection: AriConnection, path: string, options?: R
   const response = await fetch(url, { ...defaultOptions, ...options });
 
   if (!response.ok) {
-    if (response.status === 404 && options?.method === 'HEAD') {
+    // For existence checks, a 404 is a valid "not found" response, not an error.
+    if (response.status === 404) {
         return { ok: false, status: 404, error: 'Recording not found' };
     }
     const errorBody = await response.text();
@@ -38,11 +39,7 @@ async function fetchFromAri(connection: AriConnection, path: string, options?: R
     throw new Error(`ARI request failed with status ${response.status}: ${errorBody}`);
   }
   
-  if (options?.method === 'HEAD') {
-    return { ok: true, status: response.status };
-  }
-
-  return response;
+  return { ok: true, status: response.status, response };
 }
 
 
@@ -50,9 +47,12 @@ export async function testAriConnection(
   connection: AriConnection
 ): Promise<{ success: boolean; data?: any; error?: string }> {
   try {
-    const response = await fetchFromAri(connection, 'asterisk/info');
-    const data = await (response as Response).json();
-    return { success: true, data };
+    const { ok, response } = await fetchFromAri(connection, 'asterisk/info');
+    if (ok && response) {
+        const data = await response.json();
+        return { success: true, data };
+    }
+    return { success: false, error: 'Failed to connect' };
   } catch (e) {
     const message = e instanceof Error ? e.message : 'An unknown error occurred.';
     return { success: false, error: message };
@@ -61,8 +61,10 @@ export async function testAriConnection(
 
 export async function checkRecordingExists(connection: AriConnection, recordingName: string): Promise<{ success: boolean, exists: boolean, error?: string }> {
   try {
-    const response = await fetchFromAri(connection, `recordings/stored/${recordingName}`, { method: 'HEAD' });
-    return { success: true, exists: response.ok };
+    // ARI does not support HEAD for this endpoint, so we use GET and check the status code.
+    // We don't need to consume the body.
+    const result = await fetchFromAri(connection, `recordings/stored/${recordingName}`);
+    return { success: true, exists: result.ok };
   } catch (e) {
     const message = e instanceof Error ? e.message : 'An unknown error occurred.';
     console.error(`Error checking recording for ${recordingName}:`, message);
@@ -72,13 +74,13 @@ export async function checkRecordingExists(connection: AriConnection, recordingN
 
 export async function getRecording(connection: AriConnection, recordingName: string): Promise<{ success: boolean, dataUri?: string, error?: string }> {
     try {
-        const response = await fetchFromAri(connection, `recordings/stored/${recordingName}/file`);
-        if (!(response as Response).ok) {
-            const errorText = await (response as Response).text();
+        const { ok, response } = await fetchFromAri(connection, `recordings/stored/${recordingName}/file`);
+        if (!ok || !response) {
+            const errorText = response ? await response.text() : 'No response from server.';
             return { success: false, error: `Recording not found or error fetching: ${errorText}` };
         }
         
-        const audioBuffer = await (response as Response).arrayBuffer();
+        const audioBuffer = await response.arrayBuffer();
         const base64Data = Buffer.from(audioBuffer).toString('base64');
         const dataUri = `data:audio/wav;base64,${base64Data}`;
 
