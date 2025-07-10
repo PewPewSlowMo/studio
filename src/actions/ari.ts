@@ -27,19 +27,24 @@ async function fetchFromAri(connection: AriConnection, path: string, options?: R
     cache: 'no-store',
   };
 
-  const response = await fetch(url, { ...defaultOptions, ...options });
+  try {
+    const response = await fetch(url, { ...defaultOptions, ...options });
 
-  if (!response.ok) {
-    // For existence checks, a 404 is a valid "not found" response, not an error.
-    if (response.status === 404) {
-        return { ok: false, status: 404, error: 'Recording not found' };
+    if (!response.ok) {
+        if (response.status === 404) {
+            return { ok: false, status: 404, error: 'Recording not found' };
+        }
+        const errorBody = await response.text();
+        console.error(`ARI Error: ${response.status} on ${path}. Body: ${errorBody}`);
+        return { ok: false, status: response.status, error: `ARI request failed with status ${response.status}: ${errorBody}` };
     }
-    const errorBody = await response.text();
-    console.error(`ARI Error: ${response.status} on ${path}. Body: ${errorBody}`);
-    throw new Error(`ARI request failed with status ${response.status}: ${errorBody}`);
+    
+    return { ok: true, status: response.status, response };
+  } catch (e) {
+      const message = e instanceof Error ? e.message : 'A network or fetch error occurred.';
+      console.error(`Fetch Error: ${message} on ${path}`);
+      return { ok: false, status: 500, error: message };
   }
-  
-  return { ok: true, status: response.status, response };
 }
 
 
@@ -47,12 +52,12 @@ export async function testAriConnection(
   connection: AriConnection
 ): Promise<{ success: boolean; data?: any; error?: string }> {
   try {
-    const { ok, response } = await fetchFromAri(connection, 'asterisk/info');
+    const { ok, response, error } = await fetchFromAri(connection, 'asterisk/info');
     if (ok && response) {
         const data = await response.json();
         return { success: true, data };
     }
-    return { success: false, error: 'Failed to connect' };
+    return { success: false, error: error || 'Failed to connect' };
   } catch (e) {
     const message = e instanceof Error ? e.message : 'An unknown error occurred.';
     return { success: false, error: message };
@@ -62,9 +67,14 @@ export async function testAriConnection(
 export async function checkRecordingExists(connection: AriConnection, recordingName: string): Promise<{ success: boolean, exists: boolean, error?: string }> {
   try {
     // ARI does not support HEAD for this endpoint, so we use GET and check the status code.
-    // We don't need to consume the body.
-    const result = await fetchFromAri(connection, `recordings/stored/${recordingName}`);
-    return { success: true, exists: result.ok };
+    const { ok, error } = await fetchFromAri(connection, `recordings/stored/${recordingName}`);
+    if (error === 'Recording not found') {
+        return { success: true, exists: false };
+    }
+    if (!ok) {
+        return { success: false, exists: false, error };
+    }
+    return { success: true, exists: ok };
   } catch (e) {
     const message = e instanceof Error ? e.message : 'An unknown error occurred.';
     console.error(`Error checking recording for ${recordingName}:`, message);
@@ -74,10 +84,9 @@ export async function checkRecordingExists(connection: AriConnection, recordingN
 
 export async function getRecording(connection: AriConnection, recordingName: string): Promise<{ success: boolean, dataUri?: string, error?: string }> {
     try {
-        const { ok, response } = await fetchFromAri(connection, `recordings/stored/${recordingName}/file`);
+        const { ok, response, error } = await fetchFromAri(connection, `recordings/stored/${recordingName}/file`);
         if (!ok || !response) {
-            const errorText = response ? await response.text() : 'No response from server.';
-            return { success: false, error: `Recording not found or error fetching: ${errorText}` };
+            return { success: false, error: `Recording not found or error fetching: ${error}` };
         }
         
         const audioBuffer = await response.arrayBuffer();
