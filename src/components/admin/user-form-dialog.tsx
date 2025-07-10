@@ -33,8 +33,8 @@ import {
 import { Loader2 } from 'lucide-react';
 
 const baseUserFormSchema = z.object({
-  name: z.string().min(1, 'Name is required'),
-  email: z.string().email('Invalid email address'),
+  name: z.string().min(1, 'Имя обязательно'),
+  email: z.string().email('Неверный формат email'),
   role: z.enum(['admin', 'manager', 'supervisor', 'operator']),
   extension: z.string().optional(),
   password: z.string().optional(),
@@ -71,7 +71,7 @@ export function UserFormDialog({
           return true;
         },
         {
-          message: 'Extension is required for operators.',
+          message: 'Внутренний номер обязателен для оператора.',
           path: ['extension'],
         }
       )
@@ -79,21 +79,21 @@ export function UserFormDialog({
         if (!isEditing && (!data.password || data.password.length < 6)) {
           ctx.addIssue({
             code: z.ZodIssueCode.custom,
-            message: 'Password is required and must be at least 6 characters.',
+            message: 'Пароль обязателен и должен содержать не менее 6 символов.',
             path: ['password'],
           });
         }
         if (data.password && data.password.length > 0 && data.password.length < 6) {
             ctx.addIssue({
                 code: z.ZodIssueCode.custom,
-                message: 'Password must be at least 6 characters.',
+                message: 'Пароль должен содержать не менее 6 символов.',
                 path: ['password'],
             });
         }
         if (data.password !== data.confirmPassword) {
           ctx.addIssue({
             code: z.ZodIssueCode.custom,
-            message: "Passwords don't match",
+            message: "Пароли не совпадают",
             path: ['confirmPassword'],
           });
         }
@@ -147,11 +147,11 @@ export function UserFormDialog({
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>{user ? 'Edit User' : 'Create New User'}</DialogTitle>
+          <DialogTitle>{user ? 'Редактировать пользователя' : 'Создать нового пользователя'}</DialogTitle>
           <DialogDescription>
             {user
-              ? "Update the user's details. Leave password blank to keep it unchanged."
-              : 'Fill in the details for the new user.'}
+              ? "Обновите данные пользователя. Оставьте поле пароля пустым, чтобы не менять его."
+              : 'Заполните данные для нового пользователя.'}
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
@@ -164,9 +164,9 @@ export function UserFormDialog({
               name="name"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Name</FormLabel>
+                  <FormLabel>Имя</FormLabel>
                   <FormControl>
-                    <Input placeholder="John Doe" {...field} />
+                    <Input placeholder="Иван Иванов" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -190,21 +190,21 @@ export function UserFormDialog({
               name="role"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Role</FormLabel>
+                  <FormLabel>Роль</FormLabel>
                   <Select
                     onValueChange={field.onChange}
                     defaultValue={field.value}
                   >
                     <FormControl>
                       <SelectTrigger>
-                        <SelectValue placeholder="Select a role" />
+                        <SelectValue placeholder="Выберите роль" />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value="operator">Operator</SelectItem>
-                      <SelectItem value="supervisor">Supervisor</SelectItem>
-                      <SelectItem value="manager">Manager</SelectItem>
-                      <SelectItem value="admin">Admin</SelectItem>
+                      <SelectItem value="operator">Оператор</SelectItem>
+                      <SelectItem value="supervisor">Супервизор</SelectItem>
+                      <SelectItem value="manager">Менеджер</SelectItem>
+                      <SelectItem value="admin">Администратор</SelectItem>
                     </SelectContent>
                   </Select>
                   <FormMessage />
@@ -218,7 +218,7 @@ export function UserFormDialog({
                 name="extension"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Asterisk Extension</FormLabel>
+                    <FormLabel>Внутренний номер Asterisk</FormLabel>
                     <Select
                       onValueChange={field.onChange}
                       value={field.value || ''}
@@ -229,14 +229,14 @@ export function UserFormDialog({
                           {isLoadingEndpoints && (
                             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                           )}
-                          <SelectValue placeholder="Select an extension" />
+                          <SelectValue placeholder="Выберите номер" />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
                         {isLoadingEndpoints ? (
                           <div className="flex items-center justify-center p-4">
                             <Loader2 className="mr-2 h-4 w-4 animate-spin" />{' '}
-                            Loading...
+                            Загрузка...
                           </div>
                         ) : (
                           <>
@@ -263,11 +263,11 @@ export function UserFormDialog({
               name="password"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Password</FormLabel>
+                  <FormLabel>Пароль</FormLabel>
                   <FormControl>
                     <Input
                       type="password"
-                      placeholder={isEditing ? 'Leave blank to keep current' : '••••••••'}
+                      placeholder={isEditing ? 'Оставьте пустым, чтобы не менять' : '••••••••'}
                       {...field}
                       value={field.value ?? ''}
                     />
@@ -281,7 +281,7 @@ export function UserFormDialog({
               name="confirmPassword"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Confirm Password</FormLabel>
+                  <FormLabel>Подтвердите пароль</FormLabel>
                   <FormControl>
                     <Input 
                       type="password" 
@@ -301,9 +301,9 @@ export function UserFormDialog({
                 variant="outline"
                 onClick={() => onOpenChange(false)}
               >
-                Cancel
+                Отмена
               </Button>
-              <Button type="submit">Save User</Button>
+              <Button type="submit">Сохранить</Button>
             </DialogFooter>
           </form>
         </Form>

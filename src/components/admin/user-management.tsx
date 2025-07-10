@@ -73,16 +73,16 @@ export function UserManagement({ connection, users, fetchUsers, isFetchingUsers 
       } else {
         toast({
           variant: 'destructive',
-          title: 'Failed to fetch extensions',
-          description: result.error || 'Could not retrieve Asterisk extensions.',
+          title: 'Не удалось получить внутренние номера',
+          description: result.error || 'Не удалось получить номера Asterisk.',
         });
         setEndpoints([]);
       }
     } catch (error) {
        toast({
         variant: 'destructive',
-        title: 'Network Error',
-        description: 'Failed to connect to Asterisk to get extensions.',
+        title: 'Сетевая ошибка',
+        description: 'Не удалось подключиться к Asterisk для получения номеров.',
       });
     } finally {
       setIsLoadingEndpoints(false);
@@ -97,15 +97,15 @@ export function UserManagement({ connection, users, fetchUsers, isFetchingUsers 
         await addUser(data);
       }
       toast({
-        title: 'User Saved',
-        description: `Details for ${data.name} have been saved successfully.`,
+        title: 'Пользователь сохранен',
+        description: `Данные для ${data.name} были успешно сохранены.`,
       });
       fetchUsers();
     } catch (error) {
       toast({
         variant: 'destructive',
-        title: 'Failed to save user',
-        description: error instanceof Error ? error.message : 'An unknown error occurred.',
+        title: 'Не удалось сохранить пользователя',
+        description: error instanceof Error ? error.message : 'Произошла неизвестная ошибка.',
       });
     }
   };
@@ -120,15 +120,15 @@ export function UserManagement({ connection, users, fetchUsers, isFetchingUsers 
     try {
       await deleteUser(userToDelete.id);
       toast({
-        title: 'User Deleted',
-        description: `User ${userToDelete.name} has been deleted.`,
+        title: 'Пользователь удален',
+        description: `Пользователь ${userToDelete.name} был удален.`,
       });
       fetchUsers();
     } catch (error) {
       toast({
         variant: 'destructive',
-        title: 'Failed to delete user',
-        description: error instanceof Error ? error.message : 'An unknown error occurred.',
+        title: 'Не удалось удалить пользователя',
+        description: error instanceof Error ? error.message : 'Произошла неизвестная ошибка.',
       });
     } finally {
       setIsDeleteDialogOpen(false);
@@ -140,15 +140,15 @@ export function UserManagement({ connection, users, fetchUsers, isFetchingUsers 
     try {
       await toggleUserStatus(user.id, user.isActive);
       toast({
-        title: 'User Status Updated',
-        description: `User ${user.name} has been ${user.isActive ? 'deactivated' : 'activated'}.`,
+        title: 'Статус пользователя обновлен',
+        description: `Пользователь ${user.name} был ${user.isActive ? 'деактивирован' : 'активирован'}.`,
       });
       fetchUsers();
     } catch (error) {
       toast({
         variant: 'destructive',
-        title: 'Failed to update status',
-        description: error instanceof Error ? error.message : 'An unknown error occurred.',
+        title: 'Не удалось обновить статус',
+        description: error instanceof Error ? error.message : 'Произошла неизвестная ошибка.',
       });
     }
   };
@@ -166,16 +166,16 @@ export function UserManagement({ connection, users, fetchUsers, isFetchingUsers 
       <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+            <AlertDialogTitle>Вы абсолютно уверены?</AlertDialogTitle>
             <AlertDialogDescription>
-              This action cannot be undone. This will permanently delete the user
-              account for "{userToDelete?.name}".
+              Это действие нельзя будет отменить. Учетная запись пользователя
+              "{userToDelete?.name}" будет удалена навсегда.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel>Отмена</AlertDialogCancel>
             <AlertDialogAction onClick={handleDeleteUser}>
-              Continue
+              Продолжить
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -184,13 +184,13 @@ export function UserManagement({ connection, users, fetchUsers, isFetchingUsers 
         <CardHeader>
           <div className="flex justify-between items-center">
             <div>
-              <CardTitle>User Management</CardTitle>
+              <CardTitle>Управление пользователями</CardTitle>
               <CardDescription>
-                Create, edit, and manage system users from the database.
+                Создавайте, редактируйте и управляйте пользователями системы.
               </CardDescription>
             </div>
             <Button onClick={() => handleOpenDialog()}>
-              <PlusCircle className="mr-2 h-4 w-4" /> New User
+              <PlusCircle className="mr-2 h-4 w-4" /> Новый пользователь
             </Button>
           </div>
         </CardHeader>
@@ -199,13 +199,13 @@ export function UserManagement({ connection, users, fetchUsers, isFetchingUsers 
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Name</TableHead>
+                  <TableHead>Имя</TableHead>
                   <TableHead>Email</TableHead>
-                  <TableHead>Role</TableHead>
-                  <TableHead>Extension</TableHead>
-                  <TableHead>Status</TableHead>
+                  <TableHead>Роль</TableHead>
+                  <TableHead>Внутр. номер</TableHead>
+                  <TableHead>Статус</TableHead>
                   <TableHead>
-                    <span className="sr-only">Actions</span>
+                    <span className="sr-only">Действия</span>
                   </TableHead>
                 </TableRow>
               </TableHeader>
@@ -215,14 +215,14 @@ export function UserManagement({ connection, users, fetchUsers, isFetchingUsers 
                     <TableCell colSpan={6} className="h-24 text-center">
                       <div className="flex justify-center items-center gap-2">
                         <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-                        <span className="text-muted-foreground">Loading users...</span>
+                        <span className="text-muted-foreground">Загрузка пользователей...</span>
                       </div>
                     </TableCell>
                   </TableRow>
                 ) : users.length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={6} className="h-24 text-center">
-                      No users found. Create one to get started.
+                      Пользователи не найдены. Создайте нового.
                     </TableCell>
                   </TableRow>
                 ) : (
@@ -244,29 +244,29 @@ export function UserManagement({ connection, users, fetchUsers, isFetchingUsers 
                       </TableCell>
                       <TableCell>
                         <Badge variant={user.isActive ? 'default' : 'secondary'}>
-                          {user.isActive ? 'Active' : 'Inactive'}
+                          {user.isActive ? 'Активен' : 'Неактивен'}
                         </Badge>
                       </TableCell>
                       <TableCell className="text-right">
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
                             <Button variant="ghost" className="h-8 w-8 p-0">
-                              <span className="sr-only">Open menu</span>
+                              <span className="sr-only">Открыть меню</span>
                               <MoreHorizontal className="h-4 w-4" />
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
                             <DropdownMenuItem onClick={() => handleOpenDialog(user)}>
-                              Edit
+                              Редактировать
                             </DropdownMenuItem>
                             <DropdownMenuItem onClick={() => handleToggleStatus(user)}>
-                              {user.isActive ? 'Deactivate' : 'Activate'}
+                              {user.isActive ? 'Деактивировать' : 'Активировать'}
                             </DropdownMenuItem>
                             <DropdownMenuItem
                               className="text-destructive focus:!bg-destructive/10 hover:!text-destructive"
                               onClick={() => handleOpenDeleteDialog(user)}
                             >
-                              Delete
+                              Удалить
                             </DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>
