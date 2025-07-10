@@ -139,15 +139,24 @@ export async function getAmiEndpoint(
     
     const contactStatus = rawEvents.find(e => e.event === 'ContactStatusDetail');
 
-    const data = {
-      ...detailEvent,
-      ...aorDetails[0], // Assuming one AOR per endpoint for simplicity
-      ...contactStatus,
-      connectedlinenum: connectedLineNumVar?.value,
-      channel: aorDetails[0]?.channel, // Get channel from AorDetail
-    };
+    // Combine all relevant event data into a single object
+    const combinedData: Record<string, any> = { ...detailEvent };
+
+    if (aorDetails.length > 0) {
+        // Find the most relevant AOR, e.g., the one with a channel
+        const primaryAor = aorDetails.find(a => a.channel) || aorDetails[0];
+        Object.assign(combinedData, primaryAor);
+    }
     
-    return { success: true, data };
+    if (contactStatus) {
+        Object.assign(combinedData, contactStatus);
+    }
+
+    if (connectedLineNumVar) {
+        combinedData.connectedlinenum = connectedLineNumVar.value;
+    }
+
+    return { success: true, data: combinedData };
   } catch (e) {
     const message = e instanceof Error ? e.message : 'An unknown error occurred.';
     console.error(`Error in getAmiEndpoint for ${endpointId}:`, message);
