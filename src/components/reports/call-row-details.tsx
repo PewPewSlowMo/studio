@@ -22,6 +22,18 @@ interface CallRowDetailsProps {
 
 type RecordingStatus = 'checking' | 'exists' | 'not_found' | 'loading' | 'loaded' | 'error';
 
+// This function mimics FreePBX logic to get the base filename for ARI request
+const getRecordingId = (call: Call): string => {
+    // Priority 1: Use the `userfield` if it exists. This often contains the full filename.
+    if (call.recordingFile) {
+        // Remove the file extension (e.g., .wav, .mp3)
+        return call.recordingFile.replace(/\.[^/.]+$/, "");
+    }
+    // Priority 2: Fallback to the uniqueid
+    return call.id;
+};
+
+
 export function CallRowDetails({ call, user, isCrmEditable = true }: CallRowDetailsProps) {
   const [appeal, setAppeal] = useState<Appeal | null>(null);
   const [contact, setContact] = useState<CrmContact | null>(null);
@@ -39,7 +51,7 @@ export function CallRowDetails({ call, user, isCrmEditable = true }: CallRowDeta
 
       try {
         const config = await getConfig();
-        const recordingId = call.recordingFile || call.id;
+        const recordingId = getRecordingId(call);
 
         const [appealsResult, contactResult, recordingCheckResult] = await Promise.all([
           getAppeals(),
@@ -76,7 +88,7 @@ export function CallRowDetails({ call, user, isCrmEditable = true }: CallRowDeta
   const handleFetchRecording = async () => {
     if (!call) return;
     setRecordingStatus('loading');
-    const recordingId = call.recordingFile || call.id;
+    const recordingId = getRecordingId(call);
     try {
       const config = await getConfig();
       const result = await getRecording(config.ari, recordingId);
@@ -124,7 +136,7 @@ export function CallRowDetails({ call, user, isCrmEditable = true }: CallRowDeta
                             <AudioPlayer 
                                 src={audioDataUri} 
                                 canDownload={canDownloadRecording(user?.role)}
-                                fileName={`recording-${call?.id}.wav`}
+                                fileName={`recording-${getRecordingId(call)}.wav`}
                             />
                         </div>
                     )}
