@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import type { Call, Appeal, CrmContact } from '@/lib/types';
+import { useState, useEffect, use } from 'react';
+import type { Call, Appeal, CrmContact, User } from '@/lib/types';
 import {
   Dialog,
   DialogContent,
@@ -9,7 +9,7 @@ import {
   DialogTitle,
   DialogDescription
 } from '@/components/ui/dialog';
-import { Loader2, FileText, Info } from 'lucide-react';
+import { Loader2, FileText, Info, CheckCircle2, XCircle, Download, FileAudio } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { getAppeals } from '@/actions/appeals';
 import { findContactByPhone } from '@/actions/crm';
@@ -17,13 +17,21 @@ import { CrmEditor } from './crm-editor';
 import { Separator } from '@/components/ui/separator';
 import { format, parseISO, isValid } from 'date-fns';
 import { ru } from 'date-fns/locale';
+import { getConfig } from '@/actions/config';
+import { checkRecordingExists, getRecording, canDownloadRecording } from '@/actions/ari';
+import { Button } from '../ui/button';
+import { useToast } from '@/hooks/use-toast';
+import { AudioPlayer } from './audio-player';
 
 interface CallDetailsDialogProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
   call: Call | null;
+  user: User | null;
   isCrmEditable?: boolean;
 }
+
+type RecordingStatus = 'checking' | 'exists' | 'not_found' | 'loading' | 'loaded' | 'error';
 
 const statusMap: Record<string, string> = {
     ANSWERED: 'Отвечен',
@@ -44,20 +52,28 @@ const formatDuration = (seconds: number | undefined) => {
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
 };
 
-export function CallDetailsDialog({ isOpen, onOpenChange, call, isCrmEditable = true }: CallDetailsDialogProps) {
+export function CallDetailsDialog({ isOpen, onOpenChange, call, user, isCrmEditable = true }: CallDetailsDialogProps) {
   const [appeal, setAppeal] = useState<Appeal | null>(null);
   const [contact, setContact] = useState<CrmContact | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [recordingStatus, setRecordingStatus] = useState<RecordingStatus>('checking');
+  const [audioDataUri, setAudioDataUri] = useState<string | null>(null);
+  const { toast } = useToast();
 
   useEffect(() => {
     const fetchData = async () => {
       if (!call) return;
       setIsLoading(true);
+      setRecordingStatus('checking');
+      setAudioDataUri(null);
 
       try {
-        const [appealsResult, contactResult] = await Promise.all([
+        const config = await getConfig();
+
+        const [appealsResult, contactResult, recordingCheckResult] = await Promise.all([
           getAppeals(),
-          findContactByPhone(call.callerNumber)
+          findContactByPhone(call.callerNumber),
+          checkRecordingExists(config.ari, call.id),
         ]);
         
         const foundAppeal = appealsResult.find(a => a.callId === call.id) || null;
@@ -68,9 +84,16 @@ export function CallDetailsDialog({ isOpen, onOpenChange, call, isCrmEditable = 
         } else {
             setContact(null);
         }
+        
+        if (recordingCheckResult.success) {
+            setRecordingStatus(recordingCheckResult.exists ? 'exists' : 'not_found');
+        } else {
+            setRecordingStatus('error');
+        }
 
       } catch (error) {
         console.error("Failed to fetch call details:", error);
+        setRecordingStatus('error');
       } finally {
         setIsLoading(false);
       }
@@ -84,6 +107,25 @@ export function CallDetailsDialog({ isOpen, onOpenChange, call, isCrmEditable = 
   const handleSaveContact = (savedContact: CrmContact) => {
       setContact(savedContact);
   }
+
+  const handleFetchRecording = async () => {
+    if (!call) return;
+    setRecordingStatus('loading');
+    try {
+      const config = await getConfig();
+      const result = await getRecording(config.ari, call.id);
+      if (result.success && result.dataUri) {
+        setAudioDataUri(result.dataUri);
+        setRecordingStatus('loaded');
+      } else {
+        setRecordingStatus('error');
+        toast({ variant: 'destructive', title: 'Ошибка', description: result.error || 'Не удалось загрузить запись.' });
+      }
+    } catch (error) {
+        setRecordingStatus('error');
+        toast({ variant: 'destructive', title: 'Ошибка', description: 'Не удалось загрузить запись.' });
+    }
+  };
 
   const priorityMap: Record<Appeal['priority'], string> = {
     low: 'Низкий',
@@ -121,6 +163,31 @@ export function CallDetailsDialog({ isOpen, onOpenChange, call, isCrmEditable = 
                     <p><strong>Очередь:</strong> {call?.queue || 'Без очереди'}</p>
                     <p><strong>Время разговора:</strong> {call ? formatDuration(call.billsec) : 'N/A'}</p>
                     <p><strong>Время ожидания:</strong> {call ? formatDuration(call.waitTime) : 'N/A'}</p>
+                </div>
+            </div>
+
+            <div className="space-y-2">
+                <h3 className="font-semibold text-lg">Запись разговора</h3>
+                 <div className="p-3 bg-muted rounded-md min-h-[60px] flex items-center justify-between">
+                    {recordingStatus === 'checking' && <div className="flex items-center gap-2 text-muted-foreground"><Loader2 className="animate-spin h-4 w-4" /> Проверка наличия...</div>}
+                    {recordingStatus === 'exists' && (
+                        <>
+                            <div className="flex items-center gap-2 text-green-600 font-medium"><CheckCircle2 /> Запись найдена</div>
+                            <Button onClick={handleFetchRecording} size="sm"><FileAudio className="mr-2 h-4 w-4" /> Загрузить запись</Button>
+                        </>
+                    )}
+                     {recordingStatus === 'loading' && <div className="flex items-center gap-2 text-muted-foreground"><Loader2 className="animate-spin h-4 w-4" /> Загрузка записи...</div>}
+                     {recordingStatus === 'loaded' && audioDataUri && (
+                        <div className="w-full">
+                            <AudioPlayer 
+                                src={audioDataUri} 
+                                canDownload={canDownloadRecording(user?.role)}
+                                fileName={`recording-${call?.id}.wav`}
+                            />
+                        </div>
+                    )}
+                    {recordingStatus === 'not_found' && <div className="flex items-center gap-2 text-red-600 font-medium"><XCircle /> Запись отсутствует</div>}
+                    {recordingStatus === 'error' && <div className="flex items-center gap-2 text-red-600 font-medium"><XCircle /> Ошибка получения записи</div>}
                 </div>
             </div>
 

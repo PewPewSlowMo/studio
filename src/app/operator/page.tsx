@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect, useCallback, useRef, Suspense, useMemo } from 'react';
@@ -391,6 +390,7 @@ export default function OperatorPage() {
                 isOpen={isDetailsOpen}
                 onOpenChange={setIsDetailsOpen}
                 call={selectedCall}
+                user={user}
                 isCrmEditable={false}
             />
             <div className="flex flex-col lg:flex-row gap-6">
