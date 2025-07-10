@@ -138,16 +138,24 @@ export async function getCallById(connection: CdrConnection, callId: string): Pr
     try {
         dbConnection = await createCdrConnection(connection);
         
-        const callIdBase = callId.includes('.') ? callId.substring(0, callId.lastIndexOf('.')) : callId;
-        const searchTerm = `${callIdBase}.%`;
+        const baseQuery = `SELECT 
+            calldate, clid, src, dst, dcontext, channel, dstchannel, 
+            lastapp, lastdata, duration, billsec, disposition, uniqueid, linkedid, userfield
+            FROM cdr`;
 
-        const sql = `SELECT 
-                calldate, clid, src, dst, dcontext, channel, dstchannel, 
-                lastapp, lastdata, duration, billsec, disposition, uniqueid, linkedid, userfield
-             FROM cdr WHERE (uniqueid LIKE ? OR linkedid LIKE ? OR uniqueid = ? OR linkedid = ?) ORDER BY calldate DESC LIMIT 1`;
+        // 1. Try to find by exact match first
+        const exactSql = `${baseQuery} WHERE (uniqueid = ? OR linkedid = ?) ORDER BY calldate DESC LIMIT 1`;
+        let [rows] = await dbConnection.execute(exactSql, [callId, callId]);
+        let results = rows as any[];
         
-        const [rows] = await dbConnection.execute(sql, [searchTerm, searchTerm, callId, callId]);
-        const results = rows as any[];
+        // 2. If no exact match, fall back to LIKE search
+        if (results.length === 0) {
+            const callIdBase = callId.includes('.') ? callId.substring(0, callId.lastIndexOf('.')) : callId;
+            const searchTerm = `${callIdBase}.%`;
+            const likeSql = `${baseQuery} WHERE (uniqueid LIKE ? OR linkedid LIKE ?) ORDER BY calldate DESC LIMIT 1`;
+            [rows] = await dbConnection.execute(likeSql, [searchTerm, searchTerm]);
+            results = rows as any[];
+        }
 
         if (results.length === 0) {
             return { success: false, error: 'Call not found' };
