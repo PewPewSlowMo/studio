@@ -6,7 +6,7 @@ import { getConfig } from '@/actions/config';
 import { getOperatorState } from '@/actions/asterisk';
 import { findContactByPhone } from '@/actions/crm';
 import { CallerInfoCard } from '@/components/operator/caller-info-card';
-import { AlertTriangle, Loader2, User as UserIcon, Phone, Clock, MessageSquare } from 'lucide-react';
+import { AlertTriangle, Loader2, User as UserIcon, Phone, Clock, MessageSquare, PhoneOff, UserX } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
@@ -23,15 +23,17 @@ import { Separator } from '@/components/ui/separator';
 
 function OperatorStatusCard({ user, status }: { user: User; status: CallState['status'] | 'wrap-up' }) {
     const statusConfig = {
-      offline: { text: 'Оффлайн', color: 'bg-gray-500' },
-      available: { text: 'Доступен', color: 'bg-green-500' },
-      ringing: { text: 'Входящий звонок', color: 'bg-yellow-500 animate-pulse' },
-      'on-call': { text: 'В разговоре', color: 'bg-red-500' },
-      connecting: { text: 'Соединение...', color: 'bg-blue-500' },
-      'wrap-up': { text: 'Пост-обработка', color: 'bg-indigo-500' },
+      offline: { text: 'Оффлайн', color: 'bg-gray-500', icon: PhoneOff },
+      available: { text: 'Доступен', color: 'bg-green-500', icon: Phone },
+      ringing: { text: 'Входящий звонок', color: 'bg-yellow-500 animate-pulse', icon: Phone },
+      'on-call': { text: 'В разговоре', color: 'bg-red-500', icon: Phone },
+      dnd: { text: 'Не беспокоить', color: 'bg-orange-500', icon: UserX },
+      connecting: { text: 'Соединение...', color: 'bg-blue-500', icon: Loader2 },
+      'wrap-up': { text: 'Пост-обработка', color: 'bg-indigo-500', icon: Clock },
     };
   
     const currentStatus = statusConfig[status] || statusConfig.offline;
+    const Icon = currentStatus.icon;
   
     return (
       <Card>

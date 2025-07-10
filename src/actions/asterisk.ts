@@ -168,8 +168,25 @@ export async function getOperatorState(
     
     const operatorChannelId = endpoint.channel_ids.length > 0 ? endpoint.channel_ids[0] : undefined;
     if (!operatorChannelId) {
-        const status = (endpoint.state === 'unavailable' || endpoint.state === 'invalid') ? 'offline' : 'available';
-        return { success: true, data: { endpointState: status } };
+        // If there are no channels, the operator is not in a call.
+        // The endpoint state ('unavailable', 'not_inuse', 'dnd', etc.) is the source of truth.
+        const state = endpoint.state?.toLowerCase()
+        let finalStatus: CallState['status'] = 'offline';
+        switch (state) {
+            case 'not_inuse':
+                finalStatus = 'available';
+                break;
+            case 'dnd':
+                finalStatus = 'dnd';
+                break;
+            case 'unavailable':
+            case 'invalid':
+                finalStatus = 'offline';
+                break;
+            default:
+                 finalStatus = state as CallState['status'] || 'offline';
+        }
+        return { success: true, data: { endpointState: finalStatus } };
     }
 
     // 2. Get the operator's channel details
@@ -180,8 +197,8 @@ export async function getOperatorState(
     );
 
     if (!operatorChannelResult.success || !operatorChannelResult.data) {
-        const status = (endpoint.state === 'unavailable' || endpoint.state === 'invalid') ? 'offline' : 'available';
-        return { success: true, data: { endpointState: status } };
+        // Fallback to endpoint state if channel fetch fails
+        return { success: true, data: { endpointState: (endpoint.state?.toLowerCase() as CallState['status']) || 'offline' } };
     }
     const operatorChannel = operatorChannelResult.data;
 
@@ -256,6 +273,7 @@ export async function getOperatorState(
     const queue = operatorChannel.dialplan?.context;
 
     // --- Determine Final Status ---
+    // The channel state is the primary source of truth when a channel exists.
     const stateToUse = operatorChannel.state || endpoint.state;
     const normalizedState = stateToUse?.toLowerCase();
     let finalStatus: CallState['status'] = 'offline';
@@ -266,31 +284,23 @@ export async function getOperatorState(
             finalStatus = 'ringing';
             break;
         case 'up':
-            finalStatus = 'on-call';
-            break;
         case 'busy': 
             finalStatus = 'on-call';
             break;
         case 'down':
         case 'rsrvd':
         case 'not_inuse':
-        case 'not in use': 
              finalStatus = 'available';
+             break;
+        case 'dnd':
+             finalStatus = 'dnd';
              break;
         case 'unavailable':
         case 'invalid':
             finalStatus = 'offline';
             break;
         default:
-             if (operatorChannelId) {
-                 finalStatus = 'on-call';
-             } else {
-                 finalStatus = (endpoint.state === 'unavailable' || endpoint.state === 'invalid') ? 'offline' : 'available';
-             }
-    }
-
-    if (endpoint.state.toLowerCase() === 'busy') {
-        finalStatus = 'on-call';
+             finalStatus = operatorChannelId ? 'on-call' : 'available';
     }
     
     return {
