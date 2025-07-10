@@ -37,6 +37,12 @@ async function fetchFromAri(connection: AriConnection, path: string, options?: R
     throw new Error(`ARI request failed with status ${response.status}: ${errorBody}`);
   }
 
+  // For HEAD requests, we don't need to parse a body, just return the response
+  if (options?.method === 'HEAD') {
+    return { ok: true, status: response.status };
+  }
+
+  // For GET requests, return the full response object to be processed
   return response;
 }
 

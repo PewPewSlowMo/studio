@@ -52,6 +52,13 @@ const formatDuration = (seconds: number | undefined) => {
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
 };
 
+const getRecordingId = (call: Call): string => {
+    if (call.recordingfile) {
+        return call.recordingfile.replace(/\.[^/.]+$/, "");
+    }
+    return call.id;
+};
+
 export function CallDetailsDialog({ isOpen, onOpenChange, call, user, isCrmEditable = true }: CallDetailsDialogProps) {
   const [appeal, setAppeal] = useState<Appeal | null>(null);
   const [contact, setContact] = useState<CrmContact | null>(null);
@@ -69,11 +76,12 @@ export function CallDetailsDialog({ isOpen, onOpenChange, call, user, isCrmEdita
 
       try {
         const config = await getConfig();
+        const recordingId = getRecordingId(call);
 
         const [appealsResult, contactResult, recordingCheckResult] = await Promise.all([
           getAppeals(),
           findContactByPhone(call.callerNumber),
-          checkRecordingExists(config.ari, call.id),
+          checkRecordingExists(config.ari, recordingId),
         ]);
         
         const foundAppeal = appealsResult.find(a => a.callId === call.id) || null;
@@ -111,9 +119,10 @@ export function CallDetailsDialog({ isOpen, onOpenChange, call, user, isCrmEdita
   const handleFetchRecording = async () => {
     if (!call) return;
     setRecordingStatus('loading');
+    const recordingId = getRecordingId(call);
     try {
       const config = await getConfig();
-      const result = await getRecording(config.ari, call.id);
+      const result = await getRecording(config.ari, recordingId);
       if (result.success && result.dataUri) {
         setAudioDataUri(result.dataUri);
         setRecordingStatus('loaded');
