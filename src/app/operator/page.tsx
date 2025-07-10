@@ -194,7 +194,7 @@ export default function OperatorPage() {
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
-    const [callState, setCallState] = useState<CallState>({ status: 'offline' });
+    const [callState, setCallState] = useState<CallState>({ status: 'offline', endpointState: 'offline' });
     const [isWrapUp, setIsWrapUp] = useState(false);
     const [activeCallData, setActiveCallData] = useState<{
         uniqueId: string;
@@ -254,9 +254,9 @@ export default function OperatorPage() {
             }
 
             setCallState(prevState => {
-                const newState = { ...prevState, status: newStatus, ...newCallStateData };
+                const newState: CallState = { ...prevState, status: newStatus, endpointState: newStatus, ...newCallStateData };
                 if (JSON.stringify(prevState) !== JSON.stringify(newState)) {
-                    return newState as CallState;
+                    return newState;
                 }
                 return prevState;
             });
