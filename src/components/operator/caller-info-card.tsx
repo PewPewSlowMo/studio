@@ -49,10 +49,10 @@ export function CallerInfoCard({ isOpen, onClose, contact, onContactUpdate, hist
     resolver: zodResolver(appealFormSchema),
     defaultValues: {
       description: '',
-      resolution: '',
-      category: 'info',
+      resolution: 'услуга оказана полностью',
+      category: 'Информация',
       priority: 'medium',
-      satisfaction: 'n/a',
+      satisfaction: 'yes',
       notes: '',
       followUp: false,
     },

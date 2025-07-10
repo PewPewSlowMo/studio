@@ -85,14 +85,6 @@ export function CallDetailsDialog({ isOpen, onOpenChange, call, isCrmEditable = 
       setContact(savedContact);
   }
 
-  const categoryMap: Record<Appeal['category'], string> = {
-    sales: 'Продажи',
-    complaint: 'Жалоба',
-    support: 'Техподдержка',
-    info: 'Информация',
-    other: 'Другое',
-  };
-
   const priorityMap: Record<Appeal['priority'], string> = {
     low: 'Низкий',
     medium: 'Средний',
@@ -100,10 +92,8 @@ export function CallDetailsDialog({ isOpen, onOpenChange, call, isCrmEditable = 
   };
 
   const satisfactionMap: Record<Appeal['satisfaction'], string> = {
-    satisfied: 'Доволен',
-    neutral: 'Нейтрально',
-    dissatisfied: 'Недоволен',
-    'n/a': 'Неприменимо',
+    yes: 'Да',
+    no: 'Нет',
   };
 
   return (
@@ -142,7 +132,7 @@ export function CallDetailsDialog({ isOpen, onOpenChange, call, isCrmEditable = 
                 {appeal ? (
                     <div className="space-y-2 text-sm">
                        <div className="grid grid-cols-2 gap-x-4 gap-y-2">
-                         <p><strong>Категория:</strong> <Badge variant="secondary" className="capitalize">{categoryMap[appeal.category] || appeal.category}</Badge></p>
+                         <p><strong>Категория:</strong> <Badge variant="secondary" className="capitalize">{appeal.category}</Badge></p>
                          <p><strong>Приоритет:</strong> <Badge variant="outline" className="capitalize">{priorityMap[appeal.priority] || appeal.priority}</Badge></p>
                          <p><strong>Удовлетворенность:</strong> <Badge variant="outline" className="capitalize">{satisfactionMap[appeal.satisfaction] || appeal.satisfaction}</Badge></p>
                          <p><strong>Нужен контакт:</strong> {appeal.followUp ? 'Да' : 'Нет'}</p>
@@ -151,7 +141,7 @@ export function CallDetailsDialog({ isOpen, onOpenChange, call, isCrmEditable = 
                        <p><strong>Описание:</strong></p>
                        <p className="p-2 bg-muted rounded-md">{appeal.description}</p>
                        <p><strong>Решение:</strong></p>
-                       <p className="p-2 bg-muted rounded-md">{appeal.resolution || 'Не указано'}</p>
+                       <p className="p-2 bg-muted rounded-md capitalize">{appeal.resolution || 'Не указано'}</p>
                        {appeal.notes && <>
                          <p><strong>Доп. заметки:</strong></p>
                          <p className="p-2 bg-muted rounded-md">{appeal.notes}</p>

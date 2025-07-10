@@ -33,10 +33,10 @@ const WRAP_UP_SECONDS = 60;
 
 export const appealFormSchema = z.object({
   description: z.string().min(1, 'Описание обязательно для заполнения.'),
-  resolution: z.string().optional(),
-  category: z.enum(['sales', 'complaint', 'support', 'info', 'other'], { required_error: 'Выберите категорию.' }),
+  resolution: z.enum(['переведен старшему оператору', 'услуга оказана полностью', 'услуга оказана частично', 'отказано в услуге'], { required_error: 'Выберите результат.' }),
+  category: z.enum(['Жалобы', 'Прикрепление', 'Запись на прием', 'Информация', 'Госпитализация', 'Анализы', 'Иные'], { required_error: 'Выберите категорию.' }),
   priority: z.enum(['low', 'medium', 'high']),
-  satisfaction: z.enum(['satisfied', 'neutral', 'dissatisfied', 'n/a']),
+  satisfaction: z.enum(['yes', 'no']),
   notes: z.string().optional(),
   followUp: z.boolean().default(false),
 });
@@ -113,11 +113,13 @@ export function AppealForm({ form, callId, callerNumber, operator, isWrapUp, onF
                     </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value="info">Информация</SelectItem>
-                      <SelectItem value="sales">Продажи</SelectItem>
-                      <SelectItem value="support">Техподдержка</SelectItem>
-                      <SelectItem value="complaint">Жалоба</SelectItem>
-                      <SelectItem value="other">Другое</SelectItem>
+                      <SelectItem value="Жалобы">Жалобы</SelectItem>
+                      <SelectItem value="Прикрепление">Прикрепление</SelectItem>
+                      <SelectItem value="Запись на прием">Запись на прием</SelectItem>
+                      <SelectItem value="Информация">Информация</SelectItem>
+                      <SelectItem value="Госпитализация">Госпитализация</SelectItem>
+                      <SelectItem value="Анализы">Анализы</SelectItem>
+                      <SelectItem value="Иные">Иные</SelectItem>
                     </SelectContent>
                 </Select>
                 <FormMessage />
@@ -152,14 +154,20 @@ export function AppealForm({ form, callId, callerNumber, operator, isWrapUp, onF
           name="resolution"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Решение/Результат</FormLabel>
-              <FormControl>
-                <Textarea
-                  placeholder="Какое решение было предложено или предпринято..."
-                  className="min-h-[60px]"
-                  {...field}
-                />
-              </FormControl>
+              <FormLabel>Решение</FormLabel>
+               <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <FormControl>
+                    <SelectTrigger>
+                        <SelectValue placeholder="Выберите результат..." />
+                    </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="переведен старшему оператору">Переведен старшему оператору</SelectItem>
+                      <SelectItem value="услуга оказана полностью">Услуга оказана полностью</SelectItem>
+                      <SelectItem value="услуга оказана частично">Услуга оказана частично</SelectItem>
+                      <SelectItem value="отказано в услуге">Отказано в услуге</SelectItem>
+                    </SelectContent>
+                </Select>
               <FormMessage />
             </FormItem>
           )}
@@ -169,7 +177,7 @@ export function AppealForm({ form, callId, callerNumber, operator, isWrapUp, onF
             name="satisfaction"
             render={({ field }) => (
                 <FormItem>
-                <FormLabel>Удовлетворенность клиента</FormLabel>
+                <FormLabel>Удовлетворенность</FormLabel>
                 <Select onValueChange={field.onChange} defaultValue={field.value}>
                     <FormControl>
                     <SelectTrigger>
@@ -177,10 +185,8 @@ export function AppealForm({ form, callId, callerNumber, operator, isWrapUp, onF
                     </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value="satisfied">Доволен</SelectItem>
-                      <SelectItem value="neutral">Нейтрально</SelectItem>
-                      <SelectItem value="dissatisfied">Недоволен</SelectItem>
-                      <SelectItem value="n/a">Неприменимо</SelectItem>
+                      <SelectItem value="yes">Да</SelectItem>
+                      <SelectItem value="no">Нет</SelectItem>
                     </SelectContent>
                 </Select>
                 <FormMessage />
@@ -217,7 +223,7 @@ export function AppealForm({ form, callId, callerNumber, operator, isWrapUp, onF
                 </FormControl>
                 <div className="space-y-1 leading-none">
                     <FormLabel>
-                    Требуется последующий контакт
+                    Требуется обратная связь
                     </FormLabel>
                 </div>
                 </FormItem>

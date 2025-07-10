@@ -16,10 +16,10 @@ const AppealFormSchema = z.object({
   operatorName: z.string(),
   callerNumber: z.string(),
   description: z.string().min(1, 'Description is required'),
-  resolution: z.string().optional(),
-  category: z.enum(['sales', 'complaint', 'support', 'info', 'other']),
+  resolution: z.enum(['переведен старшему оператору', 'услуга оказана полностью', 'услуга оказана частично', 'отказано в услуге']),
+  category: z.enum(['Жалобы', 'Прикрепление', 'Запись на прием', 'Информация', 'Госпитализация', 'Анализы', 'Иные']),
   priority: z.enum(['low', 'medium', 'high']),
-  satisfaction: z.enum(['satisfied', 'neutral', 'dissatisfied', 'n/a']),
+  satisfaction: z.enum(['yes', 'no']),
   notes: z.string().optional(),
   followUp: z.boolean().default(false),
 });
@@ -60,7 +60,6 @@ export async function saveAppeal(data: AppealFormData): Promise<{ success: boole
       finalAppeal = {
         ...existingAppeal, // Preserve id, createdAt, etc.
         ...validatedData,   // Apply new data from the form
-        resolution: validatedData.resolution || '', // Ensure fields are not undefined
         notes: validatedData.notes || '',
       };
       // Explicitly check if `followUp` is false to reset completed status
@@ -74,7 +73,6 @@ export async function saveAppeal(data: AppealFormData): Promise<{ success: boole
       finalAppeal = {
         id: crypto.randomUUID(),
         ...validatedData,
-        resolution: validatedData.resolution || '',
         notes: validatedData.notes || '',
         createdAt: new Date().toISOString(),
         followUpCompleted: false, // Default for new appeals

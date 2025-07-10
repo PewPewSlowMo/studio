@@ -113,12 +113,11 @@ export interface Appeal {
   operatorName: string;
   callerNumber: string;
   description: string;
-  resolution: string;
+  resolution: 'переведен старшему оператору' | 'услуга оказана полностью' | 'услуга оказана частично' | 'отказано в услуге';
   createdAt: string;
-  // New fields
-  category: 'sales' | 'complaint' | 'support' | 'info' | 'other';
+  category: 'Жалобы' | 'Прикрепление' | 'Запись на прием' | 'Информация' | 'Госпитализация' | 'Анализы' | 'Иные';
   priority: 'low' | 'medium' | 'high';
-  satisfaction: 'satisfied' | 'neutral' | 'dissatisfied' | 'n/a';
+  satisfaction: 'yes' | 'no';
   notes: string;
   followUp: boolean;
   followUpCompleted?: boolean;
