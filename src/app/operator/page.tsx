@@ -395,7 +395,28 @@ export default function OperatorPage() {
             />
             <div className="flex flex-col lg:flex-row gap-6">
                 <div className="flex-grow space-y-6">
-                    <MyKpiComponent user={user} />
+                    <Suspense fallback={
+                        <Card>
+                            <CardHeader>
+                                <div className="flex justify-between items-start">
+                                    <div>
+                                        <CardTitle>Мои показатели эффективности</CardTitle>
+                                        <CardDescription>Ваши KPI за выбранный период.</CardDescription>
+                                    </div>
+                                    <Skeleton className="h-10 w-[300px]" />
+                                </div>
+                            </CardHeader>
+                            <CardContent>
+                                <div className="grid gap-4 md:grid-cols-3">
+                                    <KpiSkeleton />
+                                    <KpiSkeleton />
+                                    <KpiSkeleton />
+                                </div>
+                            </CardContent>
+                        </Card>
+                    }>
+                        <MyKpiComponent user={user} />
+                    </Suspense>
                     <Suspense fallback={<Card><CardHeader><CardTitle>Задачи на перезвон</CardTitle><CardDescription>Список клиентов, с которыми нужно связаться.</CardDescription></CardHeader><CardContent className="flex justify-center items-center h-72"><Loader2 className="animate-spin" /></CardContent></Card>}>
                         <FollowUpList operatorId={user.id} onItemClick={handleFollowUpClick} />
                     </Suspense>

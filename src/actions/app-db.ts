@@ -22,6 +22,8 @@ export async function getDbConnection() {
     filename: DB_PATH,
     driver: sqlite3.Database,
   });
+  // Enable WAL mode for better concurrency. This allows multiple readers and one writer.
+  await db.exec('PRAGMA journal_mode = WAL;');
   return db;
 }
 
