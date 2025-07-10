@@ -123,11 +123,7 @@ function runAmiAction(
             }
             return;
         }
-        if (res?.response === 'Success') {
-          resolve({ success: true, message: res.message || 'Action was successful.', data: res });
-        } else {
-          reject(new Error(res?.message || 'Action failed: Asterisk did not return "Success".'));
-        }
+        resolve({ success: true, message: res.message || 'Action was successful.', data: res });
       });
 
     } catch (e) {
@@ -146,16 +142,17 @@ function runAmiAction(
   });
 }
 
-export async function answerCallAmi(
-  connection: AmiConnection,
-  channel: string
+export async function testAmiConnection(
+  connection: AmiConnection
 ): Promise<{ success: boolean; error?: string }> {
   try {
-    const action = {
-      Action: 'Command',
-      Command: `channel answer ${channel}`,
-    };
-    await runAmiAction(connection, action);
+    // A good test is to try fetching a list of endpoints.
+    const action = { Action: 'PJSIPShowEndpoints' };
+    await runAmiCommand<any>(
+      connection,
+      action,
+      'EndpointListComplete'
+    );
     return { success: true };
   } catch (e) {
     const message = e instanceof Error ? e.message : 'An unknown error occurred.';
@@ -163,65 +160,48 @@ export async function answerCallAmi(
   }
 }
 
-export async function hangupCallAmi(
+export async function getExtensionState(
   connection: AmiConnection,
-  channel: string
-): Promise<{ success: boolean; error?: string }> {
-  try {
-    const action = {
-      Action: 'Hangup',
-      Channel: channel,
-    };
-    await runAmiAction(connection, action);
-    return { success: true };
-  } catch (e) {
-    const message = e instanceof Error ? e.message : 'An unknown error occurred.';
-    return { success: false, error: message };
-  }
-}
-
-export async function originateCall(
-  connection: AmiConnection,
-  fromExtension: string,
-  numberToDial: string,
+  extension: string,
   context: string = 'from-internal'
-): Promise<{ success: boolean; error?: string }> {
+): Promise<{ success: boolean; data?: any; error?: string }> {
   try {
     const action = {
-      Action: 'Originate',
-      Channel: `PJSIP/${fromExtension}`,
+      Action: 'ExtensionState',
+      Exten: extension,
       Context: context,
-      Exten: numberToDial,
-      Priority: 1,
-      CallerID: `"${fromExtension}" <${fromExtension}>`,
-      Async: 'true',
-      Timeout: 20000, // 20 seconds
     };
     const result = await runAmiAction(connection, action);
-    if (result.success) {
-      return { success: true };
+    if (result.success && result.data) {
+        return { success: true, data: result.data };
     }
-    return { success: false, error: result.message || 'Origination failed' };
+    return { success: false, error: result.message || 'Failed to get extension state' };
   } catch (e) {
     const message = e instanceof Error ? e.message : 'An unknown error occurred.';
     return { success: false, error: message };
   }
 }
 
-export async function getEndpointDetails(
+export async function getChannelInfo(
   connection: AmiConnection,
-  extension: string
-): Promise<{ success: boolean; data?: AsteriskEndpoint; error?: string }> {
-    const result = await getAmiEndpoints(connection);
-    if (!result.success) {
-        return { success: false, error: result.error };
+  channel: string
+): Promise<{ success: boolean; data?: any; error?: string }> {
+  try {
+    const action = {
+      Action: 'CoreShowChannel',
+      Channel: channel
+    };
+     const result = await runAmiAction(connection, action);
+     if (result.success && result.data?.response === 'Success') {
+        return { success: true, data: result.data };
     }
-    const endpoint = result.data?.find(e => e.resource === extension);
-    if (endpoint) {
-        return { success: true, data: endpoint };
-    }
-    return { success: false, error: `Endpoint ${extension} not found.` };
+    return { success: false, error: result.message || 'Failed to get channel info' };
+  } catch (e) {
+    const message = e instanceof Error ? e.message : 'An unknown error occurred.';
+    return { success: false, error: message };
+  }
 }
+
 
 export async function getAmiEndpoints(
   connection: AmiConnection

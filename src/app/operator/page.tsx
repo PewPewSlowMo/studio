@@ -7,7 +7,7 @@ import { getConfig } from '@/actions/config';
 import { getOperatorState } from '@/actions/asterisk';
 import { findContactByPhone } from '@/actions/crm';
 import { CallerInfoCard } from '@/components/operator/caller-info-card';
-import { AlertTriangle, Loader2, User as UserIcon, Phone, Clock, MessageSquare, PhoneOff, UserX } from 'lucide-react';
+import { AlertTriangle, Loader2, User as UserIcon, Phone, Clock, MessageSquare, PhoneOff, UserX, UserRound, Moon, Sun } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
@@ -23,16 +23,18 @@ import { getUsers } from '@/actions/users';
 import { Separator } from '@/components/ui/separator';
 
 function OperatorStatusCard({ user, status }: { user: User; status: CallState['status'] | 'wrap-up' }) {
-    const statusConfig = {
+    const statusConfig: Record<string, { text: string; color: string; icon: React.ElementType; }> = {
       offline: { text: 'Оффлайн', color: 'bg-gray-500', icon: PhoneOff },
       available: { text: 'Доступен', color: 'bg-green-500', icon: Phone },
-      ringing: { text: 'Входящий звонок', color: 'bg-yellow-500 animate-pulse', icon: Phone },
+      ringing: { text: 'Входящий', color: 'bg-yellow-500 animate-pulse', icon: Phone },
       'on-call': { text: 'В разговоре', color: 'bg-red-500', icon: Phone },
       busy: { text: 'В разговоре', color: 'bg-red-500', icon: Phone },
       'in use': { text: 'В разговоре', color: 'bg-red-500', icon: Phone },
+      away: { text: 'Отошел', color: 'bg-blue-500', icon: UserRound },
       dnd: { text: 'Не беспокоить', color: 'bg-orange-500', icon: UserX },
       connecting: { text: 'Соединение...', color: 'bg-blue-500', icon: Loader2 },
       'wrap-up': { text: 'Пост-обработка', color: 'bg-indigo-500', icon: Clock },
+      unavailable: { text: 'Недоступен', color: 'bg-gray-500', icon: PhoneOff },
     };
   
     const currentStatus = statusConfig[status] || statusConfig.offline;
@@ -192,7 +194,6 @@ function MyKpiComponent({ user }: { user: User }) {
 
 
 export default function OperatorPage() {
-    const [config, setConfig] = useState<AppConfig | null>(null);
     const [user, setUser] = useState<User | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -226,10 +227,6 @@ export default function OperatorPage() {
                 } else {
                      setError('Пользователь не авторизован.');
                 }
-                
-                const appConfig = await getConfig();
-                setConfig(appConfig);
-
             } catch (e) {
                 const message = e instanceof Error ? e.message : 'An unknown error occurred';
                 setError(message)
@@ -241,42 +238,34 @@ export default function OperatorPage() {
     }, []);
 
     useEffect(() => {
-        if (!user?.extension || !config?.ari) return;
+        if (!user?.extension) return;
 
         const poll = async () => {
-            const result = await getOperatorState(config.ari, user.extension!);
-            let newStatus: CallState['status'] = 'offline';
-            let newCallStateData: Partial<CallState> = {};
-            
+            const result = await getOperatorState(user.extension!);
             if (result.success && result.data) {
-                const { endpointState, channelId, channelName, callerId, queue, uniqueId } = result.data;
-                newStatus = endpointState as CallState['status'] || 'offline';
-                newCallStateData = { channelId, channelName, callerId, queue, uniqueId };
+                setCallState(prevState => {
+                    if (JSON.stringify(prevState) !== JSON.stringify(result.data)) {
+                        return result.data!;
+                    }
+                    return prevState;
+                });
             } else {
                 console.error('Polling failed:', result.error);
+                // Keep the old state on failure to avoid flickering to offline
             }
-
-            setCallState(prevState => {
-                const newState: CallState = { ...prevState, status: newStatus, endpointState: newStatus, ...newCallStateData };
-                if (JSON.stringify(prevState) !== JSON.stringify(newState)) {
-                    return newState;
-                }
-                return prevState;
-            });
         };
 
         poll();
-        const intervalId = setInterval(poll, 5000);
+        const intervalId = setInterval(poll, 3000); // Poll every 3 seconds
         return () => clearInterval(intervalId);
-    }, [user, config]);
+    }, [user]);
 
     useEffect(() => {
-        if (!config?.ari) return;
-
         const currentStatus = callState.status;
         const prevStatus = previousStatusRef.current;
+        const activeCallStatuses = ['ringing', 'on-call'];
         
-        if ((currentStatus === 'ringing' || currentStatus === 'on-call') && callState.uniqueId && callState.callerId) {
+        if (activeCallStatuses.includes(currentStatus) && callState.uniqueId && callState.callerId) {
             setIsWrapUp(false);
             if (!isModalOpen) setIsModalOpen(true);
             
@@ -293,7 +282,7 @@ export default function OperatorPage() {
                 });
             }
         } 
-        else if ((prevStatus === 'on-call' || prevStatus === 'ringing') && currentStatus !== 'on-call' && currentStatus !== 'ringing' && activeCallData) {
+        else if (activeCallStatuses.includes(prevStatus!) && !activeCallStatuses.includes(currentStatus) && activeCallData) {
             setIsWrapUp(true);
         } 
         else if (!isWrapUp) {
@@ -301,7 +290,7 @@ export default function OperatorPage() {
         }
 
         previousStatusRef.current = currentStatus;
-    }, [callState, isModalOpen, isWrapUp, activeCallData, config]);
+    }, [callState, isModalOpen, isWrapUp, activeCallData]);
 
 
     const handleCloseModal = () => {
@@ -317,6 +306,7 @@ export default function OperatorPage() {
     }
 
     const handleFollowUpClick = async (appeal: Appeal) => {
+        const config = await getConfig();
         if (!config) return;
         const callResult = await getCallById(config.cdr, appeal.callId);
         

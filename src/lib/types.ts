@@ -88,13 +88,14 @@ export interface OperatorReportData {
 
 
 export interface CallState {
-  status: 'offline' | 'available' | 'ringing' | 'on-call' | 'connecting' | 'busy' | 'in use';
-  endpointState: 'offline' | 'available' | 'ringing' | 'on-call' | 'connecting' | 'busy' | 'in use';
+  status: 'offline' | 'available' | 'ringing' | 'on-call' | 'connecting' | 'busy' | 'in use' | 'away' | 'dnd' | 'unavailable';
+  endpointState: 'offline' | 'available' | 'ringing' | 'on-call' | 'connecting' | 'busy' | 'in use' | 'away' | 'dnd' | 'unavailable';
   channelId?: string;
   channelName?: string;
   callerId?: string;
   queue?: string;
   uniqueId?: string;
+  linkedId?: string;
   extension?: string;
 }
 

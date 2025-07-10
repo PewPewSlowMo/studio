@@ -6,8 +6,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { UserManagement } from '@/components/admin/user-management';
 import { SystemSettings } from '@/components/admin/system-settings';
 import { ConnectionStatusCard } from '@/components/admin/connection-status-card';
-import { getAsteriskVersion } from '@/actions/asterisk';
-import { getAmiQueues } from '@/actions/ami';
+import { getAmiQueues, testAmiConnection } from '@/actions/ami';
 import { testCdrConnection } from '@/actions/cdr';
 import { getConfig, saveConfig } from '@/actions/config';
 import { toast } from '@/hooks/use-toast';
@@ -84,7 +83,7 @@ export default function AdminPage() {
       setCdrDatabase(config.cdr.database);
       
       const [ariResult, amiResult, cdrResult] = await Promise.all([
-        getAsteriskVersion(config.ari),
+        testAmiConnection(config.ari), // Testing ARI with an AMI command as it's the primary interface now
         getAmiQueues(config.ami),
         testCdrConnection(config.cdr),
       ]);
@@ -104,13 +103,15 @@ export default function AdminPage() {
   const handleTestAri = async () => {
     setIsTestingAri(true);
     setAriStatus('Unknown');
-    const result = await getAsteriskVersion(ariConnection);
+    // We use testAmiConnection because ARI is now only a part of the Asterisk setup,
+    // and a successful AMI connection is a better indicator of overall health for our app.
+    const result = await testAmiConnection(ariConnection);
     if (result.success) {
       setAriStatus('Connected');
-      toast({ title: 'ARI Connection Successful', description: `Connected to Asterisk version: ${result.version}` });
+      toast({ title: 'Asterisk Connection Successful', description: `Successfully connected to Asterisk.` });
     } else {
       setAriStatus('Failed');
-      toast({ variant: 'destructive', title: 'ARI Connection Failed', description: result.error });
+      toast({ variant: 'destructive', title: 'Asterisk Connection Failed', description: result.error });
     }
     setIsTestingAri(false);
   };
@@ -207,7 +208,7 @@ export default function AdminPage() {
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
                 <ConnectionStatusCard
                     icon={Network}
-                    title="ARI Interface"
+                    title="Asterisk (ARI)"
                     status={ariStatus}
                     port={ariPort}
                     onTest={handleTestAri}
@@ -215,7 +216,7 @@ export default function AdminPage() {
                 />
                 <ConnectionStatusCard
                     icon={Wifi}
-                    title="AMI Interface"
+                    title="Asterisk (AMI)"
                     status={amiStatus}
                     port={amiPort}
                     onTest={handleTestAmi}
