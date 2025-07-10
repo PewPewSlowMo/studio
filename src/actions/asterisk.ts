@@ -1,19 +1,20 @@
 'use server';
 
 import type { CallState } from '@/lib/types';
-import { getAmiEndpoint, getChannelInfo } from './ami';
+import { getAmiEndpoint } from './ami';
 import { getConfig } from './config';
 
 const mapDeviceState = (state: string): CallState['status'] => {
-    state = state.toLowerCase();
+    state = state.toLowerCase().trim();
     switch (state) {
         case 'not in use': return 'available';
         case 'in use': return 'on-call';
         case 'busy': return 'on-call';
         case 'ringing': return 'ringing';
-        case 'ring,in use': return 'ringing'; // Sometimes Asterisk combines states
+        case 'ring,in use': return 'ringing';
         case 'on hold': return 'on-call';
         case 'dnd': return 'dnd';
+        case 'away': return 'away';
         case 'unavailable': return 'unavailable';
         case 'invalid': return 'offline';
         default: return 'offline';
@@ -33,15 +34,14 @@ export async function getOperatorState(
             return { success: false, error: 'AMI configuration is missing.' };
         }
         
-        // 1. Get the primary device state for the endpoint
         const endpointResult = await getAmiEndpoint(config.ami, extension);
         
         if (!endpointResult.success || !endpointResult.data) {
             return { success: false, error: endpointResult.error || `Could not get endpoint ${extension}.` };
         }
 
-        const endpoint = endpointResult.data;
-        const mappedStatus = mapDeviceState(endpoint.state);
+        const endpointData = endpointResult.data;
+        const mappedStatus = mapDeviceState(endpointData.devicestate);
 
         let finalCallState: CallState = {
             status: mappedStatus,
@@ -49,22 +49,15 @@ export async function getOperatorState(
             extension: extension,
         };
 
-        // 2. If the endpoint is on a call, get channel details
-        const activeChannelId = endpoint.channel_ids?.[0];
+        const activeChannelId = endpointData.channel;
         if (activeChannelId && (mappedStatus === 'on-call' || mappedStatus === 'ringing')) {
-            const channelInfoResult = await getChannelInfo(config.ami, activeChannelId);
-
-            if (channelInfoResult.success && channelInfoResult.data) {
-                const channelData = channelInfoResult.data;
-                finalCallState = {
-                    ...finalCallState,
-                    channelId: activeChannelId,
-                    uniqueId: channelData.uniqueid,
-                    linkedId: channelData.linkedid,
-                    callerId: channelData.connectedlinenum || channelData.calleridnum, // Prefer connected line number
-                    queue: channelData.context,
-                };
-            }
+             finalCallState = {
+                ...finalCallState,
+                channelId: activeChannelId,
+                uniqueId: endpointData.uniqueid, // This might not be present, depends on context
+                callerId: endpointData.connectedlinenum || endpointData.callerid,
+                queue: endpointData.context,
+            };
         }
         
         return { success: true, data: finalCallState };

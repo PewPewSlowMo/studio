@@ -94,70 +94,6 @@ function runAmiCommand<T extends Record<string, any>>(
   return withRetry(commandFn);
 }
 
-function runAmiAction(
-  connection: AmiConnection,
-  action: Record<string, string>
-): Promise<{ success: boolean; message?: string; data?: any }> {
-   const actionFn = () => new Promise<{ success: boolean; message?: string; data?: any }>(async (resolve, reject) => {
-    let ami: any;
-    const timeout = setTimeout(() => {
-      if (ami) ami.disconnect();
-      const timeoutError = new Error('AMI action timed out after 20 seconds.');
-      reject(timeoutError);
-    }, 20000); // Increased timeout to 20 seconds
-
-    try {
-      const validatedConnection = AmiConnectionSchema.parse(connection);
-      ami = new Ami(
-        Number(validatedConnection.port),
-        validatedConnection.host,
-        validatedConnection.username,
-        validatedConnection.password,
-        true
-      );
-      
-      const actionid = new Date().getTime().toString();
-      action.actionid = actionid;
-
-      ami.on('disconnect', () => {
-        clearTimeout(timeout);
-      });
-
-      ami.on('error', (err: Error) => {
-        if(ami) ami.disconnect();
-        reject(err);
-      });
-      
-      ami.action(action, (err: any, res: any) => {
-        if(ami) ami.disconnect();
-        if (err) {
-            if (typeof err === 'object' && err !== null && err.message) {
-                reject(new Error(err.message));
-            } else {
-                reject(err);
-            }
-            return;
-        }
-        resolve({ success: true, message: res.message || 'Action was successful.', data: res });
-      });
-
-    } catch (e) {
-      clearTimeout(timeout);
-      if (ami) ami.disconnect();
-      
-      let errorMessage = 'An unknown error occurred during AMI action execution.';
-      if (e instanceof z.ZodError) {
-        errorMessage = `Invalid input: ${e.errors.map((err) => err.message).join(', ')}`;
-      } else if (e instanceof Error) {
-        errorMessage = e.message;
-      }
-      
-      reject(new Error(errorMessage));
-    }
-  });
-
-  return withRetry(actionFn);
-}
 
 export async function testAmiConnection(
   connection: AmiConnection
@@ -176,31 +112,10 @@ export async function testAmiConnection(
   }
 }
 
-export async function getExtensionState(
-  connection: AmiConnection,
-  extension: string
-): Promise<{ success: boolean; data?: any; error?: string }> {
-  try {
-    const action = {
-      Action: 'ExtensionState',
-      Exten: extension,
-      Context: 'from-internal',
-    };
-    const result = await runAmiAction(connection, action);
-    if (result.success && result.data) {
-        return { success: true, data: result.data };
-    }
-    return { success: false, error: result.message || 'Failed to get extension state' };
-  } catch (e) {
-    const message = e instanceof Error ? e.message : 'An unknown error occurred.';
-    return { success: false, error: message };
-  }
-}
-
 export async function getAmiEndpoint(
   connection: AmiConnection,
   endpointId: string
-): Promise<{ success: boolean; data?: AsteriskEndpoint; error?: string }> {
+): Promise<{ success: boolean; data?: any; error?: string }> {
   try {
     const action = { Action: 'PJSIPShowEndpoint', Endpoint: endpointId };
     const rawEvents = await runAmiCommand<any>(
@@ -209,53 +124,36 @@ export async function getAmiEndpoint(
       'EndpointDetailComplete'
     );
 
+    // EndpointDetail contains high-level info.
     const detailEvent = rawEvents.find(e => e.event === 'EndpointDetail');
     if (!detailEvent) {
       return { success: false, error: `Endpoint ${endpointId} not found.` };
     }
+    
+    // AorDetail provides channel IDs and call info
+    const aorDetails = rawEvents.filter(e => e.event === 'AorDetail');
+    
+    // ChanVariable provides connected line info during a call
+    const chanVariables = rawEvents.filter(e => e.event === 'ChanVariable');
+    const connectedLineNumVar = chanVariables.find(v => v.variable === 'CONNECTEDLINE(num)');
+    
+    const contactStatus = rawEvents.find(e => e.event === 'ContactStatusDetail');
 
-    const data: AsteriskEndpoint = {
-      technology: 'PJSIP',
-      resource: detailEvent.objectname,
-      state: detailEvent.devicestate?.toLowerCase() || 'unknown',
-      channel_ids: detailEvent.channel ? [detailEvent.channel] : [],
+    const data = {
+      ...detailEvent,
+      ...aorDetails[0], // Assuming one AOR per endpoint for simplicity
+      ...contactStatus,
+      connectedlinenum: connectedLineNumVar?.value,
+      channel: aorDetails[0]?.channel, // Get channel from AorDetail
     };
-
+    
     return { success: true, data };
   } catch (e) {
     const message = e instanceof Error ? e.message : 'An unknown error occurred.';
+    console.error(`Error in getAmiEndpoint for ${endpointId}:`, message);
     return { success: false, error: message };
   }
 }
-
-export async function getChannelInfo(
-  connection: AmiConnection,
-  channel: string
-): Promise<{ success: boolean; data?: any; error?: string }> {
-  try {
-    const action = {
-      Action: 'CoreShowChannel',
-      Channel: channel
-    };
-     const result = await runAmiAction(connection, action);
-     if (result.success && result.data?.response === 'Success') {
-        const lines = result.data.output.split('\n');
-        const channelData = lines.reduce((acc, line) => {
-            const [key, ...valueParts] = line.split(':');
-            if (key && valueParts.length > 0) {
-                acc[key.trim().toLowerCase().replace(/-/g, '')] = valueParts.join(':').trim();
-            }
-            return acc;
-        }, {} as Record<string, string>);
-        return { success: true, data: channelData };
-    }
-    return { success: false, error: result.message || 'Failed to get channel info' };
-  } catch (e) {
-    const message = e instanceof Error ? e.message : 'An unknown error occurred.';
-    return { success: false, error: message };
-  }
-}
-
 
 export async function getAmiEndpoints(
   connection: AmiConnection
