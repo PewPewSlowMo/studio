@@ -62,7 +62,7 @@ export async function getCallHistory(connection: CdrConnection, dateRange?: Date
         
         let sql = `SELECT 
                 calldate, clid, src, dst, dcontext, channel, dstchannel, 
-                lastapp, lastdata, duration, billsec, disposition, uniqueid 
+                lastapp, lastdata, duration, billsec, disposition, uniqueid, linkedid
              FROM cdr`;
         
         const params: any[] = [];
@@ -91,6 +91,7 @@ export async function getCallHistory(connection: CdrConnection, dateRange?: Date
 
             return {
                 id: row.uniqueid,
+                linkedId: row.linkedid,
                 callerNumber: row.src,
                 calledNumber: row.dst,
                 operatorExtension: operatorExtension,
@@ -126,7 +127,7 @@ export async function getCallById(connection: CdrConnection, callId: string): Pr
 
         const sql = `SELECT 
                 calldate, clid, src, dst, dcontext, channel, dstchannel, 
-                lastapp, lastdata, duration, billsec, disposition, uniqueid 
+                lastapp, lastdata, duration, billsec, disposition, uniqueid, linkedid
              FROM cdr WHERE (uniqueid LIKE ? OR linkedid LIKE ? OR uniqueid = ? OR linkedid = ?) ORDER BY calldate DESC LIMIT 1`;
         
         const [rows] = await dbConnection.execute(sql, [searchTerm, searchTerm, callId, callId]);
@@ -143,6 +144,7 @@ export async function getCallById(connection: CdrConnection, callId: string): Pr
 
         const call: Call = {
             id: row.uniqueid,
+            linkedId: row.linkedid,
             callerNumber: row.src,
             calledNumber: row.dst,
             operatorExtension: operatorExtension,
@@ -174,7 +176,7 @@ export async function getMissedCalls(connection: CdrConnection, dateRange?: Date
         
         let sql = `SELECT 
                 calldate, clid, src, dst, dcontext, channel, dstchannel, 
-                lastapp, lastdata, duration, billsec, disposition, uniqueid 
+                lastapp, lastdata, duration, billsec, disposition, uniqueid, linkedid
              FROM cdr 
              WHERE disposition != 'ANSWERED'`;
         
@@ -200,6 +202,7 @@ export async function getMissedCalls(connection: CdrConnection, dateRange?: Date
         const calls = (rows as any[]).map((row): Call => {
             return {
                 id: row.uniqueid,
+                linkedId: row.linkedid,
                 callerNumber: row.src,
                 calledNumber: row.dst,
                 queue: row.dcontext, 

@@ -4,22 +4,25 @@ import { useState, useEffect, useMemo } from 'react';
 import {
   LayoutDashboard,
   Phone,
-  PhoneForwarded,
+  PhoneCall,
   Users,
   AlertTriangle,
+  PhoneForwarded,
+  Presentation,
 } from 'lucide-react';
 import { KpiCard } from '@/components/dashboard/kpi-card';
 import { CallVolumeChart } from '@/components/dashboard/call-volume-chart';
 import { OperatorStatusList } from '@/components/dashboard/operator-status';
-import { ActiveCalls } from '@/components/dashboard/active-calls';
+import { ActiveCallsTable } from '@/components/dashboard/active-calls';
 import { getAmiEndpoints, getAmiQueues } from '@/actions/ami';
 import { getUsers } from '@/actions/users';
 import { getConfig } from '@/actions/config';
 import { getCallHistory } from '@/actions/cdr';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Skeleton } from '@/components/ui/skeleton';
-import { format, parseISO, isValid } from 'date-fns';
-import type { Call, User, AsteriskEndpoint, AsteriskQueue } from '@/lib/types';
+import { format, parseISO, isValid, subHours } from 'date-fns';
+import type { Call, User, AsteriskEndpoint, AsteriskQueue, CallState } from '@/lib/types';
+import { getOperatorState } from '@/actions/asterisk';
 
 function KpiCardSkeleton() {
   return (
@@ -45,6 +48,7 @@ export default function DashboardPage() {
     users: User[];
     calls: Call[];
   } | null>(null);
+  const [liveChannels, setLiveChannels] = useState<CallState[]>([]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -52,11 +56,14 @@ export default function DashboardPage() {
       setError(null);
       try {
         const config = await getConfig();
+        const oneHourAgo = subHours(new Date(), 1).toISOString();
+        const dateRange = { from: oneHourAgo, to: new Date().toISOString() };
+
         const [endpointsResult, queuesResult, users, callsResult] = await Promise.all([
           getAmiEndpoints(config.ami),
           getAmiQueues(config.ami),
           getUsers(),
-          getCallHistory(config.cdr),
+          getCallHistory(config.cdr), // Full day for main charts
         ]);
 
         if (!endpointsResult.success) throw new Error(endpointsResult.error || 'Failed to fetch endpoints');
@@ -77,13 +84,42 @@ export default function DashboardPage() {
     };
     fetchData();
   }, []);
+  
+  useEffect(() => {
+    if (!data?.users || !data.users.length) return;
+  
+    const pollStates = async () => {
+      try {
+        const config = await getConfig();
+        const operatorExtensions = data.users
+          .filter(u => u.role === 'operator' && u.extension)
+          .map(u => u.extension!);
+  
+        const statePromises = operatorExtensions.map(ext => 
+          getOperatorState(config.ari, ext).then(res => 
+            res.success && res.data ? { ...res.data, extension: ext } as CallState & { extension: string } : null
+          )
+        );
+        const results = await Promise.all(statePromises);
+        const activeChannels = results.filter(r => r && (r.status === 'on-call' || r.status === 'ringing')) as (CallState & { extension: string })[];
+        setLiveChannels(activeChannels);
+        
+      } catch (error) {
+        console.error("Error polling operator states:", error);
+      }
+    };
+  
+    const interval = setInterval(pollStates, 3000);
+    return () => clearInterval(interval);
+  }, [data?.users]);
+
 
   const dashboardData = useMemo(() => {
     if (!data) return null;
 
     const { endpoints, queues, users, calls } = data;
     
-    const userMap = new Map(users.filter((u) => u.extension).map((u) => [u.extension, u]));
+    const userMap = new Map(users.filter((u) => u.extension).map((u) => [u.extension!, u]));
 
     const callVolumeData = Array.from({ length: 24 }, (_, i) => {
       const d = new Date();
@@ -105,17 +141,26 @@ export default function DashboardPage() {
       }
     });
 
-    const operatorsOnCall = endpoints.filter((e) => e.state === 'in use' || e.state === 'busy').length;
+    const operatorsOnCall = liveChannels.filter(c => c.status === 'on-call').length;
     const operatorsOnline = endpoints.filter((e) => e.state !== 'unavailable').length;
-    const totalOperators = endpoints.length;
-    const totalQueues = queues.length;
-    const activeCallEndpoints = endpoints.filter((e) => e.state === 'in use' || e.state === 'busy' || e.state === 'ringing');
+    const totalOperators = users.filter(u => u.role === 'operator').length;
+    
+    const oneHourAgo = subHours(new Date(), 1);
+    const recentCalls = calls.filter(c => parseISO(c.startTime) >= oneHourAgo);
+    
+    const queueDetails = queues.map(queue => {
+      const queueCalls = recentCalls.filter(c => c.queue === queue.name);
+      return {
+        name: queue.name,
+        state: `${queueCalls.length} за час`,
+      };
+    }).sort((a,b) => a.name.localeCompare(b.name));
 
-    const operatorDetails = endpoints.map(endpoint => {
-        const user = userMap.get(endpoint.resource);
+    const operatorDetails = users.filter(u => u.role === 'operator').map(user => {
+        const endpoint = endpoints.find(e => e.resource === user.extension);
         return {
-            name: user?.name || `Внутренний ${endpoint.resource}`,
-            state: endpoint.state,
+            name: user.name || `Внутренний ${user.extension}`,
+            state: endpoint?.state || 'unavailable',
         }
     }).sort((a, b) => a.name.localeCompare(b.name));
 
@@ -123,9 +168,10 @@ export default function DashboardPage() {
     
     const onCallOperatorDetails = operatorDetails.filter(op => ['in use', 'busy'].includes(op.state));
 
-    const queueDetails = queues.map(queue => ({
-        name: queue.name
-    })).sort((a,b) => a.name.localeCompare(b.name));
+    const enrichedLiveCalls = liveChannels.map(channel => ({
+      ...channel,
+      operatorName: userMap.get(channel.extension!)?.name || `Ext. ${channel.extension}`
+    }));
 
 
     return {
@@ -133,16 +179,15 @@ export default function DashboardPage() {
       operatorsOnCall,
       operatorsOnline,
       totalOperators,
-      totalQueues,
-      activeCallEndpoints,
-      endpoints,
-      users,
+      totalQueues: queues.length,
+      queueDetails,
       operatorDetails,
       onlineOperatorDetails,
       onCallOperatorDetails,
-      queueDetails,
+      enrichedLiveCalls,
+      totalCallsLastHour: recentCalls.length
     };
-  }, [data]);
+  }, [data, liveChannels]);
 
   if (error) {
     return (
@@ -187,13 +232,12 @@ export default function DashboardPage() {
       operatorsOnline,
       totalOperators,
       totalQueues,
-      activeCallEndpoints,
-      endpoints,
-      users,
+      queueDetails,
       operatorDetails,
       onlineOperatorDetails,
       onCallOperatorDetails,
-      queueDetails
+      enrichedLiveCalls,
+      totalCallsLastHour
   } = dashboardData;
 
   return (
@@ -203,7 +247,7 @@ export default function DashboardPage() {
           title="Всего операторов"
           value={totalOperators.toString()}
           icon={Users}
-          description="Все настроенные PJSIP-адреса."
+          description="Все настроенные пользователи-операторы."
           detailsTitle="Все операторы"
           details={operatorDetails}
         />
@@ -216,7 +260,7 @@ export default function DashboardPage() {
           details={onlineOperatorDetails}
         />
         <KpiCard
-          title="Операторы на линии"
+          title="В разговоре"
           value={operatorsOnCall.toString()}
           icon={Phone}
           description="Операторы в статусе 'занят' или 'разговор'."
@@ -226,22 +270,22 @@ export default function DashboardPage() {
         <KpiCard
           title="Активные очереди"
           value={totalQueues.toString()}
-          icon={LayoutDashboard}
+          icon={Presentation}
           description="Всего настроенных очередей."
-          detailsTitle="Все очереди"
+          detailsTitle="Звонки по очередям (за час)"
           details={queueDetails}
         />
       </div>
       <div className="grid gap-6 lg:grid-cols-3">
         <div className="lg:col-span-2">
-          <CallVolumeChart data={callVolumeChartData} />
+          <CallVolumeChart data={callVolumeChartData} liveCalls={enrichedLiveCalls.length} />
         </div>
         <div className="lg:col-span-1">
-          <OperatorStatusList endpoints={endpoints} users={users} />
+          <OperatorStatusList users={users} endpoints={data.endpoints} />
         </div>
       </div>
       <div>
-        <ActiveCalls endpoints={activeCallEndpoints} users={users} />
+        <ActiveCallsTable liveCalls={enrichedLiveCalls} />
       </div>
     </div>
   );

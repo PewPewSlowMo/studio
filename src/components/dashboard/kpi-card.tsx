@@ -13,6 +13,7 @@ import {
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { cn } from '@/lib/utils';
+import { Badge } from '../ui/badge';
 
 interface KpiCardProps {
   title: string;
@@ -68,7 +69,7 @@ export function KpiCard({
           <div className="space-y-2">
             <h4 className="font-medium leading-none">{detailsTitle}</h4>
             <p className="text-sm text-muted-foreground">
-              A detailed list of all items.
+              Детальный список.
             </p>
           </div>
           <ScrollArea className="h-48">
@@ -93,7 +94,7 @@ export function KpiCard({
                         {item.name}
                       </p>
                     </div>
-                    {status && (
+                    {status ? (
                       <div className="flex items-center gap-2">
                         <div
                           className={cn(
@@ -105,6 +106,8 @@ export function KpiCard({
                           {status.label}
                         </span>
                       </div>
+                    ) : (
+                       item.state && <Badge variant="outline">{item.state}</Badge>
                     )}
                   </div>
                 );

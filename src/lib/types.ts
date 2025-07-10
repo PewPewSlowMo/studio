@@ -27,6 +27,7 @@ export interface Operator {
 
 export interface Call {
   id: string;
+  linkedId?: string;
   callerNumber: string;
   calledNumber: string;
   operatorId?: string;
@@ -76,6 +77,7 @@ export interface CallState {
   callerId?: string;
   queue?: string;
   uniqueId?: string;
+  extension?: string;
 }
 
 export interface CrmContact {

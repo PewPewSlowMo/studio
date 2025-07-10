@@ -1,4 +1,4 @@
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import type { AsteriskEndpoint, User } from '@/lib/types';
 import { cn } from '@/lib/utils';
@@ -9,72 +9,67 @@ interface OperatorStatusListProps {
   users: User[];
 }
 
-const stateConfig: Record<
-  string,
-  { label: string; colorClass: string }
-> = {
-  'not in use': { label: 'Online', colorClass: 'bg-green-500' },
-  'in use': { label: 'On Call', colorClass: 'bg-red-500' },
-  busy: { label: 'Busy', colorClass: 'bg-red-500' },
-  unavailable: { label: 'Offline', colorClass: 'bg-gray-400' },
-  ringing: { label: 'Ringing', colorClass: 'bg-yellow-500' },
-  invalid: { label: 'Invalid', colorClass: 'bg-gray-400' },
-  unknown: { label: 'Unknown', colorClass: 'bg-gray-400' },
+const stateConfig: Record<string, { label: string; colorClass: string }> = {
+  'not in use': { label: 'Готов к работе', colorClass: 'bg-green-500' },
+  'ringing': { label: 'В разговоре', colorClass: 'bg-yellow-500' },
+  'in use': { label: 'В разговоре', colorClass: 'bg-yellow-500' },
+  'busy': { label: 'В разговоре', colorClass: 'bg-yellow-500' },
+  'unavailable': { label: 'Оффлайн', colorClass: 'bg-red-500' },
+  'invalid': { label: 'Оффлайн', colorClass: 'bg-red-500' },
+  'unknown': { label: 'Неизвестно', colorClass: 'bg-gray-400' },
 };
 
-
 export function OperatorStatusList({ endpoints, users }: OperatorStatusListProps) {
-
   const userMap = useMemo(() => 
     new Map(users.filter(u => u.extension).map(u => [u.extension, u]))
   , [users]);
 
+  const operatorDetails = useMemo(() => {
+    return users
+      .filter(user => user.role === 'operator' && user.extension)
+      .map(user => {
+        const endpoint = endpoints.find(e => e.resource === user.extension);
+        const state = endpoint?.state.toLowerCase() || 'unavailable';
+        return {
+          name: user.name,
+          extension: user.extension!,
+          status: stateConfig[state] || stateConfig.unknown,
+          fallback: user.name.slice(0, 2).toUpperCase()
+        };
+      })
+      .sort((a, b) => a.name.localeCompare(b.name));
+  }, [users, endpoints]);
+
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Operator Status</CardTitle>
+        <CardTitle>Статус операторов</CardTitle>
+        <CardDescription>Состояние операторов в реальном времени.</CardDescription>
       </CardHeader>
       <CardContent className="grid gap-4">
-        {endpoints.map((endpoint) => {
-          const user = userMap.get(endpoint.resource);
-          const name = user?.name || `Extension ${endpoint.resource}`;
-          const fallback = name.slice(0, 2).toUpperCase();
-          const status = stateConfig[endpoint.state.toLowerCase()] || stateConfig['unknown'];
-
-          return (
-            <div
-              key={endpoint.resource}
-              className="flex items-center space-x-4"
-            >
-              <Avatar>
-                <AvatarImage src={user ? `https://placehold.co/100x100.png` : undefined} data-ai-hint="user avatar" />
-                <AvatarFallback>
-                  {fallback}
-                </AvatarFallback>
-              </Avatar>
-              <div className="flex-grow">
-                <p className="text-sm font-medium leading-none">{name}</p>
-                <p className="text-sm text-muted-foreground">
-                  Ext: {endpoint.resource}
-                </p>
-              </div>
-              <div className="flex items-center gap-2">
-                <div
-                  className={cn(
-                    'h-2 w-2 rounded-full',
-                    status.colorClass
-                  )}
-                />
-                <span className="text-sm text-muted-foreground capitalize">
-                  {status.label}
-                </span>
-              </div>
+        {operatorDetails.map((op) => (
+          <div key={op.extension} className="flex items-center space-x-4">
+            <Avatar>
+              <AvatarImage src={`https://placehold.co/100x100.png`} data-ai-hint="user avatar" />
+              <AvatarFallback>{op.fallback}</AvatarFallback>
+            </Avatar>
+            <div className="flex-grow">
+              <p className="text-sm font-medium leading-none">{op.name}</p>
+              <p className="text-sm text-muted-foreground">
+                Вн. {op.extension}
+              </p>
             </div>
-          );
-        })}
-        {endpoints.length === 0 && (
+            <div className="flex items-center gap-2">
+              <div className={cn('h-2 w-2 rounded-full', op.status.colorClass)} />
+              <span className="text-sm text-muted-foreground capitalize">
+                {op.status.label}
+              </span>
+            </div>
+          </div>
+        ))}
+        {operatorDetails.length === 0 && (
           <div className="text-center text-muted-foreground py-4">
-            No operators found.
+            Операторы не найдены.
           </div>
         )}
       </CardContent>

@@ -19,9 +19,10 @@ import { AlertTriangle, BarChart as BarChartIcon } from 'lucide-react';
 
 interface CallVolumeChartProps {
   data: { hour: string; calls: number }[] | null;
+  liveCalls: number;
 }
 
-export function CallVolumeChart({ data }: CallVolumeChartProps) {
+export function CallVolumeChart({ data, liveCalls }: CallVolumeChartProps) {
   if (!data) {
     return (
       <Card className="h-full">
@@ -46,15 +47,15 @@ export function CallVolumeChart({ data }: CallVolumeChartProps) {
     return (
       <Card className="h-full">
         <CardHeader>
-          <CardTitle>Call Volume</CardTitle>
-          <CardDescription>Calls per hour over the last 24 hours.</CardDescription>
+          <CardTitle>Статистика по звонкам</CardTitle>
+          <CardDescription>Звонки за последние 24 часа</CardDescription>
         </CardHeader>
         <CardContent className="pl-2 h-[300px] flex items-center justify-center">
           <div className="text-center text-muted-foreground">
             <BarChartIcon className="h-12 w-12 mx-auto mb-4" />
-            <p className="font-semibold">No call data for the last 24 hours.</p>
+            <p className="font-semibold">Нет данных о звонках за последние 24 часа.</p>
             <p className="text-sm">
-              The chart will populate once calls are made.
+              График заполнится, как только начнут поступать звонки.
             </p>
           </div>
         </CardContent>
@@ -65,8 +66,16 @@ export function CallVolumeChart({ data }: CallVolumeChartProps) {
   return (
     <Card className="h-full">
       <CardHeader>
-        <CardTitle>Call Volume</CardTitle>
-        <CardDescription>Calls per hour over the last 24 hours.</CardDescription>
+        <div className="flex justify-between items-start">
+            <div>
+                 <CardTitle>Статистика по звонкам</CardTitle>
+                 <CardDescription>Звонки за последние 24 часа</CardDescription>
+            </div>
+            <div className="text-right">
+                <p className="text-sm text-muted-foreground">Звонков сейчас</p>
+                <p className="text-2xl font-bold">{liveCalls}</p>
+            </div>
+        </div>
       </CardHeader>
       <CardContent className="pl-2">
         <ResponsiveContainer width="100%" height={300}>
