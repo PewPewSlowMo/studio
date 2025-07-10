@@ -16,17 +16,30 @@ const AmiConnectionSchema = z.object({
 
 type AmiConnection = z.infer<typeof AmiConnectionSchema>;
 
+async function withRetry<T>(fn: () => Promise<T>, retries = 1, delay = 100): Promise<T> {
+  try {
+    return await fn();
+  } catch (err: any) {
+    if (retries > 0 && err.code === 'ECONNRESET') {
+      console.warn(`AMI connection reset. Retrying in ${delay}ms... (${retries} retries left)`);
+      await new Promise(res => setTimeout(res, delay));
+      return withRetry(fn, retries - 1, delay * 2);
+    }
+    throw err;
+  }
+}
+
 function runAmiCommand<T extends Record<string, any>>(
   connection: AmiConnection,
   action: Record<string, string>,
   completionEvent: string
 ): Promise<T[]> {
-  return new Promise((resolve, reject) => {
+  const commandFn = () => new Promise<T[]>((resolve, reject) => {
     let ami: any;
     const timeout = setTimeout(() => {
         if (ami) ami.disconnect();
-        reject(new Error('AMI command timed out after 10 seconds.'));
-    }, 10000); 
+        reject(new Error('AMI command timed out after 20 seconds.'));
+    }, 20000); // Increased timeout to 20 seconds
 
     try {
       const validatedConnection = AmiConnectionSchema.parse(connection);
@@ -77,19 +90,21 @@ function runAmiCommand<T extends Record<string, any>>(
       }
     }
   });
+
+  return withRetry(commandFn);
 }
 
 function runAmiAction(
   connection: AmiConnection,
   action: Record<string, string>
 ): Promise<{ success: boolean; message?: string; data?: any }> {
-  return new Promise(async (resolve, reject) => {
+   const actionFn = () => new Promise<{ success: boolean; message?: string; data?: any }>(async (resolve, reject) => {
     let ami: any;
     const timeout = setTimeout(() => {
       if (ami) ami.disconnect();
-      const timeoutError = new Error('AMI action timed out after 10 seconds.');
+      const timeoutError = new Error('AMI action timed out after 20 seconds.');
       reject(timeoutError);
-    }, 10000);
+    }, 20000); // Increased timeout to 20 seconds
 
     try {
       const validatedConnection = AmiConnectionSchema.parse(connection);
@@ -140,6 +155,8 @@ function runAmiAction(
       reject(new Error(errorMessage));
     }
   });
+
+  return withRetry(actionFn);
 }
 
 export async function testAmiConnection(
@@ -196,10 +213,6 @@ export async function getAmiEndpoint(
     if (!detailEvent) {
       return { success: false, error: `Endpoint ${endpointId} not found.` };
     }
-
-    const channelIds = rawEvents
-        .filter(e => e.event === 'AorDetail')
-        .flatMap(e => (e.contactstatus?.startsWith('Avail') ? [e.uri] : [])); // Example logic
 
     const data: AsteriskEndpoint = {
       technology: 'PJSIP',
