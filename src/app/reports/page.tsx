@@ -13,7 +13,7 @@ import { DateRangePicker } from '@/components/shared/date-range-picker';
 import { subDays, format, parseISO, isValid } from 'date-fns';
 import { OperatorReportTable, type OperatorReportData } from '@/components/reports/operator-report-table';
 import { Button } from '@/components/ui/button';
-import { OperatorCallsDialog } from '@/components/reports/operator-calls-dialog';
+import { CallHistoryTable } from '@/components/reports/call-history-table';
 
 export default function ReportsPage() {
     const searchParams = useSearchParams();
@@ -22,8 +22,9 @@ export default function ReportsPage() {
     const [calls, setCalls] = useState<Call[]>([]);
     const [users, setUsers] = useState<User[]>([]);
 
-    const [isDetailsOpen, setIsDetailsOpen] = useState(false);
     const [selectedOperator, setSelectedOperator] = useState<User | null>(null);
+    const [operatorCalls, setOperatorCalls] = useState<Call[]>([]);
+    const [isLoadingOperatorCalls, setIsLoadingOperatorCalls] = useState(false);
     
     const dateRange = useMemo(() => {
         const toParam = searchParams.get('to');
@@ -58,11 +59,41 @@ export default function ReportsPage() {
         fetchData();
     }, [dateRange]);
 
-    const handleOperatorClick = (operatorId: string) => {
+    const handleOperatorClick = async (operatorId: string) => {
         const user = users.find(u => u.id === operatorId);
-        if (user) {
-            setSelectedOperator(user);
-            setIsDetailsOpen(true);
+        if (!user) return;
+        
+        if (selectedOperator?.id === operatorId) {
+            // If the same operator is clicked, collapse the view
+            setSelectedOperator(null);
+            setOperatorCalls([]);
+            return;
+        }
+
+        setSelectedOperator(user);
+        setIsLoadingOperatorCalls(true);
+        try {
+            const config = await getConfig();
+            const params: DateRangeParams = {
+                ...dateRange,
+                operatorExtension: user.extension!,
+            };
+            const callsResult = await getCallHistory(config.cdr, params);
+            if (callsResult.success && callsResult.data) {
+                const userMap = new Map(users.map(u => [u.extension, u.name]));
+                const enrichedCalls = callsResult.data
+                    .filter(c => c.status === 'ANSWERED')
+                    .map(c => ({ ...c, operatorName: userMap.get(c.operatorExtension!) }));
+                setOperatorCalls(enrichedCalls);
+            } else {
+                setError(callsResult.error || 'Failed to fetch calls for this operator.');
+                setOperatorCalls([]);
+            }
+        } catch (e) {
+            setError(e instanceof Error ? e.message : 'An unknown error occurred.');
+            setOperatorCalls([]);
+        } finally {
+            setIsLoadingOperatorCalls(false);
         }
     };
 
@@ -73,7 +104,7 @@ export default function ReportsPage() {
             const operatorCalls = calls.filter(c => c.operatorExtension === operator.extension || c.callerNumber === operator.extension);
 
             if (operatorCalls.length === 0) {
-                return null; // Skip operators with no calls in the period
+                return null;
             }
             
             const answeredIncomingCalls = operatorCalls.filter(c => c.status === 'ANSWERED' && c.operatorExtension === operator.extension);
@@ -103,8 +134,8 @@ export default function ReportsPage() {
                 missedCallsPercentage: missedCallsPercentage,
                 avgTalkTime: avgTalkTime,
                 avgWaitTime: avgWaitTime,
-                satisfactionScore: 'N/A', // Placeholder
-                transferredToSupervisorCount: 0, // Placeholder
+                satisfactionScore: 'N/A', 
+                transferredToSupervisorCount: 0, 
             };
         }).filter((data): data is OperatorReportData => data !== null);
 
@@ -124,13 +155,6 @@ export default function ReportsPage() {
     }
 
     return (
-        <>
-        <OperatorCallsDialog 
-            isOpen={isDetailsOpen}
-            onOpenChange={setIsDetailsOpen}
-            operator={selectedOperator}
-            dateRange={dateRange}
-        />
         <div className="space-y-6">
             <div className="flex flex-wrap items-center justify-between gap-4">
                 <div>
@@ -152,16 +176,30 @@ export default function ReportsPage() {
                         <div>
                             <CardTitle>Эффективность операторов</CardTitle>
                             <CardDescription>
-                               Ключевые показатели для каждого оператора за выбранный период.
+                               Ключевые показатели для каждого оператора за выбранный период. Нажмите на строку для просмотра звонков.
                             </CardDescription>
                         </div>
                     </div>
                 </CardHeader>
                 <CardContent>
-                   <OperatorReportTable data={operatorReportData} isLoading={isLoading} onOperatorClick={handleOperatorClick} />
+                   <OperatorReportTable 
+                        data={operatorReportData} 
+                        isLoading={isLoading} 
+                        onOperatorClick={handleOperatorClick}
+                        selectedOperatorId={selectedOperator?.id || null}
+                    />
+                     {selectedOperator && (
+                        <div className="mt-6 p-4 border-t">
+                            <h3 className="text-lg font-semibold mb-2">Принятые звонки: {selectedOperator.name}</h3>
+                            <CallHistoryTable 
+                                calls={operatorCalls}
+                                isLoading={isLoadingOperatorCalls}
+                                user={selectedOperator}
+                            />
+                        </div>
+                    )}
                 </CardContent>
             </Card>
         </div>
-        </>
     );
 }

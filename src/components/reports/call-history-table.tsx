@@ -10,7 +10,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Input } from '@/components/ui/input';
-import type { Call } from '@/lib/types';
+import type { Call, User } from '@/lib/types';
 import { Badge } from '@/components/ui/badge';
 import { format, parseISO, isValid } from 'date-fns';
 import { Skeleton } from '../ui/skeleton';
@@ -18,6 +18,7 @@ import { cn } from '@/lib/utils';
 import { ru } from 'date-fns/locale';
 import { ArrowDown, ArrowUp } from 'lucide-react';
 import { Button } from '../ui/button';
+import { CallRowDetails } from './call-row-details';
 
 const statusMap: Record<string, string> = {
     ANSWERED: 'Отвечен',
@@ -28,10 +29,14 @@ const statusMap: Record<string, string> = {
 
 type SortKey = keyof Call;
 
-export function CallHistoryTable({ calls, isLoading, onRowClick }: { calls: Call[], isLoading: boolean, onRowClick?: (call: Call) => void }) {
+export function CallHistoryTable({ calls, isLoading, user }: { calls: Call[], isLoading: boolean, user: User | null }) {
   const [filter, setFilter] = React.useState('');
   const [sortConfig, setSortConfig] = React.useState<{ key: SortKey; direction: 'ascending' | 'descending' } | null>({ key: 'startTime', direction: 'descending' });
+  const [activeRowId, setActiveRowId] = React.useState<string | null>(null);
 
+  const handleRowClick = (callId: string) => {
+    setActiveRowId(prevId => (prevId === callId ? null : callId));
+  };
   
   const filteredAndSortedCalls = React.useMemo(() => {
     let filtered = calls;
@@ -140,27 +145,35 @@ export function CallHistoryTable({ calls, isLoading, onRowClick }: { calls: Call
               <TableBody>
                 {filteredAndSortedCalls.length > 0 ? (
                   filteredAndSortedCalls.map((call) => (
-                    <TableRow 
-                      key={call.id + call.startTime}
-                      onClick={() => onRowClick?.(call)}
-                      className={cn(onRowClick && 'cursor-pointer hover:bg-muted')}
-                    >
-                      <TableCell className="font-medium">{call.callerNumber}</TableCell>
-                      <TableCell>{call.operatorName || 'N/A'}</TableCell>
-                      <TableCell>
-                        <Badge
-                          variant={
-                            call.status !== 'ANSWERED' ? 'destructive' : 'success'
-                          }
+                    <React.Fragment key={call.id}>
+                        <TableRow 
+                            onClick={() => handleRowClick(call.id)}
+                            className="cursor-pointer hover:bg-muted"
                         >
-                          {statusMap[call.status] || call.status}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        {formatDate(call.startTime)}
-                      </TableCell>
-                      <TableCell className="text-right">{call.billsec ?? 'N/A'}</TableCell>
-                    </TableRow>
+                            <TableCell className="font-medium">{call.callerNumber}</TableCell>
+                            <TableCell>{call.operatorName || 'N/A'}</TableCell>
+                            <TableCell>
+                                <Badge
+                                variant={
+                                    call.status !== 'ANSWERED' ? 'destructive' : 'success'
+                                }
+                                >
+                                {statusMap[call.status] || call.status}
+                                </Badge>
+                            </TableCell>
+                            <TableCell>
+                                {formatDate(call.startTime)}
+                            </TableCell>
+                            <TableCell className="text-right">{call.billsec ?? 'N/A'}</TableCell>
+                        </TableRow>
+                        {activeRowId === call.id && (
+                            <TableRow>
+                                <TableCell colSpan={5} className="p-0">
+                                    <CallRowDetails call={call} user={user} isCrmEditable={false} />
+                                </TableCell>
+                            </TableRow>
+                        )}
+                    </React.Fragment>
                   ))
                 ) : (
                   <TableRow>

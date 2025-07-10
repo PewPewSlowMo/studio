@@ -16,11 +16,13 @@ import { Skeleton } from '../ui/skeleton';
 import { ArrowDown, ArrowUp } from 'lucide-react';
 import { Button } from '../ui/button';
 import { Badge } from '../ui/badge';
+import { cn } from '@/lib/utils';
 
 interface OperatorReportTableProps {
     data: OperatorReportData[];
     isLoading: boolean;
     onOperatorClick: (operatorId: string) => void;
+    selectedOperatorId: string | null;
 }
 
 type SortKey = keyof OperatorReportData;
@@ -72,7 +74,7 @@ const TableSkeleton = () => (
 );
 
 
-export function OperatorReportTable({ data, isLoading, onOperatorClick }: OperatorReportTableProps) {
+export function OperatorReportTable({ data, isLoading, onOperatorClick, selectedOperatorId }: OperatorReportTableProps) {
     const [sortConfig, setSortConfig] = React.useState<{ key: SortKey; direction: 'ascending' | 'descending' }>({ key: 'operatorName', direction: 'ascending' });
 
     const sortedData = React.useMemo(() => {
@@ -140,13 +142,15 @@ export function OperatorReportTable({ data, isLoading, onOperatorClick }: Operat
                 <TableBody>
                     {sortedData.length > 0 ? (
                         sortedData.map((op) => (
-                            <TableRow key={op.operatorId}>
+                            <TableRow 
+                                key={op.operatorId}
+                                onClick={() => onOperatorClick(op.operatorId)}
+                                className={cn("cursor-pointer", selectedOperatorId === op.operatorId && "bg-muted hover:bg-muted/90")}
+                            >
                                 <TableCell className="font-medium">{op.operatorName}</TableCell>
                                 <TableCell>{formatDateTime(op.firstCallTime)} - {formatDateTime(op.lastCallTime)}</TableCell>
                                 <TableCell>
-                                    <Button variant="link" className="p-0 h-auto" onClick={() => onOperatorClick(op.operatorId)}>
-                                        {op.answeredIncomingCount}
-                                    </Button>
+                                    {op.answeredIncomingCount}
                                 </TableCell>
                                 <TableCell>{op.outgoingCount}</TableCell>
                                 <TableCell>

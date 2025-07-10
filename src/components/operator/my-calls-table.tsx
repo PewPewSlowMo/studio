@@ -9,7 +9,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import type { Call, Appeal } from '@/lib/types';
+import type { User, Appeal } from '@/lib/types';
 import { Badge } from '@/components/ui/badge';
 import { format, parseISO, isValid } from 'date-fns';
 import { ru } from 'date-fns/locale';
@@ -18,19 +18,13 @@ import { Button } from '../ui/button';
 import { ArrowUp, ArrowDown, FileText, PhoneOutgoing } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-
-type EnrichedCall = Call & {
-    callerName?: string;
-    cardFilled?: boolean;
-    category?: Appeal['category'];
-    followUp?: boolean;
-    followUpCompleted?: boolean;
-};
+import type { EnrichedCall } from '@/app/my-calls/page';
+import { CallRowDetails } from '../reports/call-row-details';
 
 interface MyCallsTableProps {
     calls: EnrichedCall[];
     isLoading: boolean;
-    onRowClick: (call: Call) => void;
+    user: User | null;
 }
 
 type SortKey = keyof EnrichedCall;
@@ -50,9 +44,13 @@ const statusMap: Record<string, string> = {
     FAILED: 'Ошибка',
 };
 
-
-export function MyCallsTable({ calls, isLoading, onRowClick }: MyCallsTableProps) {
+export function MyCallsTable({ calls, isLoading, user }: MyCallsTableProps) {
     const [sortConfig, setSortConfig] = React.useState<{ key: SortKey; direction: 'ascending' | 'descending' } | null>({ key: 'startTime', direction: 'descending' });
+    const [activeRowId, setActiveRowId] = React.useState<string | null>(null);
+
+    const handleRowClick = (callId: string) => {
+        setActiveRowId(prevId => (prevId === callId ? null : callId));
+    };
 
     const sortedCalls = React.useMemo(() => {
         let sortableCalls = [...calls];
@@ -164,48 +162,57 @@ export function MyCallsTable({ calls, isLoading, onRowClick }: MyCallsTableProps
           <TableBody>
             {sortedCalls.length > 0 ? (
               sortedCalls.map((call) => (
-                <TableRow key={call.id + call.startTime} onClick={() => onRowClick(call)} className="cursor-pointer">
-                    <TableCell className="font-medium">
-                        <div className="flex items-center gap-2">
-                            <Tooltip>
-                                <TooltipTrigger>
-                                    <FileText className={cn('h-4 w-4 shrink-0', call.cardFilled ? 'text-green-500' : 'text-red-500')} />
-                                </TooltipTrigger>
-                                <TooltipContent>
-                                    <p>{call.cardFilled ? 'Карточка заполнена' : 'Карточка не заполнена'}</p>
-                                </TooltipContent>
-                            </Tooltip>
-                            {call.followUp && (
+                <React.Fragment key={call.id}>
+                    <TableRow onClick={() => handleRowClick(call.id)} className="cursor-pointer">
+                        <TableCell className="font-medium">
+                            <div className="flex items-center gap-2">
                                 <Tooltip>
                                     <TooltipTrigger>
-                                        <PhoneOutgoing className={cn('h-4 w-4 shrink-0', call.followUpCompleted ? 'text-green-500' : 'text-yellow-500')} />
+                                        <FileText className={cn('h-4 w-4 shrink-0', call.cardFilled ? 'text-green-500' : 'text-red-500')} />
                                     </TooltipTrigger>
                                     <TooltipContent>
-                                        <p>{call.followUpCompleted ? 'Перезвон выполнен' : 'Требуется перезвон'}</p>
+                                        <p>{call.cardFilled ? 'Карточка заполнена' : 'Карточка не заполнена'}</p>
                                     </TooltipContent>
                                 </Tooltip>
+                                {call.followUp && (
+                                    <Tooltip>
+                                        <TooltipTrigger>
+                                            <PhoneOutgoing className={cn('h-4 w-4 shrink-0', call.followUpCompleted ? 'text-green-500' : 'text-yellow-500')} />
+                                        </TooltipTrigger>
+                                        <TooltipContent>
+                                            <p>{call.followUpCompleted ? 'Перезвон выполнен' : 'Требуется перезвон'}</p>
+                                        </TooltipContent>
+                                    </Tooltip>
+                                )}
+                            <span>{call.callerNumber}</span>
+                            </div>
+                        </TableCell>
+                        <TableCell>{call.callerName || <span className="text-muted-foreground">Неизвестно</span>}</TableCell>
+                        <TableCell>
+                            {call.category ? (
+                                <Badge variant="outline" className="capitalize">{categoryMap[call.category] || call.category}</Badge>
+                            ) : (
+                                <span className="text-muted-foreground">-</span>
                             )}
-                           <span>{call.callerNumber}</span>
-                        </div>
-                    </TableCell>
-                    <TableCell>{call.callerName || <span className="text-muted-foreground">Неизвестно</span>}</TableCell>
-                    <TableCell>
-                        {call.category ? (
-                            <Badge variant="outline" className="capitalize">{categoryMap[call.category] || call.category}</Badge>
-                        ) : (
-                            <span className="text-muted-foreground">-</span>
-                        )}
-                    </TableCell>
-                    <TableCell>
-                      <Badge
-                        variant={call.status === 'ANSWERED' ? 'success' : 'destructive'}
-                      >
-                        {statusMap[call.status] || call.status}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>{formatDate(call.startTime)}</TableCell>
-                    <TableCell className="text-right">{formatDuration(call.billsec)}</TableCell>
-                  </TableRow>
+                        </TableCell>
+                        <TableCell>
+                        <Badge
+                            variant={call.status === 'ANSWERED' ? 'success' : 'destructive'}
+                        >
+                            {statusMap[call.status] || call.status}
+                        </Badge>
+                        </TableCell>
+                        <TableCell>{formatDate(call.startTime)}</TableCell>
+                        <TableCell className="text-right">{formatDuration(call.billsec)}</TableCell>
+                    </TableRow>
+                     {activeRowId === call.id && (
+                        <TableRow>
+                            <TableCell colSpan={6} className="p-0">
+                                <CallRowDetails call={call} user={user} isCrmEditable={false} />
+                            </TableCell>
+                        </TableRow>
+                    )}
+                </React.Fragment>
               ))
             ) : (
               <TableRow>

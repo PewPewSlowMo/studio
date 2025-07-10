@@ -12,9 +12,8 @@ import { AlertTriangle, Loader2 } from 'lucide-react';
 import { DateRangePicker } from '@/components/shared/date-range-picker';
 import { subDays, format, parseISO, isValid } from 'date-fns';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { CallDetailsDialog } from '@/components/operator/call-details-dialog';
 
-type EnrichedCall = Call & {
+export type EnrichedCall = Call & {
     callerName?: string;
     cardFilled?: boolean;
     category?: Appeal['category'];
@@ -28,8 +27,6 @@ export default function MyCallsPage() {
     const [calls, setCalls] = useState<EnrichedCall[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
-    const [selectedCall, setSelectedCall] = useState<Call | null>(null);
-    const [isDetailsOpen, setIsDetailsOpen] = useState(false);
 
     useEffect(() => {
         const storedUser = localStorage.getItem('loggedInUser');
@@ -99,11 +96,6 @@ export default function MyCallsPage() {
         fetchAndEnrichCalls();
     }, [user, searchParams]);
     
-    const handleRowClick = (call: Call) => {
-        setSelectedCall(call);
-        setIsDetailsOpen(true);
-    };
-
     if (!user && !error) {
         return (
              <div className="flex justify-center items-center h-64">
@@ -123,30 +115,21 @@ export default function MyCallsPage() {
     }
     
     return (
-        <>
-            <CallDetailsDialog 
-                isOpen={isDetailsOpen}
-                onOpenChange={setIsDetailsOpen}
-                call={selectedCall}
-                user={user}
-                isCrmEditable={false}
-            />
-            <Card>
-                <CardHeader>
-                    <div className="flex justify-between items-start">
-                        <div>
-                            <CardTitle>История моих звонков</CardTitle>
-                            <CardDescription>
-                                Нажмите на строку, чтобы раскрыть детали обращения.
-                            </CardDescription>
-                        </div>
-                        <DateRangePicker />
+        <Card>
+            <CardHeader>
+                <div className="flex justify-between items-start">
+                    <div>
+                        <CardTitle>История моих звонков</CardTitle>
+                        <CardDescription>
+                            Нажмите на строку, чтобы раскрыть детали обращения.
+                        </CardDescription>
                     </div>
-                </CardHeader>
-                <CardContent>
-                    <MyCallsTable calls={calls} isLoading={isLoading} onRowClick={handleRowClick} />
-                </CardContent>
-            </Card>
-        </>
+                    <DateRangePicker />
+                </div>
+            </CardHeader>
+            <CardContent>
+                <MyCallsTable calls={calls} isLoading={isLoading} user={user} />
+            </CardContent>
+        </Card>
     );
 }
