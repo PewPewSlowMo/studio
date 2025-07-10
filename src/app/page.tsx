@@ -141,7 +141,6 @@ export default function DashboardPage() {
       }
     });
 
-    const operatorsOnCall = liveChannels.filter(c => c.status === 'on-call').length;
     const operatorsOnline = endpoints.filter((e) => e.state !== 'unavailable').length;
     const totalOperators = users.filter(u => u.role === 'operator').length;
     
@@ -167,6 +166,8 @@ export default function DashboardPage() {
     const onlineOperatorDetails = operatorDetails.filter(op => op.state !== 'unavailable');
     
     const onCallOperatorDetails = operatorDetails.filter(op => ['in use', 'busy'].includes(op.state));
+    
+    const operatorsOnCall = onCallOperatorDetails.length;
 
     const enrichedLiveCalls = liveChannels.map(channel => ({
       ...channel,
