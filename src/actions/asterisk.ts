@@ -1,23 +1,21 @@
 'use server';
 
-import { z } from 'zod';
-import type { CallState, AppConfig } from '@/lib/types';
-import { getExtensionState, getChannelInfo } from './ami';
+import type { CallState } from '@/lib/types';
+import { getAmiEndpoint, getChannelInfo } from './ami';
 import { getConfig } from './config';
 
-
-const mapAmiStatus = (status: string, statusText: string): CallState['status'] => {
-    switch (status) {
-        case '-1': return 'offline'; // Not found
-        case '0':  // Idle
-            if (statusText.toLowerCase() === 'dnd') return 'dnd';
-            if (statusText.toLowerCase() === 'away') return 'away';
-            return 'available';
-        case '1': return 'on-call'; // In Use
-        case '2': return 'on-call'; // Busy
-        case '4': return 'unavailable'; // Unavailable
-        case '8': return 'ringing'; // Ringing
-        case '16': return 'on-call'; // On Hold
+const mapDeviceState = (state: string): CallState['status'] => {
+    state = state.toLowerCase();
+    switch (state) {
+        case 'not in use': return 'available';
+        case 'in use': return 'on-call';
+        case 'busy': return 'on-call';
+        case 'ringing': return 'ringing';
+        case 'ring,in use': return 'ringing'; // Sometimes Asterisk combines states
+        case 'on hold': return 'on-call';
+        case 'dnd': return 'dnd';
+        case 'unavailable': return 'unavailable';
+        case 'invalid': return 'offline';
         default: return 'offline';
     }
 };
@@ -35,14 +33,15 @@ export async function getOperatorState(
             return { success: false, error: 'AMI configuration is missing.' };
         }
         
-        const extStateResult = await getExtensionState(config.ami, extension);
-
-        if (!extStateResult.success || !extStateResult.data) {
-            return { success: false, error: extStateResult.error || `Could not get state for extension ${extension}.` };
+        // 1. Get the primary device state for the endpoint
+        const endpointResult = await getAmiEndpoint(config.ami, extension);
+        
+        if (!endpointResult.success || !endpointResult.data) {
+            return { success: false, error: endpointResult.error || `Could not get endpoint ${extension}.` };
         }
 
-        const { status, statustext, channel, channeltype, calleridnum, uniqueid, linkedid } = extStateResult.data;
-        const mappedStatus = mapAmiStatus(status, statustext.toLowerCase());
+        const endpoint = endpointResult.data;
+        const mappedStatus = mapDeviceState(endpoint.state);
 
         let finalCallState: CallState = {
             status: mappedStatus,
@@ -50,19 +49,29 @@ export async function getOperatorState(
             extension: extension,
         };
 
-        // If there's an active channel, enrich with call details
-        if (channel && channeltype) {
-            finalCallState.channelId = channel;
-            finalCallState.uniqueId = uniqueid;
-            finalCallState.callerId = calleridnum;
-            finalCallState.linkedId = linkedid;
-        }
+        // 2. If the endpoint is on a call, get channel details
+        const activeChannelId = endpoint.channel_ids?.[0];
+        if (activeChannelId && (mappedStatus === 'on-call' || mappedStatus === 'ringing')) {
+            const channelInfoResult = await getChannelInfo(config.ami, activeChannelId);
 
+            if (channelInfoResult.success && channelInfoResult.data) {
+                const channelData = channelInfoResult.data;
+                finalCallState = {
+                    ...finalCallState,
+                    channelId: activeChannelId,
+                    uniqueId: channelData.uniqueid,
+                    linkedId: channelData.linkedid,
+                    callerId: channelData.connectedlinenum || channelData.calleridnum, // Prefer connected line number
+                    queue: channelData.context,
+                };
+            }
+        }
+        
         return { success: true, data: finalCallState };
 
     } catch (e) {
         const message = e instanceof Error ? e.message : 'An unknown error occurred in getOperatorState';
-        console.error('getOperatorState failed:', message);
+        console.error('getOperatorState failed for extension', extension, ':', message);
         return { success: false, error: message };
     }
 }

@@ -146,7 +146,6 @@ export async function testAmiConnection(
   connection: AmiConnection
 ): Promise<{ success: boolean; error?: string }> {
   try {
-    // A good test is to try fetching a list of endpoints.
     const action = { Action: 'PJSIPShowEndpoints' };
     await runAmiCommand<any>(
       connection,
@@ -162,20 +161,54 @@ export async function testAmiConnection(
 
 export async function getExtensionState(
   connection: AmiConnection,
-  extension: string,
-  context: string = 'from-internal'
+  extension: string
 ): Promise<{ success: boolean; data?: any; error?: string }> {
   try {
     const action = {
       Action: 'ExtensionState',
       Exten: extension,
-      Context: context,
+      Context: 'from-internal',
     };
     const result = await runAmiAction(connection, action);
     if (result.success && result.data) {
         return { success: true, data: result.data };
     }
     return { success: false, error: result.message || 'Failed to get extension state' };
+  } catch (e) {
+    const message = e instanceof Error ? e.message : 'An unknown error occurred.';
+    return { success: false, error: message };
+  }
+}
+
+export async function getAmiEndpoint(
+  connection: AmiConnection,
+  endpointId: string
+): Promise<{ success: boolean; data?: AsteriskEndpoint; error?: string }> {
+  try {
+    const action = { Action: 'PJSIPShowEndpoint', Endpoint: endpointId };
+    const rawEvents = await runAmiCommand<any>(
+      connection,
+      action,
+      'EndpointDetailComplete'
+    );
+
+    const detailEvent = rawEvents.find(e => e.event === 'EndpointDetail');
+    if (!detailEvent) {
+      return { success: false, error: `Endpoint ${endpointId} not found.` };
+    }
+
+    const channelIds = rawEvents
+        .filter(e => e.event === 'AorDetail')
+        .flatMap(e => (e.contactstatus?.startsWith('Avail') ? [e.uri] : [])); // Example logic
+
+    const data: AsteriskEndpoint = {
+      technology: 'PJSIP',
+      resource: detailEvent.objectname,
+      state: detailEvent.devicestate?.toLowerCase() || 'unknown',
+      channel_ids: detailEvent.channel ? [detailEvent.channel] : [],
+    };
+
+    return { success: true, data };
   } catch (e) {
     const message = e instanceof Error ? e.message : 'An unknown error occurred.';
     return { success: false, error: message };
@@ -193,7 +226,15 @@ export async function getChannelInfo(
     };
      const result = await runAmiAction(connection, action);
      if (result.success && result.data?.response === 'Success') {
-        return { success: true, data: result.data };
+        const lines = result.data.output.split('\n');
+        const channelData = lines.reduce((acc, line) => {
+            const [key, ...valueParts] = line.split(':');
+            if (key && valueParts.length > 0) {
+                acc[key.trim().toLowerCase().replace(/-/g, '')] = valueParts.join(':').trim();
+            }
+            return acc;
+        }, {} as Record<string, string>);
+        return { success: true, data: channelData };
     }
     return { success: false, error: result.message || 'Failed to get channel info' };
   } catch (e) {
