@@ -24,10 +24,10 @@ type RecordingStatus = 'checking' | 'exists' | 'not_found' | 'loading' | 'loaded
 
 // This function mimics FreePBX logic to get the base filename for ARI request
 const getRecordingId = (call: Call): string => {
-    // Priority 1: Use the `userfield` if it exists. This often contains the full filename.
-    if (call.recordingFile) {
+    // Priority 1: Use the `recordingfile` if it exists. This is the most reliable source.
+    if (call.recordingfile) {
         // Remove the file extension (e.g., .wav, .mp3)
-        return call.recordingFile.replace(/\.[^/.]+$/, "");
+        return call.recordingfile.replace(/\.[^/.]+$/, "");
     }
     // Priority 2: Fallback to the uniqueid
     return call.id;
@@ -136,7 +136,7 @@ export function CallRowDetails({ call, user, isCrmEditable = true }: CallRowDeta
                             <AudioPlayer 
                                 src={audioDataUri} 
                                 canDownload={canDownloadRecording(user?.role)}
-                                fileName={`recording-${getRecordingId(call)}.wav`}
+                                fileName={`${getRecordingId(call)}.wav`}
                             />
                         </div>
                     )}

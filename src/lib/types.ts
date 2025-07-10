@@ -45,7 +45,7 @@ export interface Call {
   reason?: string;
   isOutgoing?: boolean;
   satisfaction?: string;
-  recordingFile?: string; // Correct filename from CDR
+  recordingfile?: string; // Correct filename from CDR
   // Add new fields for enriched data
   callerName?: string;
   appealDescription?: string;

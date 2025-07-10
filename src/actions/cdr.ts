@@ -78,7 +78,7 @@ function mapRowToCall(row: any): Call {
         queue: row.dcontext,
         isOutgoing: row.dcontext === 'from-internal',
         satisfaction: row.userfield,
-        recordingFile: row.userfield || undefined,
+        recordingfile: row.recordingfile || undefined,
     }
 }
 
@@ -110,7 +110,7 @@ export async function getCallHistory(connection: CdrConnection, params: GetCallH
         
         let sql = `SELECT 
                 calldate, clid, src, dst, dcontext, channel, dstchannel, 
-                lastapp, lastdata, duration, billsec, disposition, uniqueid, linkedid, userfield
+                lastapp, lastdata, duration, billsec, disposition, uniqueid, linkedid, userfield, recordingfile
              FROM cdr`;
         
         if (whereClauses.length > 0) {
@@ -143,7 +143,7 @@ export async function getCallById(connection: CdrConnection, callId: string): Pr
         
         const baseQuery = `SELECT 
             calldate, clid, src, dst, dcontext, channel, dstchannel, 
-            lastapp, lastdata, duration, billsec, disposition, uniqueid, linkedid, userfield
+            lastapp, lastdata, duration, billsec, disposition, uniqueid, linkedid, userfield, recordingfile
             FROM cdr`;
 
         // 1. Try to find by exact match first
@@ -186,7 +186,7 @@ export async function getMissedCalls(connection: CdrConnection, dateRange?: Date
         
         let sql = `SELECT 
                 calldate, clid, src, dst, dcontext, channel, dstchannel, 
-                lastapp, lastdata, duration, billsec, disposition, uniqueid, linkedid, userfield
+                lastapp, lastdata, duration, billsec, disposition, uniqueid, linkedid, userfield, recordingfile
              FROM cdr 
              WHERE disposition != 'ANSWERED'`;
         
