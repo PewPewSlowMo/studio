@@ -104,6 +104,7 @@ export interface CrmContact {
   address: string;
   type: string;
   email?: string;
+  notes?: string;
 }
 
 export interface Appeal {

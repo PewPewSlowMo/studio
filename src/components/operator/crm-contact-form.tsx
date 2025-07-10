@@ -26,12 +26,14 @@ import { addOrUpdateContact } from '@/actions/crm';
 import { useToast } from '@/hooks/use-toast';
 import type { CrmContact } from '@/lib/types';
 import { Separator } from '@/components/ui/separator';
+import { Textarea } from '@/components/ui/textarea';
 
 export const crmContactFormSchema = z.object({
   name: z.string().min(2, 'Имя должно содержать не менее 2 символов.'),
   address: z.string().min(5, 'Адрес должен содержать не менее 5 символов.'),
   type: z.enum(['контингент', 'фсмс', 'платный', 'иной']),
   email: z.string().email({ message: 'Неверный формат email' }).optional().or(z.literal('')),
+  notes: z.string().optional(),
 });
 
 export type CrmContactFormValues = z.infer<typeof crmContactFormSchema>;
@@ -128,6 +130,19 @@ export function CrmContactForm({ form, phoneNumber, onSave }: CrmContactFormProp
                     ))}
                   </SelectContent>
                 </Select>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="notes"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel className="text-xs">Примечание</FormLabel>
+                <FormControl>
+                  <Textarea placeholder="Конфликтный клиент, важные детали..." {...field} />
+                </FormControl>
                 <FormMessage />
               </FormItem>
             )}

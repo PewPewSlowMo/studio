@@ -21,12 +21,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Loader2, Save, User } from 'lucide-react';
+import { Loader2, Save, User, Pencil } from 'lucide-react';
 import { addOrUpdateContact } from '@/actions/crm';
 import { useToast } from '@/hooks/use-toast';
 import type { CrmContact } from '@/lib/types';
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
+import { Textarea } from '../ui/textarea';
 
 const crmFormSchema = z.object({
   name: z.string().min(2, 'Имя должно содержать не менее 2 символов.'),
@@ -34,6 +35,7 @@ const crmFormSchema = z.object({
   type: z.enum(['контингент', 'фсмс', 'платный', 'иной']),
   phoneNumber: z.string(),
   email: z.string().email('Неверный формат email').optional().or(z.literal('')),
+  notes: z.string().optional(),
 });
 
 type CrmFormData = z.infer<typeof crmFormSchema>;
@@ -72,6 +74,15 @@ function CrmDataViewer({ contact, phoneNumber }: { contact: CrmContact | null, p
             <div className="sm:col-span-2"><strong className="text-muted-foreground block font-normal">Email:</strong> {contact.email || 'Не указан'}</div>
             <div className="sm:col-span-2"><strong className="text-muted-foreground block font-normal">Адрес:</strong> {contact.address}</div>
         </div>
+        {contact.notes && (
+            <>
+                <Separator />
+                <div className="space-y-1 text-sm">
+                    <strong className="text-muted-foreground block font-normal">Примечание:</strong>
+                    <div className="p-2 bg-muted rounded-md border text-sm whitespace-pre-wrap">{contact.notes}</div>
+                </div>
+            </>
+        )}
     </div>
   );
 }
@@ -87,6 +98,7 @@ export function CrmEditor({ contact, phoneNumber, onSave, isEditable = true }: C
       type: 'иной',
       phoneNumber: phoneNumber,
       email: '',
+      notes: '',
     },
   });
 
@@ -101,6 +113,7 @@ export function CrmEditor({ contact, phoneNumber, onSave, isEditable = true }: C
         type: contactTypes.includes(contact.type) ? contact.type : 'иной',
         phoneNumber: contact.phoneNumber,
         email: contact.email || '',
+        notes: contact.notes || '',
       });
     } else {
       form.reset({
@@ -109,6 +122,7 @@ export function CrmEditor({ contact, phoneNumber, onSave, isEditable = true }: C
         type: 'иной',
         phoneNumber: phoneNumber,
         email: '',
+        notes: '',
       });
     }
   }, [contact, phoneNumber, form]);
@@ -120,7 +134,7 @@ export function CrmEditor({ contact, phoneNumber, onSave, isEditable = true }: C
         title: 'Контакт сохранен',
         description: `Данные для номера ${data.phoneNumber} были успешно обновлены.`,
       });
-      onSave?.(data);
+      onSave?.(data as CrmContact);
     } else {
       toast({
         variant: 'destructive',
@@ -136,7 +150,10 @@ export function CrmEditor({ contact, phoneNumber, onSave, isEditable = true }: C
 
   return (
     <div className="space-y-4">
-      <h3 className="font-semibold text-lg">Данные клиента</h3>
+      <h3 className="font-semibold text-lg flex items-center gap-2">
+        <Pencil className="h-5 w-5" />
+        {contact ? 'Редактирование данных клиента' : 'Создание нового клиента'}
+      </h3>
       <Separator />
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
@@ -202,6 +219,19 @@ export function CrmEditor({ contact, phoneNumber, onSave, isEditable = true }: C
                 <FormLabel>Адрес</FormLabel>
                 <FormControl>
                   <Input placeholder="г. Алматы, ул. Абая, 1" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="notes"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Примечание</FormLabel>
+                <FormControl>
+                  <Textarea placeholder="Конфликтный клиент, VIP, предпочитает общение по email и т.д." {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>

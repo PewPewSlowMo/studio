@@ -8,7 +8,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { User as UserIcon, Phone, MapPin, BadgeInfo, History, Calendar, X, Clock, ChevronsRight, Mail, PhoneIncoming as PhoneIncomingIcon, Building } from 'lucide-react';
+import { User as UserIcon, Phone, MapPin, BadgeInfo, History, Calendar, X, Clock, ChevronsRight, Mail, PhoneIncoming as PhoneIncomingIcon, Building, StickyNote } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { format, parseISO, isValid } from 'date-fns';
@@ -60,7 +60,7 @@ export function CallerInfoCard({ isOpen, onClose, contact, onContactUpdate, hist
 
   const crmForm = useForm<CrmContactFormValues>({
       resolver: zodResolver(crmContactFormSchema),
-      defaultValues: { name: '', address: '', type: 'иной', email: '' },
+      defaultValues: { name: '', address: '', type: 'иной', email: '', notes: '' },
   });
   
   const isCallActive = callState.status === 'ringing' || callState.status === 'on-call';
@@ -125,9 +125,10 @@ export function CallerInfoCard({ isOpen, onClose, contact, onContactUpdate, hist
         // @ts-ignore
         type: contact.type,
         email: contact.email || '',
+        notes: contact.notes || '',
       });
     } else {
-      crmForm.reset({ name: '', address: '', type: 'иной', email: '' });
+      crmForm.reset({ name: '', address: '', type: 'иной', email: '', notes: '' });
     }
   }, [contact, crmForm]);
 
@@ -204,6 +205,7 @@ export function CallerInfoCard({ isOpen, onClose, contact, onContactUpdate, hist
                    <div className="flex items-center gap-3"><Mail className="h-4 w-4 text-muted-foreground" /> <span>{contact.email || 'Нет данных'}</span></div>
                    <div className="flex items-center gap-3"><MapPin className="h-4 w-4 text-muted-foreground" /> <span>{contact.address}</span></div>
                    <div className="flex items-center gap-3"><BadgeInfo className="h-4 w-4 text-muted-foreground" /> <Badge className="capitalize">{contact.type}</Badge></div>
+                   {contact.notes && <div className="flex items-start gap-3 pt-1"><StickyNote className="h-4 w-4 text-muted-foreground mt-0.5" /> <span className="whitespace-pre-wrap">{contact.notes}</span></div>}
                 </div>
             ) : (
                 <CrmContactForm form={crmForm} phoneNumber={callState.callerNumber || ''} onSave={onContactUpdate} />
