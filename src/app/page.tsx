@@ -103,7 +103,7 @@ export default function DashboardPage() {
         const results = await Promise.all(statePromises);
         const activeStatuses = ['on-call', 'ringing', 'busy', 'in use'];
         const activeChannels = results.filter(r => r && activeStatuses.includes(r.endpointState)) as (CallState & { extension: string })[];
-        setLiveChannels(activeChannels);
+        setLiveChannels(activeChannels as CallState[]);
         
       } catch (error) {
         console.error("Error polling operator states:", error);
@@ -142,7 +142,7 @@ export default function DashboardPage() {
       }
     });
 
-    const operatorsOnline = endpoints.filter((e) => e.state !== 'unavailable').length;
+    const operatorsOnline = endpoints.filter((e) => e.state !== 'unavailable' && e.state !== 'invalid').length;
     const totalOperators = users.filter(u => u.role === 'operator').length;
     
     const oneHourAgo = subHours(new Date(), 1);
@@ -164,14 +164,15 @@ export default function DashboardPage() {
         }
     }).sort((a, b) => a.name.localeCompare(b.name));
 
-    const onlineOperatorDetails = operatorDetails.filter(op => op.state !== 'unavailable');
+    const onlineOperatorDetails = operatorDetails.filter(op => op.state !== 'unavailable' && op.state !== 'invalid');
     
-    const onCallOperatorDetails = operatorDetails.filter(op => ['in use', 'busy'].includes(op.state));
+    const onCallOperatorDetails = operatorDetails.filter(op => ['in use', 'busy', 'ringing'].includes(op.state));
     
     const operatorsOnCall = onCallOperatorDetails.length;
 
     const enrichedLiveCalls = liveChannels.map(channel => ({
       ...channel,
+      status: channel.endpointState!,
       operatorName: userMap.get(channel.extension!)?.name || `Ext. ${channel.extension}`
     }));
 

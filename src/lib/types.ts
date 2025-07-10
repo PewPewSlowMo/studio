@@ -71,7 +71,8 @@ export interface QueueReportData {
 }
 
 export interface CallState {
-  status: 'offline' | 'available' | 'ringing' | 'on-call' | 'connecting';
+  status: 'offline' | 'available' | 'ringing' | 'on-call' | 'connecting' | 'busy' | 'in use';
+  endpointState: 'offline' | 'available' | 'ringing' | 'on-call' | 'connecting' | 'busy' | 'in use';
   channelId?: string;
   channelName?: string;
   callerId?: string;
