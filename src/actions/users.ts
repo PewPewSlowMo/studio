@@ -1,116 +1,113 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
-import fs from 'fs/promises';
-import path from 'path';
 import crypto from 'crypto';
 import type { User } from '@/lib/types';
 import type { UserFormData } from '@/components/admin/user-form-dialog';
-
-const USERS_DB_PATH = path.join(process.cwd(), 'data', 'users.json');
-
-async function readUsers(): Promise<User[]> {
-  try {
-    // Ensure the directory exists before reading
-    await fs.mkdir(path.dirname(USERS_DB_PATH), { recursive: true });
-    const data = await fs.readFile(USERS_DB_PATH, 'utf-8');
-    return JSON.parse(data);
-  } catch (error: any) {
-    if (error.code === 'ENOENT') {
-      // If the file doesn't exist, it's the first run.
-      // Create it with an empty array.
-      await writeUsers([]);
-      return [];
-    }
-    console.error('Error reading users database:', error);
-    throw new Error('Could not read from the database.');
-  }
-}
-
-async function writeUsers(users: User[]): Promise<void> {
-  try {
-    await fs.writeFile(USERS_DB_PATH, JSON.stringify(users, null, 2), 'utf-8');
-  } catch (error) {
-    console.error('Error writing to users database:', error);
-    throw new Error('Could not write to the database.');
-  }
-}
+import { getDbConnection } from './app-db';
 
 export async function getUsers(): Promise<User[]> {
-  const users = await readUsers();
-  // Sort by createdAt date descending
-  return users.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  const db = await getDbConnection();
+  try {
+    const users = await db.all<User[]>('SELECT * FROM users ORDER BY createdAt DESC');
+    return users.map(user => ({
+        ...user,
+        // Convert integer 0/1 from DB back to boolean
+        isActive: Boolean(user.isActive),
+    }));
+  } finally {
+    await db.close();
+  }
 }
 
 export async function addUser(userData: UserFormData): Promise<User> {
-  const users = await readUsers();
-  const { confirmPassword, ...restUserData } = userData;
+  const db = await getDbConnection();
+  try {
+    const { confirmPassword, ...restUserData } = userData;
 
-  const newUser: User = {
-    id: crypto.randomUUID(),
-    ...restUserData,
-    username: userData.email.split('@')[0],
-    isActive: true,
-    createdAt: new Date().toISOString(),
-    extension: userData.extension || '',
-  };
+    const newUser: User = {
+      id: crypto.randomUUID(),
+      ...restUserData,
+      username: userData.email.split('@')[0],
+      isActive: true,
+      createdAt: new Date().toISOString(),
+      extension: userData.extension || '',
+      password: userData.password!, // Password is required for new users by the form validation
+    };
 
-  users.push(newUser);
-  await writeUsers(users);
+    await db.run(
+      'INSERT INTO users (id, name, email, role, extension, password, username, isActive, createdAt) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      newUser.id,
+      newUser.name,
+      newUser.email,
+      newUser.role,
+      newUser.extension,
+      newUser.password,
+      newUser.username,
+      newUser.isActive,
+      newUser.createdAt
+    );
 
-  revalidatePath('/admin');
-  return newUser;
+    revalidatePath('/admin');
+    return newUser;
+  } finally {
+    await db.close();
+  }
 }
 
 export async function updateUser(id: string, userData: UserFormData): Promise<void> {
-  const users = await readUsers();
-  const userIndex = users.findIndex((user) => user.id === id);
+    const db = await getDbConnection();
+    try {
+        const { password, confirmPassword, ...restUserData } = userData;
+        
+        if (password) {
+            // If password is provided, update it along with other fields
+             await db.run(
+                `UPDATE users SET name = ?, email = ?, role = ?, extension = ?, password = ? WHERE id = ?`,
+                restUserData.name,
+                restUserData.email,
+                restUserData.role,
+                restUserData.extension || '',
+                password,
+                id
+            );
+        } else {
+            // If password is not provided, update only other fields
+            await db.run(
+                `UPDATE users SET name = ?, email = ?, role = ?, extension = ? WHERE id = ?`,
+                restUserData.name,
+                restUserData.email,
+                restUserData.role,
+                restUserData.extension || '',
+                id
+            );
+        }
 
-  if (userIndex === -1) {
-    throw new Error('User not found.');
-  }
-  
-  const { password, confirmPassword, ...restUserData } = userData;
-
-  const updatedUser: User = {
-    ...users[userIndex],
-    ...restUserData,
-    extension: userData.extension || '',
-  };
-
-  if (password) {
-    updatedUser.password = password;
-  }
-
-  users[userIndex] = updatedUser;
-
-  await writeUsers(users);
-  revalidatePath('/admin');
+        revalidatePath('/admin');
+    } finally {
+        await db.close();
+    }
 }
 
 export async function toggleUserStatus(id: string, currentStatus: boolean): Promise<void> {
-  const users = await readUsers();
-  const userIndex = users.findIndex((user) => user.id === id);
-
-  if (userIndex === -1) {
-    throw new Error('User not found.');
-  }
-
-  users[userIndex].isActive = !currentStatus;
-  await writeUsers(users);
-  revalidatePath('/admin');
+    const db = await getDbConnection();
+    try {
+        await db.run('UPDATE users SET isActive = ? WHERE id = ?', !currentStatus, id);
+        revalidatePath('/admin');
+    } finally {
+        await db.close();
+    }
 }
 
 export async function deleteUser(id: string): Promise<void> {
-  let users = await readUsers();
-  const originalLength = users.length;
-  const updatedUsers = users.filter((user) => user.id !== id);
-
-  if (originalLength === updatedUsers.length) {
-    // This can happen in a race condition, but for this app it's a good guard.
-    throw new Error('User not found to delete.');
-  }
-
-  await writeUsers(updatedUsers);
-  revalidatePath('/admin');
+    const db = await getDbConnection();
+    try {
+        const result = await db.run('DELETE FROM users WHERE id = ?', id);
+        if (result.changes === 0) {
+            throw new Error('User not found to delete.');
+        }
+        revalidatePath('/admin');
+    } finally {
+        await db.close();
+    }
 }

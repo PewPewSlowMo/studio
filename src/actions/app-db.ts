@@ -3,9 +3,12 @@
 import { open } from 'sqlite';
 import sqlite3 from 'sqlite3';
 import path from 'path';
+import fs from 'fs/promises';
+import type { User } from '@/lib/types';
 
 // The database file will be stored in the `data` directory.
 const DB_PATH = path.join(process.cwd(), 'data', 'app.db');
+const USERS_JSON_PATH = path.join(process.cwd(), 'data', 'users.json');
 
 /**
  * Creates and returns a database connection instance.
@@ -20,12 +23,13 @@ export async function getDbConnection() {
 }
 
 /**
- * Initializes the database schema.
+ * Initializes the database schema and performs a one-time migration from JSON files if needed.
  * This function should be called when the application starts
  * to ensure all necessary tables are created.
  */
 export async function initializeDatabase() {
   const db = await getDbConnection();
+  
   await db.exec(`
     CREATE TABLE IF NOT EXISTS users (
       id TEXT PRIMARY KEY,
@@ -65,6 +69,42 @@ export async function initializeDatabase() {
       createdAt TEXT NOT NULL
     );
   `);
+
+  // One-time migration for users
+  const userCount = await db.get('SELECT COUNT(*) as count FROM users');
+  if (userCount.count === 0) {
+      console.log('Users table is empty. Attempting to migrate from users.json...');
+      try {
+          const data = await fs.readFile(USERS_JSON_PATH, 'utf-8');
+          const users: User[] = JSON.parse(data);
+          
+          if (users.length > 0) {
+              const stmt = await db.prepare('INSERT INTO users (id, username, email, name, role, isActive, createdAt, extension, password) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)');
+              for (const user of users) {
+                  await stmt.run(
+                      user.id,
+                      user.username,
+                      user.email,
+                      user.name,
+                      user.role,
+                      user.isActive,
+                      user.createdAt, // Assumes createdAt is already an ISO string
+                      user.extension || null,
+                      user.password
+                  );
+              }
+              await stmt.finalize();
+              console.log(`Successfully migrated ${users.length} users from users.json.`);
+          }
+      } catch (error) {
+          if ((error as NodeJS.ErrnoException).code !== 'ENOENT') {
+              console.error('Failed to migrate users from users.json:', error);
+          } else {
+              console.log('users.json not found, skipping migration.');
+          }
+      }
+  }
+
   await db.close();
 }
 
