@@ -59,6 +59,29 @@ export async function testCdrConnection(
   }
 }
 
+function mapRowToCall(row: any): Call {
+    const operatorExtMatch = row.dstchannel?.match(/(?:PJSIP|SIP)\/(\d+)/);
+    const operatorExtension = operatorExtMatch ? operatorExtMatch[1] : undefined;
+    const waitTime = row.duration - row.billsec;
+
+    return {
+        id: row.uniqueid,
+        linkedId: row.linkedid,
+        callerNumber: row.src,
+        calledNumber: row.dst,
+        operatorExtension: operatorExtension,
+        status: row.disposition, // 'ANSWERED', 'NO ANSWER', 'BUSY'
+        startTime: row.calldate.toISOString(),
+        duration: row.duration, // Full duration from dial to hangup
+        billsec: row.billsec, // Talk time
+        waitTime: waitTime >= 0 ? waitTime : 0, // wait time before answer
+        queue: row.dcontext,
+        isOutgoing: row.dcontext === 'from-internal',
+        satisfaction: row.userfield,
+        recordingFile: row.userfield || undefined,
+    }
+}
+
 export async function getCallHistory(connection: CdrConnection, params: GetCallHistoryParams): Promise<{ success: boolean; data?: Call[], error?: string }> {
     let dbConnection;
     try {
@@ -98,27 +121,7 @@ export async function getCallHistory(connection: CdrConnection, params: GetCallH
         
         const [rows] = await dbConnection.execute(sql, sqlParams);
 
-        const calls = (rows as any[]).map((row): Call => {
-            const operatorExtMatch = row.dstchannel?.match(/(?:PJSIP|SIP)\/(\d+)/);
-            const operatorExtension = operatorExtMatch ? operatorExtMatch[1] : undefined;
-            const waitTime = row.duration - row.billsec;
-
-            return {
-                id: row.uniqueid,
-                linkedId: row.linkedid,
-                callerNumber: row.src,
-                calledNumber: row.dst,
-                operatorExtension: operatorExtension,
-                status: row.disposition, // 'ANSWERED', 'NO ANSWER', 'BUSY'
-                startTime: row.calldate.toISOString(),
-                duration: row.duration, // Full duration from dial to hangup
-                billsec: row.billsec, // Talk time
-                waitTime: waitTime >= 0 ? waitTime : 0, // wait time before answer
-                queue: row.dcontext,
-                isOutgoing: row.dcontext === 'from-internal',
-                satisfaction: row.userfield,
-            }
-        });
+        const calls = (rows as any[]).map(mapRowToCall);
 
         return { success: true, data: calls };
 
@@ -161,26 +164,7 @@ export async function getCallById(connection: CdrConnection, callId: string): Pr
             return { success: false, error: 'Call not found' };
         }
 
-        const row = results[0];
-        const operatorExtMatch = row.dstchannel?.match(/(?:PJSIP|SIP)\/(\d+)/);
-        const operatorExtension = operatorExtMatch ? operatorExtMatch[1] : undefined;
-        const waitTime = row.duration - row.billsec;
-
-        const call: Call = {
-            id: row.uniqueid,
-            linkedId: row.linkedid,
-            callerNumber: row.src,
-            calledNumber: row.dst,
-            operatorExtension: operatorExtension,
-            status: row.disposition,
-            startTime: row.calldate.toISOString(),
-            duration: row.duration,
-            billsec: row.billsec,
-            waitTime: waitTime >= 0 ? waitTime : 0,
-            queue: row.dcontext,
-            isOutgoing: row.dcontext === 'from-internal',
-            satisfaction: row.userfield,
-        };
+        const call: Call = mapRowToCall(results[0]);
 
         return { success: true, data: call };
 
@@ -225,22 +209,7 @@ export async function getMissedCalls(connection: CdrConnection, dateRange?: Date
 
         const [rows] = await dbConnection.execute(sql, params);
 
-        const calls = (rows as any[]).map((row): Call => {
-            return {
-                id: row.uniqueid,
-                linkedId: row.linkedid,
-                callerNumber: row.src,
-                calledNumber: row.dst,
-                queue: row.dcontext, 
-                status: row.disposition, // 'NO ANSWER', 'BUSY', 'FAILED'
-                startTime: row.calldate.toISOString(),
-                duration: row.duration,
-                billsec: row.billsec, // Should be 0
-                waitTime: row.duration, // Wait time for missed calls is the full duration
-                isOutgoing: row.dcontext === 'from-internal',
-                satisfaction: row.userfield,
-            }
-        });
+        const calls = (rows as any[]).map(mapRowToCall);
 
         return { success: true, data: calls };
 

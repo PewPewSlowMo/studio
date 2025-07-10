@@ -39,11 +39,12 @@ export function CallRowDetails({ call, user, isCrmEditable = true }: CallRowDeta
 
       try {
         const config = await getConfig();
+        const recordingId = call.recordingFile || call.id;
 
         const [appealsResult, contactResult, recordingCheckResult] = await Promise.all([
           getAppeals(),
           findContactByPhone(call.callerNumber),
-          checkRecordingExists(config.ari, call.id),
+          checkRecordingExists(config.ari, recordingId),
         ]);
         
         const foundAppeal = appealsResult.find(a => a.callId === call.id) || null;
@@ -75,9 +76,10 @@ export function CallRowDetails({ call, user, isCrmEditable = true }: CallRowDeta
   const handleFetchRecording = async () => {
     if (!call) return;
     setRecordingStatus('loading');
+    const recordingId = call.recordingFile || call.id;
     try {
       const config = await getConfig();
-      const result = await getRecording(config.ari, call.id);
+      const result = await getRecording(config.ari, recordingId);
       if (result.success && result.dataUri) {
         setAudioDataUri(result.dataUri);
         setRecordingStatus('loaded');
