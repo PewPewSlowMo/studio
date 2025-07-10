@@ -22,15 +22,17 @@ interface CallRowDetailsProps {
 
 type RecordingStatus = 'checking' | 'exists' | 'not_found' | 'loading' | 'loaded' | 'error';
 
-// This function mimics FreePBX logic to get the base filename for ARI request
-const getRecordingId = (call: Call): string => {
-    // Priority 1: Use the `recordingfile` if it exists. This is the most reliable source.
+const getRecordingName = (call: Call): string | null => {
+    // The most reliable source is the `recordingfile` field from the CDR.
+    // We just need to remove the file extension (e.g., .wav, .mp3).
     if (call.recordingfile) {
-        // Remove the file extension (e.g., .wav, .mp3)
         return call.recordingfile.replace(/\.[^/.]+$/, "");
     }
-    // Priority 2: Fallback to the uniqueid
-    return call.id;
+    // As a fallback, we can try the uniqueid, but it's less reliable for recordings.
+    if (call.id) {
+        return call.id;
+    }
+    return null;
 };
 
 
@@ -50,13 +52,13 @@ export function CallRowDetails({ call, user, isCrmEditable = true }: CallRowDeta
       setAudioDataUri(null);
 
       try {
+        const recordingName = getRecordingName(call);
+        
         const config = await getConfig();
-        const recordingId = getRecordingId(call);
-
         const [appealsResult, contactResult, recordingCheckResult] = await Promise.all([
           getAppeals(),
           findContactByPhone(call.callerNumber),
-          checkRecordingExists(config.ari, recordingId),
+          recordingName ? checkRecordingExists(config.ari, recordingName) : Promise.resolve({ success: true, exists: false }),
         ]);
         
         const foundAppeal = appealsResult.find(a => a.callId === call.id) || null;
@@ -64,7 +66,9 @@ export function CallRowDetails({ call, user, isCrmEditable = true }: CallRowDeta
 
         setContact(contactResult.contact || null);
         
-        if (recordingCheckResult.success) {
+        if (!recordingName) {
+            setRecordingStatus('not_found');
+        } else if (recordingCheckResult.success) {
             setRecordingStatus(recordingCheckResult.exists ? 'exists' : 'not_found');
         } else {
             setRecordingStatus('error');
@@ -87,11 +91,17 @@ export function CallRowDetails({ call, user, isCrmEditable = true }: CallRowDeta
 
   const handleFetchRecording = async () => {
     if (!call) return;
+    const recordingName = getRecordingName(call);
+    if (!recordingName) {
+        setRecordingStatus('error');
+        toast({ variant: 'destructive', title: 'Ошибка', description: 'Не удалось определить имя файла записи.' });
+        return;
+    }
+
     setRecordingStatus('loading');
-    const recordingId = getRecordingId(call);
     try {
       const config = await getConfig();
-      const result = await getRecording(config.ari, recordingId);
+      const result = await getRecording(config.ari, recordingName);
       if (result.success && result.dataUri) {
         setAudioDataUri(result.dataUri);
         setRecordingStatus('loaded');
@@ -136,7 +146,7 @@ export function CallRowDetails({ call, user, isCrmEditable = true }: CallRowDeta
                             <AudioPlayer 
                                 src={audioDataUri} 
                                 canDownload={canDownloadRecording(user?.role)}
-                                fileName={`${getRecordingId(call)}.wav`}
+                                fileName={`${getRecordingName(call)}.wav`}
                             />
                         </div>
                     )}

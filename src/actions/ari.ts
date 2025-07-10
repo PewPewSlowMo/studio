@@ -23,6 +23,9 @@ async function fetchFromAri(connection: AriConnection, path: string, options?: R
     headers: {
       'Authorization': `Basic ${auth}`,
     },
+    // This is the key fix: it forces fetch to send the Authorization header
+    // even on non-HTTPS connections, which is required for Asterisk ARI.
+    credentials: 'include', 
     cache: 'no-store',
   };
 
@@ -34,9 +37,10 @@ async function fetchFromAri(connection: AriConnection, path: string, options?: R
         return { ok: false, status: 404, error: 'Recording not found' };
     }
     const errorBody = await response.text();
-    throw new Error(`ARI request failed with status ${response.status}: ${errorBody}`);
+    console.error(`ARI Error: ${response.status} on ${path}`, errorBody);
+    throw new Error(`ARI request failed with status ${response.status}`);
   }
-
+  
   // For HEAD requests, we don't need to parse a body, just return the response
   if (options?.method === 'HEAD') {
     return { ok: true, status: response.status };
@@ -60,34 +64,33 @@ export async function testAriConnection(
   }
 }
 
-export async function checkRecordingExists(connection: AriConnection, uniqueId: string): Promise<{ success: boolean, exists: boolean }> {
+export async function checkRecordingExists(connection: AriConnection, recordingName: string): Promise<{ success: boolean, exists: boolean }> {
   try {
-    const response = await fetchFromAri(connection, `recordings/stored/${uniqueId}`, { method: 'HEAD' });
+    // Stored recordings are referenced by their name without extension
+    const response = await fetchFromAri(connection, `recordings/stored/${recordingName}`, { method: 'HEAD' });
     return { success: true, exists: response.ok };
   } catch (e) {
     const message = e instanceof Error ? e.message : 'An unknown error occurred.';
-    console.error(`Error checking recording for ${uniqueId}:`, message);
+    console.error(`Error checking recording for ${recordingName}:`, message);
     return { success: false, exists: false };
   }
 }
 
-export async function getRecording(connection: AriConnection, uniqueId: string): Promise<{ success: boolean, dataUri?: string, error?: string }> {
+export async function getRecording(connection: AriConnection, recordingName: string): Promise<{ success: boolean, dataUri?: string, error?: string }> {
     try {
-        const response = await fetchFromAri(connection, `recordings/stored/${uniqueId}/file`);
+        const response = await fetchFromAri(connection, `recordings/stored/${recordingName}/file`);
         if (!(response as Response).ok) {
             return { success: false, error: 'Recording not found or error fetching.' };
         }
         
         const audioBuffer = await (response as Response).arrayBuffer();
         const base64Data = Buffer.from(audioBuffer).toString('base64');
-        // Assuming the file is WAV, which is common for Asterisk recordings.
-        // This might need adjustment if other formats are used.
         const dataUri = `data:audio/wav;base64,${base64Data}`;
 
         return { success: true, dataUri };
   } catch (e) {
     const message = e instanceof Error ? e.message : 'An unknown error occurred.';
-    console.error(`Error getting recording for ${uniqueId}:`, message);
+    console.error(`Error getting recording for ${recordingName}:`, message);
     return { success: false, error: message };
   }
 }
