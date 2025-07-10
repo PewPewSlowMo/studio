@@ -42,7 +42,7 @@ export async function getOperatorState(
         }
 
         const { status, statustext, channel, channeltype, calleridnum, uniqueid, linkedid } = extStateResult.data;
-        const mappedStatus = mapAmiStatus(status, statustext);
+        const mappedStatus = mapAmiStatus(status, statustext.toLowerCase());
 
         let finalCallState: CallState = {
             status: mappedStatus,
