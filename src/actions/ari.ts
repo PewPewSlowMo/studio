@@ -23,8 +23,6 @@ async function fetchFromAri(connection: AriConnection, path: string, options?: R
     headers: {
       'Authorization': `Basic ${auth}`,
     },
-    // This is the key fix: it forces fetch to send the Authorization header
-    // even on non-HTTPS connections, which is required for Asterisk ARI.
     credentials: 'include', 
     cache: 'no-store',
   };
@@ -32,21 +30,18 @@ async function fetchFromAri(connection: AriConnection, path: string, options?: R
   const response = await fetch(url, { ...defaultOptions, ...options });
 
   if (!response.ok) {
-    // For HEAD requests, a 404 is a valid "not found" response, not an error.
     if (response.status === 404 && options?.method === 'HEAD') {
         return { ok: false, status: 404, error: 'Recording not found' };
     }
     const errorBody = await response.text();
-    console.error(`ARI Error: ${response.status} on ${path}`, errorBody);
-    throw new Error(`ARI request failed with status ${response.status}`);
+    console.error(`ARI Error: ${response.status} on ${path}. Body: ${errorBody}`);
+    throw new Error(`ARI request failed with status ${response.status}: ${errorBody}`);
   }
   
-  // For HEAD requests, we don't need to parse a body, just return the response
   if (options?.method === 'HEAD') {
     return { ok: true, status: response.status };
   }
 
-  // For GET requests, return the full response object to be processed
   return response;
 }
 
@@ -64,15 +59,14 @@ export async function testAriConnection(
   }
 }
 
-export async function checkRecordingExists(connection: AriConnection, recordingName: string): Promise<{ success: boolean, exists: boolean }> {
+export async function checkRecordingExists(connection: AriConnection, recordingName: string): Promise<{ success: boolean, exists: boolean, error?: string }> {
   try {
-    // Stored recordings are referenced by their name without extension
     const response = await fetchFromAri(connection, `recordings/stored/${recordingName}`, { method: 'HEAD' });
     return { success: true, exists: response.ok };
   } catch (e) {
     const message = e instanceof Error ? e.message : 'An unknown error occurred.';
     console.error(`Error checking recording for ${recordingName}:`, message);
-    return { success: false, exists: false };
+    return { success: false, exists: false, error: message };
   }
 }
 
@@ -80,7 +74,8 @@ export async function getRecording(connection: AriConnection, recordingName: str
     try {
         const response = await fetchFromAri(connection, `recordings/stored/${recordingName}/file`);
         if (!(response as Response).ok) {
-            return { success: false, error: 'Recording not found or error fetching.' };
+            const errorText = await (response as Response).text();
+            return { success: false, error: `Recording not found or error fetching: ${errorText}` };
         }
         
         const audioBuffer = await (response as Response).arrayBuffer();

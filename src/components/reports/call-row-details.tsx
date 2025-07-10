@@ -23,14 +23,8 @@ interface CallRowDetailsProps {
 type RecordingStatus = 'checking' | 'exists' | 'not_found' | 'loading' | 'loaded' | 'error';
 
 const getRecordingName = (call: Call): string | null => {
-    // The most reliable source is the `recordingfile` field from the CDR.
-    // We just need to remove the file extension (e.g., .wav, .mp3).
     if (call.recordingfile) {
         return call.recordingfile.replace(/\.[^/.]+$/, "");
-    }
-    // As a fallback, we can try the uniqueid, but it's less reliable for recordings.
-    if (call.id) {
-        return call.id;
     }
     return null;
 };
@@ -72,18 +66,21 @@ export function CallRowDetails({ call, user, isCrmEditable = true }: CallRowDeta
             setRecordingStatus(recordingCheckResult.exists ? 'exists' : 'not_found');
         } else {
             setRecordingStatus('error');
+            toast({ variant: 'destructive', title: 'Ошибка проверки записи', description: recordingCheckResult.error });
         }
 
       } catch (error) {
+        const message = error instanceof Error ? error.message : 'An unknown error occurred';
         console.error("Failed to fetch call details:", error);
         setRecordingStatus('error');
+        toast({ variant: 'destructive', title: 'Ошибка загрузки деталей', description: message });
       } finally {
         setIsLoading(false);
       }
     };
 
     fetchData();
-  }, [call]);
+  }, [call, toast]);
   
   const handleSaveContact = (savedContact: CrmContact) => {
       setContact(savedContact);
@@ -107,11 +104,12 @@ export function CallRowDetails({ call, user, isCrmEditable = true }: CallRowDeta
         setRecordingStatus('loaded');
       } else {
         setRecordingStatus('error');
-        toast({ variant: 'destructive', title: 'Ошибка', description: result.error || 'Не удалось загрузить запись.' });
+        toast({ variant: 'destructive', title: 'Ошибка получения записи', description: result.error });
       }
     } catch (error) {
+        const message = error instanceof Error ? error.message : 'An unknown error occurred';
         setRecordingStatus('error');
-        toast({ variant: 'destructive', title: 'Ошибка', description: 'Не удалось загрузить запись.' });
+        toast({ variant: 'destructive', title: 'Ошибка получения записи', description: message });
     }
   };
 
