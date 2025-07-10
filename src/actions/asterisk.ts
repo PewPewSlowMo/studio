@@ -148,127 +148,109 @@ export async function getOperatorState(
     extension: string
 ): Promise<{
     success: boolean;
-    data?: {
-        endpointState: string;
-        channelId?: string;
-        channelName?: string;
-        channelState?: string;
-        callerId?: string;
-        queue?: string;
-        uniqueId?: string; // This is the CDR uniqueid
-    };
+    data?: CallState;
     error?: string;
 }> {
     // Helper function to map raw states to application-specific states
-    const mapState = (rawState: string): string => {
-        const state = rawState.toLowerCase();
+    const mapEndpointState = (rawState: string | undefined): CallState['status'] => {
+        const state = rawState?.toLowerCase() || 'unavailable';
         switch (state) {
-            case 'not_inuse': return 'available';
+            case 'not in use': return 'available';
             case 'dnd': return 'dnd';
-            case 'unavailable':
+            case 'unavailable': return 'offline';
             case 'invalid': return 'offline';
-            case 'ring':
             case 'ringing': return 'ringing';
-            case 'up':
+            case 'in use': return 'on-call';
             case 'busy': return 'on-call';
-            default: return state; // Pass through any other states like 'in use'
+            default: return 'offline'; // Fallback for any other state
         }
     };
 
-    // 1. Get endpoint details
+    // 1. Get the primary source of truth: the endpoint's state.
     const endpointResult = await getAriEndpointDetails(connection, extension);
     if (!endpointResult.success || !endpointResult.data) {
         return { success: false, error: endpointResult.error || `Could not get endpoint details for ${extension}.` };
     }
     const endpoint = endpointResult.data;
     
-    // The primary channel associated with the operator's device
-    const operatorChannelId = endpoint.channel_ids.length > 0 ? endpoint.channel_ids[0] : undefined;
-    
-    // If there are no channels, the operator is not in a call.
-    // The endpoint state is the source of truth.
-    if (!operatorChannelId) {
-        const finalStatus = mapState(endpoint.state);
-        return { success: true, data: { endpointState: finalStatus } };
-    }
-
-    // 2. A channel exists, get its details to determine call state
-    const operatorChannelResult = await fetchFromAri(
-        connection,
-        `channels/${operatorChannelId}`,
-        AriChannelSchema
-    );
-
-    // If channel fetch fails, fallback to endpoint state
-    if (!operatorChannelResult.success || !operatorChannelResult.data) {
-        return { success: true, data: { endpointState: mapState(endpoint.state) } };
-    }
-    const operatorChannel = operatorChannelResult.data;
-
-    // --- Data extraction for an active call ---
-    let mainUniqueId: string | undefined = undefined;
-    let effectiveCallerId: string | undefined = undefined;
-    let peerChannelId: string | undefined = undefined;
-
-    // Method 1 (most reliable): Find the peer channel in the bridge to get its details.
-    const bridgeId = operatorChannel.bridge_ids?.[0];
-    if (bridgeId) {
-        const bridgeResult = await fetchFromAri(connection, `bridges/${bridgeId}`, AriBridgeSchema);
-        if (bridgeResult.success && bridgeResult.data) {
-            peerChannelId = bridgeResult.data.channels.find(id => id !== operatorChannelId);
-            if (peerChannelId) {
-                const peerUniqueIdResult = await getAriChannelVar(connection, peerChannelId, 'CDR(uniqueid)');
-                if (peerUniqueIdResult.success && peerUniqueIdResult.data?.value) {
-                    mainUniqueId = peerUniqueIdResult.data.value;
-                }
-                const peerChannelResult = await fetchFromAri(connection, `channels/${peerChannelId}`, AriChannelSchema);
-                if (peerChannelResult.success && peerChannelResult.data) {
-                    effectiveCallerId = peerChannelResult.data.caller.number;
-                }
-            }
-        }
-    }
-
-    // Fallback methods for caller ID if bridge fails or doesn't exist yet (e.g., ringing)
-    if (!effectiveCallerId) {
-        const connectedLineResult = await getAriChannelVar(connection, operatorChannelId, 'CONNECTEDLINE(num)');
-        if (connectedLineResult.success && connectedLineResult.data?.value) {
-            effectiveCallerId = connectedLineResult.data.value;
-        }
-    }
-    if (!effectiveCallerId && operatorChannel.creator) {
-        const creatorChannelResult = await fetchFromAri(connection, `channels/${operatorChannel.creator}`, AriChannelSchema);
-        if (creatorChannelResult.success && creatorChannelResult.data) {
-            effectiveCallerId = creatorChannelResult.data.caller.number;
-        }
-    }
-
-    // Fallback methods for Unique ID
-    if (!mainUniqueId) {
-        const linkedIdResult = await getAriChannelVar(connection, operatorChannelId, 'CDR(linkedid)');
-        if (linkedIdResult.success && linkedIdResult.data?.value) {
-            mainUniqueId = linkedIdResult.data.value;
-        } else {
-             const ownUniqueIdResult = await getAriChannelVar(connection, operatorChannelId, 'CDR(uniqueid)');
-             if (ownUniqueIdResult.success && ownUniqueIdResult.data?.value) {
-                mainUniqueId = ownUniqueIdResult.data.value;
-            }
-        }
-    }
-    
-    // When a channel exists, its state is more accurate than the endpoint's state.
-    const finalStatus = mapState(operatorChannel.state);
-    
-    return {
-        success: true,
-        data: {
-            endpointState: finalStatus,
-            channelId: operatorChannelId,
-            channelName: operatorChannel.name,
-            channelState: operatorChannel.state,
-            queue: operatorChannel.dialplan?.context,
-            callerId: effectiveCallerId, 
-            uniqueId: mainUniqueId,
-        },
+    // 2. Determine the base status from the endpoint.
+    const baseStatus = mapEndpointState(endpoint.state);
+    let finalCallState: CallState = {
+        status: baseStatus,
+        endpointState: baseStatus,
+        extension: extension,
     };
+
+    // 3. If the endpoint has channels, it's in a call. Enhance with call details.
+    const operatorChannelId = endpoint.channel_ids.length > 0 ? endpoint.channel_ids[0] : undefined;
+    if (operatorChannelId) {
+        const operatorChannelResult = await fetchFromAri(
+            connection,
+            `channels/${operatorChannelId}`,
+            AriChannelSchema
+        );
+        
+        // If we can get channel details, override status and add call info
+        if (operatorChannelResult.success && operatorChannelResult.data) {
+            const operatorChannel = operatorChannelResult.data;
+            
+            // Channel state is more precise during a call
+            finalCallState.status = mapEndpointState(operatorChannel.state);
+            finalCallState.channelId = operatorChannelId;
+            finalCallState.channelName = operatorChannel.name;
+            finalCallState.queue = operatorChannel.dialplan?.context;
+
+            // --- Advanced Caller ID and UniqueID retrieval logic ---
+            let effectiveCallerId: string | undefined = undefined;
+            let mainUniqueId: string | undefined = undefined;
+
+            // Method 1: Bridge lookup (most reliable for connected calls)
+            const bridgeId = operatorChannel.bridge_ids?.[0];
+            if (bridgeId) {
+                const bridgeResult = await fetchFromAri(connection, `bridges/${bridgeId}`, AriBridgeSchema);
+                if (bridgeResult.success && bridgeResult.data) {
+                    const peerChannelId = bridgeResult.data.channels.find(id => id !== operatorChannelId);
+                    if (peerChannelId) {
+                        const peerChannelResult = await fetchFromAri(connection, `channels/${peerChannelId}`, AriChannelSchema);
+                        if (peerChannelResult.success && peerChannelResult.data) {
+                            effectiveCallerId = peerChannelResult.data.caller.number;
+                            const peerUniqueIdResult = await getAriChannelVar(connection, peerChannelId, 'CDR(uniqueid)');
+                            if (peerUniqueIdResult.success) mainUniqueId = peerUniqueIdResult.data?.value;
+                        }
+                    }
+                }
+            }
+
+            // Fallback Method 2: CONNECTEDLINE variable
+            if (!effectiveCallerId) {
+                const connectedLineResult = await getAriChannelVar(connection, operatorChannelId, 'CONNECTEDLINE(num)');
+                if (connectedLineResult.success) effectiveCallerId = connectedLineResult.data?.value;
+            }
+            
+            // Fallback Method 3: Call creator
+            if (!effectiveCallerId && operatorChannel.creator) {
+                 const creatorChannelResult = await fetchFromAri(connection, `channels/${operatorChannel.creator}`, AriChannelSchema);
+                 if (creatorChannelResult.success && creatorChannelResult.data) {
+                    effectiveCallerId = creatorChannelResult.data.caller.number;
+                }
+            }
+
+            // Fallback for UniqueID: linkedid, then own uniqueid
+            if (!mainUniqueId) {
+                const linkedIdResult = await getAriChannelVar(connection, operatorChannelId, 'CDR(linkedid)');
+                if (linkedIdResult.success) mainUniqueId = linkedIdResult.data?.value;
+            }
+            if (!mainUniqueId) {
+                const ownUniqueIdResult = await getAriChannelVar(connection, operatorChannelId, 'CDR(uniqueid)');
+                if (ownUniqueIdResult.success) mainUniqueId = ownUniqueIdResult.data?.value;
+            }
+
+            finalCallState.callerId = effectiveCallerId;
+            finalCallState.uniqueId = mainUniqueId;
+        }
+    }
+    
+    // 4. Return the final, determined state.
+    // This will either be the base endpoint status (if no call) or the enhanced status (if in a call).
+    return { success: true, data: finalCallState };
 }
