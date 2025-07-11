@@ -74,8 +74,9 @@ export default function ReportsPage() {
         setIsLoadingOperatorCalls(true);
         try {
             const config = await getConfig();
-            const params: DateRangeParams = {
-                ...dateRange,
+            const params: GetCallHistoryParams = {
+                from: dateRange.from,
+                to: dateRange.to,
                 operatorExtension: user.extension!,
             };
             const callsResult = await getCallHistory(config.cdr, params);

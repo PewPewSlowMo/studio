@@ -24,15 +24,11 @@ type RecordingStatus = 'checking' | 'exists' | 'not_found' | 'loading' | 'loaded
 
 /**
  * Gets the recording name from the call object.
- * It prioritizes `call.recordingfile` and removes the file extension for the ARI query.
+ * This now simply uses the call's unique ID, which is the most reliable
+ * name for a recording in standard Asterisk setups.
  */
-const getRecordingName = (call: Call): string | null => {
-    if (call.recordingfile && call.recordingfile.trim() !== '') {
-        // ARI stored recording API expects the name without the file extension.
-        // E.g., for "xyz.wav", the name is "xyz".
-        return call.recordingfile.replace(/\.[^/.]+$/, "");
-    }
-    return null;
+const getRecordingId = (call: Call): string => {
+    return call.id; // call.id is the uniqueid
 };
 
 
@@ -52,15 +48,15 @@ export function CallRowDetails({ call, user, isCrmEditable = true }: CallRowDeta
       setRecordingStatus('checking');
       setAudioDataUri(null);
 
-      const recordingName = getRecordingName(call);
-      setDebugRecordingId(recordingName);
+      const recordingId = getRecordingId(call);
+      setDebugRecordingId(recordingId);
 
       try {
         const config = await getConfig();
         const [appealsResult, contactResult, recordingCheckResult] = await Promise.all([
           getAppeals(),
           findContactByPhone(call.callerNumber),
-          recordingName ? checkRecordingExists(config.ari, recordingName) : Promise.resolve({ success: true, exists: false }),
+          recordingId ? checkRecordingExists(config.ari, recordingId) : Promise.resolve({ success: true, exists: false }),
         ]);
         
         const foundAppeal = appealsResult.find(a => a.callId === call.id) || null;
@@ -68,7 +64,7 @@ export function CallRowDetails({ call, user, isCrmEditable = true }: CallRowDeta
 
         setContact(contactResult.contact || null);
         
-        if (!recordingName) {
+        if (!recordingId) {
             setRecordingStatus('not_found');
         } else if (recordingCheckResult.success) {
             setRecordingStatus(recordingCheckResult.exists ? 'exists' : 'not_found');
@@ -96,17 +92,17 @@ export function CallRowDetails({ call, user, isCrmEditable = true }: CallRowDeta
 
   const handleFetchRecording = async () => {
     if (!call) return;
-    const recordingName = getRecordingName(call);
-    if (!recordingName) {
+    const recordingId = getRecordingId(call);
+    if (!recordingId) {
         setRecordingStatus('error');
-        toast({ variant: 'destructive', title: 'Ошибка', description: 'Не удалось определить имя файла записи.' });
+        toast({ variant: 'destructive', title: 'Ошибка', description: 'Не удалось определить ID файла записи.' });
         return;
     }
 
     setRecordingStatus('loading');
     try {
       const config = await getConfig();
-      const result = await getRecording(config.ari, recordingName);
+      const result = await getRecording(config.ari, recordingId);
       if (result.success && result.dataUri) {
         setAudioDataUri(result.dataUri);
         setRecordingStatus('loaded');
