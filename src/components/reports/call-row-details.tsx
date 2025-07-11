@@ -24,11 +24,16 @@ type RecordingStatus = 'checking' | 'exists' | 'not_found' | 'loading' | 'loaded
 
 /**
  * Gets the recording name from the call object.
- * This now simply uses the call's unique ID, which is the most reliable
- * name for a recording in standard Asterisk setups.
+ * This now simply uses the `recordingfile` field from the CDR, which is the most reliable source.
+ * It removes the file extension, as ARI expects the recording name without it.
  */
-const getRecordingId = (call: Call): string => {
-    return call.id; // call.id is the uniqueid
+const getRecordingId = (call: Call): string | null => {
+    const recordingFile = call.recordingfile;
+    if (!recordingFile) {
+        return null;
+    }
+    // Remove extension (.wav, .mp3, etc.)
+    return recordingFile.substring(0, recordingFile.lastIndexOf('.')) || recordingFile;
 };
 
 
