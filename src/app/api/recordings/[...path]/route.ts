@@ -33,6 +33,7 @@ export async function GET(
     const fyear = rec_parts[3].substring(0, 4);
     const fmonth = rec_parts[3].substring(4, 2);
     const fday = rec_parts[3].substring(6, 2);
+    
     // Assuming standard FreePBX monitor directory
     const monitor_base = `/var/spool/asterisk/monitor`; 
     const remotePath = `${monitor_base}/${fyear}/${fmonth}/${fday}/${recordingfile}`;
@@ -43,7 +44,7 @@ export async function GET(
     // This could be a separate config in the future.
     const sftpConfig = {
       host: config.ami.host,
-      port: 22, // Standard SSH port
+      port: 22, // Standard SSH port, explicitly set
       username: config.ami.username,
       password: config.ami.password,
     };
@@ -76,7 +77,8 @@ export async function GET(
     if (error instanceof Error) {
         errorMessage = error.message;
     }
-    // Provide more specific error messages
+    
+    // Provide more specific error messages based on common SFTP errors
     if (errorMessage.includes('No such file')) {
         return NextResponse.json({ error: 'Recording file not found on the server.' }, { status: 404 });
     }
@@ -86,7 +88,48 @@ export async function GET(
      if (errorMessage.includes('Timed out')) {
         return NextResponse.json({ error: 'Connection to the recording server timed out.' }, { status: 504 });
     }
+     if (errorMessage.includes('All configured authentication methods failed')) {
+        return NextResponse.json({ error: 'Authentication failed. Check AMI username/password for SFTP.' }, { status: 401 });
+     }
+
 
     return NextResponse.json({ error: 'Failed to retrieve recording', details: errorMessage }, { status: 500 });
   }
 }
+
+async function handleFetchRecording(callId: string, toast: any) {
+  if (!callId) return { audioDataUri: null };
+
+  try {
+    // Fetch from our own API proxy
+    const response = await fetch(`/api/recordings/${callId}`);
+    
+    if (!response.ok) {
+      // Handle non-JSON error responses gracefully
+      const errorText = await response.text();
+      try {
+        // Try to parse it as JSON, as our own errors are JSON
+        const errorData = JSON.parse(errorText);
+        throw new Error(errorData.error || errorData.details || `Failed to fetch recording: ${response.statusText}`);
+      } catch (e) {
+        // If parsing fails, it's likely an HTML error page or plain text
+        throw new Error(errorText);
+      }
+    }
+
+    const audioBlob = await response.blob();
+    const reader = new FileReader();
+    
+    return new Promise<{ audioDataUri: string | null }>((resolve) => {
+        reader.onloadend = () => {
+            resolve({ audioDataUri: reader.result as string });
+        };
+        reader.readAsDataURL(audioBlob);
+    });
+
+  } catch (error) {
+      const message = error instanceof Error ? error.message : 'An unknown error occurred';
+      toast({ variant: 'destructive', title: 'Ошибка получения записи', description: message });
+      return { audioDataUri: null };
+  }
+};

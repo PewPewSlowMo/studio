@@ -73,13 +73,20 @@ export function CallRowDetails({ call, user, isCrmEditable = true }: CallRowDeta
   const handleFetchRecording = async () => {
     if (!call?.id) return;
     setRecordingStatus('loading');
+    
     try {
-      // Fetch from our own API proxy instead of directly from ARI
       const response = await fetch(`/api/recordings/${call.id}`);
       
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || `Failed to fetch recording: ${response.statusText}`);
+        const errorText = await response.text();
+        let errorMessage = errorText;
+        try {
+          const errorJson = JSON.parse(errorText);
+          errorMessage = errorJson.error || errorJson.details || errorText;
+        } catch (e) {
+          // It's not JSON, use the plain text. This is expected for HTML error pages.
+        }
+        throw new Error(errorMessage);
       }
 
       const audioBlob = await response.blob();
@@ -127,7 +134,8 @@ export function CallRowDetails({ call, user, isCrmEditable = true }: CallRowDeta
                         <div className="w-full">
                             <AudioPlayer 
                                 src={audioDataUri} 
-                                canDownload={canDownloadRecording(user?.role)}
+                                // Simplified canDownload logic for now
+                                canDownload={user?.role === 'admin' || user?.role === 'supervisor'}
                                 fileName={`${call.recordingfile}`}
                             />
                         </div>
