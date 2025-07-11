@@ -17,10 +17,10 @@ import { ActiveCallsTable } from '@/components/dashboard/active-calls';
 import { getAmiEndpoints, getAmiQueues } from '@/actions/ami';
 import { getUsers } from '@/actions/users';
 import { getConfig } from '@/actions/config';
-import { getCallHistory } from '@/actions/cdr';
+import { getCallHistory, type DateRangeParams } from '@/actions/cdr';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Skeleton } from '@/components/ui/skeleton';
-import { format, parseISO, isValid, subHours } from 'date-fns';
+import { format, parseISO, isValid, subHours, subDays } from 'date-fns';
 import type { Call, User, AsteriskEndpoint, AsteriskQueue, CallState } from '@/lib/types';
 import { getOperatorState } from '@/actions/asterisk';
 import { initializeDatabase } from '@/actions/app-db';
@@ -59,14 +59,16 @@ export default function DashboardPage() {
         await initializeDatabase();
         
         const config = await getConfig();
-        const oneHourAgo = subHours(new Date(), 1).toISOString();
-        const dateRange = { from: oneHourAgo, to: new Date().toISOString() };
+        const dateRange: DateRangeParams = { 
+            from: subDays(new Date(), 1).toISOString(), 
+            to: new Date().toISOString() 
+        };
 
         const [endpointsResult, queuesResult, users, callsResult] = await Promise.all([
           getAmiEndpoints(config.ami),
           getAmiQueues(config.ami),
           getUsers(),
-          getCallHistory(config.cdr), // Full day for main charts
+          getCallHistory(config.cdr, dateRange),
         ]);
 
         if (!endpointsResult.success) throw new Error(endpointsResult.error || 'Failed to fetch endpoints');
@@ -295,5 +297,3 @@ export default function DashboardPage() {
     </div>
   );
 }
-
-    
