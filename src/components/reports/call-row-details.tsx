@@ -24,20 +24,21 @@ type RecordingStatus = 'checking' | 'exists' | 'not_found' | 'loading' | 'loaded
 
 /**
  * Gets the recording name from the call object.
- * This now correctly uses the `recordingfile` field from the CDR, which is the most reliable source.
- * It removes the file extension, as ARI expects the recording name without it.
+ * Based on FreePBX logic, it prioritizes `recordingfile` and uses it directly without modification.
+ * It also includes a fallback to `userfield`, which is sometimes used.
+ * We no longer use uniqueid as it's less reliable.
  */
 const getRecordingId = (call: Call): string | null => {
-    const recordingFile = call.recordingfile;
-    if (!recordingFile) {
-        return null;
+    // Priority 1: The dedicated recordingfile field. Use it as is.
+    if (call.recordingfile && call.recordingfile.length > 0) {
+        return call.recordingfile;
     }
-    // Remove extension (.wav, .mp3, etc.)
-    const lastDotIndex = recordingFile.lastIndexOf('.');
-    if (lastDotIndex === -1) {
-        return recordingFile; // No extension found
+    // Priority 2: Fallback to userfield, which can sometimes store the recording name.
+    if (call.userfield && call.userfield.length > 0) {
+        return call.userfield;
     }
-    return recordingFile.substring(0, lastDotIndex);
+    // If neither is available, we cannot find the recording.
+    return null;
 };
 
 
