@@ -6,6 +6,7 @@ import { getConfig } from './config';
 import { getCallHistory } from './cdr';
 import { getUsers } from './users';
 import { getDbConnection } from './app-db';
+import { subDays } from 'date-fns';
 
 const CrmContactSchema = z.object({
   phoneNumber: z.string().min(1, 'Phone number is required'),
@@ -30,7 +31,13 @@ export async function findContactByPhone(phoneNumber: string): Promise<{ contact
           getUsers(),
       ]);
 
-      const callHistoryResult = await getCallHistory(config.cdr); // Fetches last 24h by default
+      // Fetch last 24h by default for contact history
+      const dateRange = { 
+        from: subDays(new Date(), 1).toISOString(), 
+        to: new Date().toISOString() 
+      };
+
+      const callHistoryResult = await getCallHistory(config.cdr, dateRange);
       
       let history: Call[] = [];
       if (callHistoryResult.success && callHistoryResult.data) {
