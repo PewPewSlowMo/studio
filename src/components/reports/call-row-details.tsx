@@ -22,9 +22,14 @@ interface CallRowDetailsProps {
 
 type RecordingStatus = 'checking' | 'exists' | 'not_found' | 'loading' | 'loaded' | 'error';
 
+/**
+ * Gets the recording name from the call object.
+ * It prioritizes `call.recordingfile` and removes the .wav extension for the ARI query.
+ */
 const getRecordingName = (call: Call): string | null => {
-    if (call.recordingfile) {
-        return call.recordingfile;
+    if (call.recordingfile && call.recordingfile.trim() !== '') {
+        // ARI expects the name without the file extension.
+        return call.recordingfile.replace(/\.[^/.]+$/, "");
     }
     return null;
 };
@@ -45,12 +50,11 @@ export function CallRowDetails({ call, user, isCrmEditable = true }: CallRowDeta
       setIsLoading(true);
       setRecordingStatus('checking');
       setAudioDataUri(null);
-      setDebugRecordingId(null);
+
+      const recordingName = getRecordingName(call);
+      setDebugRecordingId(recordingName); // For debugging purposes
 
       try {
-        const recordingName = getRecordingName(call);
-        setDebugRecordingId(recordingName); // For debugging
-        
         const config = await getConfig();
         const [appealsResult, contactResult, recordingCheckResult] = await Promise.all([
           getAppeals(),
@@ -147,7 +151,7 @@ export function CallRowDetails({ call, user, isCrmEditable = true }: CallRowDeta
                             <AudioPlayer 
                                 src={audioDataUri} 
                                 canDownload={canDownloadRecording(user?.role)}
-                                fileName={`${getRecordingName(call)}.wav`}
+                                fileName={`${debugRecordingId}.wav`}
                             />
                         </div>
                     )}
