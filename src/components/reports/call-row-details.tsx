@@ -24,11 +24,12 @@ type RecordingStatus = 'checking' | 'exists' | 'not_found' | 'loading' | 'loaded
 
 /**
  * Gets the recording name from the call object.
- * It prioritizes `call.recordingfile` and removes the extension for the ARI query.
+ * It prioritizes `call.recordingfile` and removes the file extension for the ARI query.
  */
 const getRecordingName = (call: Call): string | null => {
     if (call.recordingfile && call.recordingfile.trim() !== '') {
         // ARI stored recording API expects the name without the file extension.
+        // E.g., for "xyz.wav", the name is "xyz".
         return call.recordingfile.replace(/\.[^/.]+$/, "");
     }
     return null;
