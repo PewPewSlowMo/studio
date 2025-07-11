@@ -8,8 +8,6 @@ import { getAppeals } from '@/actions/appeals';
 import { findContactByPhone } from '@/actions/crm';
 import { CrmEditor } from '@/components/operator/crm-editor';
 import { Separator } from '@/components/ui/separator';
-import { getConfig } from '@/actions/config';
-import { checkRecordingExists, getRecording, canDownloadRecording } from '@/actions/ari';
 import { Button } from '../ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { AudioPlayer } from '@/components/operator/audio-player';
@@ -22,25 +20,6 @@ interface CallRowDetailsProps {
 
 type RecordingStatus = 'checking' | 'exists' | 'not_found' | 'loading' | 'loaded' | 'error';
 
-/**
- * Gets the recording name from the call object.
- * Based on FreePBX logic, it prioritizes `recordingfile` and uses it directly without modification.
- * It also includes a fallback to `userfield`, which is sometimes used.
- * We no longer use uniqueid as it's less reliable.
- */
-const getRecordingId = (call: Call): string | null => {
-    // Priority 1: The dedicated recordingfile field. Use it as is.
-    if (call.recordingfile && call.recordingfile.length > 0) {
-        return call.recordingfile;
-    }
-    // Priority 2: Fallback to userfield, which can sometimes store the recording name.
-    if (call.userfield && call.userfield.length > 0) {
-        return call.userfield;
-    }
-    // If neither is available, we cannot find the recording.
-    return null;
-};
-
 
 export function CallRowDetails({ call, user, isCrmEditable = true }: CallRowDetailsProps) {
   const [appeal, setAppeal] = useState<Appeal | null>(null);
@@ -48,7 +27,6 @@ export function CallRowDetails({ call, user, isCrmEditable = true }: CallRowDeta
   const [isLoading, setIsLoading] = useState(true);
   const [recordingStatus, setRecordingStatus] = useState<RecordingStatus>('checking');
   const [audioDataUri, setAudioDataUri] = useState<string | null>(null);
-  const [debugRecordingId, setDebugRecordingId] = useState<string | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -58,29 +36,21 @@ export function CallRowDetails({ call, user, isCrmEditable = true }: CallRowDeta
       setRecordingStatus('checking');
       setAudioDataUri(null);
 
-      const recordingId = getRecordingId(call);
-      setDebugRecordingId(recordingId);
-
       try {
-        const config = await getConfig();
-        const [appealsResult, contactResult, recordingCheckResult] = await Promise.all([
+        const [appealsResult, contactResult] = await Promise.all([
           getAppeals(),
           findContactByPhone(call.callerNumber),
-          recordingId ? checkRecordingExists(config.ari, recordingId) : Promise.resolve({ success: true, exists: false }),
         ]);
         
         const foundAppeal = appealsResult.find(a => a.callId === call.id) || null;
         setAppeal(foundAppeal);
-
         setContact(contactResult.contact || null);
-        
-        if (!recordingId) {
-            setRecordingStatus('not_found');
-        } else if (recordingCheckResult.success) {
-            setRecordingStatus(recordingCheckResult.exists ? 'exists' : 'not_found');
+
+        // Recording check is now just a check if `recordingfile` exists in the CDR data
+        if (call.recordingfile && call.recordingfile.length > 0) {
+            setRecordingStatus('exists');
         } else {
-            setRecordingStatus('error');
-            toast({ variant: 'destructive', title: 'Ошибка проверки записи', description: recordingCheckResult.error });
+            setRecordingStatus('not_found');
         }
 
       } catch (error) {
@@ -101,25 +71,25 @@ export function CallRowDetails({ call, user, isCrmEditable = true }: CallRowDeta
   }
 
   const handleFetchRecording = async () => {
-    if (!call) return;
-    const recordingId = getRecordingId(call);
-    if (!recordingId) {
-        setRecordingStatus('error');
-        toast({ variant: 'destructive', title: 'Ошибка', description: 'Не удалось определить ID файла записи.' });
-        return;
-    }
-
+    if (!call?.id) return;
     setRecordingStatus('loading');
     try {
-      const config = await getConfig();
-      const result = await getRecording(config.ari, recordingId);
-      if (result.success && result.dataUri) {
-        setAudioDataUri(result.dataUri);
-        setRecordingStatus('loaded');
-      } else {
-        setRecordingStatus('error');
-        toast({ variant: 'destructive', title: 'Ошибка получения записи', description: result.error });
+      // Fetch from our own API proxy instead of directly from ARI
+      const response = await fetch(`/api/recordings/${call.id}`);
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || `Failed to fetch recording: ${response.statusText}`);
       }
+
+      const audioBlob = await response.blob();
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setAudioDataUri(reader.result as string);
+        setRecordingStatus('loaded');
+      };
+      reader.readAsDataURL(audioBlob);
+
     } catch (error) {
         const message = error instanceof Error ? error.message : 'An unknown error occurred';
         setRecordingStatus('error');
@@ -158,12 +128,12 @@ export function CallRowDetails({ call, user, isCrmEditable = true }: CallRowDeta
                             <AudioPlayer 
                                 src={audioDataUri} 
                                 canDownload={canDownloadRecording(user?.role)}
-                                fileName={`${debugRecordingId}.wav`}
+                                fileName={`${call.recordingfile}`}
                             />
                         </div>
                     )}
-                    {recordingStatus === 'not_found' && <div className="flex flex-col gap-1 w-full text-red-600 font-medium"><div className="flex items-center gap-2"><XCircle /> Запись отсутствует</div><code className="text-xs text-red-400 bg-red-900/20 p-1 rounded-sm">ID: {debugRecordingId || 'N/A'}</code></div>}
-                    {recordingStatus === 'error' && <div className="flex flex-col gap-1 w-full text-red-600 font-medium"><div className="flex items-center gap-2"><XCircle /> Ошибка получения записи</div><code className="text-xs text-red-400 bg-red-900/20 p-1 rounded-sm">ID: {debugRecordingId || 'N/A'}</code></div>}
+                    {recordingStatus === 'not_found' && <div className="flex items-center gap-2 text-red-600 font-medium"><XCircle /> Запись отсутствует в CDR</div>}
+                    {recordingStatus === 'error' && <div className="flex items-center gap-2 text-red-600 font-medium"><XCircle /> Ошибка получения записи</div>}
                 </div>
             </div>
 

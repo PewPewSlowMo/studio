@@ -17,11 +17,11 @@ import { CrmEditor } from './crm-editor';
 import { Separator } from '@/components/ui/separator';
 import { format, parseISO, isValid } from 'date-fns';
 import { ru } from 'date-fns/locale';
-import { getConfig } from '@/actions/config';
-import { checkRecordingExists, getRecording, canDownloadRecording } from '@/actions/ari';
+import { canDownloadRecording } from '@/actions/ari';
 import { Button } from '../ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { AudioPlayer } from './audio-player';
+import { CallRowDetails } from '../reports/call-row-details';
 
 interface CallDetailsDialogProps {
   isOpen: boolean;
@@ -31,7 +31,6 @@ interface CallDetailsDialogProps {
   isCrmEditable?: boolean;
 }
 
-type RecordingStatus = 'checking' | 'exists' | 'not_found' | 'loading' | 'loaded' | 'error';
 
 const statusMap: Record<string, string> = {
     ANSWERED: 'Отвечен',
@@ -52,195 +51,43 @@ const formatDuration = (seconds: number | undefined) => {
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
 };
 
-const getRecordingId = (call: Call): string => {
-    if (call.recordingfile) {
-        return call.recordingfile.replace(/\.[^/.]+$/, "");
-    }
-    return call.id;
-};
-
 export function CallDetailsDialog({ isOpen, onOpenChange, call, user, isCrmEditable = true }: CallDetailsDialogProps) {
-  const [appeal, setAppeal] = useState<Appeal | null>(null);
-  const [contact, setContact] = useState<CrmContact | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
-  const [recordingStatus, setRecordingStatus] = useState<RecordingStatus>('checking');
-  const [audioDataUri, setAudioDataUri] = useState<string | null>(null);
-  const { toast } = useToast();
+  const [activeTab, setActiveTab] = useState<'details' | 'crm'>('details');
 
-  useEffect(() => {
-    const fetchData = async () => {
-      if (!call) return;
-      setIsLoading(true);
-      setRecordingStatus('checking');
-      setAudioDataUri(null);
-
-      try {
-        const config = await getConfig();
-        const recordingId = getRecordingId(call);
-
-        const [appealsResult, contactResult, recordingCheckResult] = await Promise.all([
-          getAppeals(),
-          findContactByPhone(call.callerNumber),
-          checkRecordingExists(config.ari, recordingId),
-        ]);
-        
-        const foundAppeal = appealsResult.find(a => a.callId === call.id) || null;
-        setAppeal(foundAppeal);
-
-        if (contactResult.contact) {
-            setContact(contactResult.contact);
-        } else {
-            setContact(null);
-        }
-        
-        if (recordingCheckResult.success) {
-            setRecordingStatus(recordingCheckResult.exists ? 'exists' : 'not_found');
-        } else {
-            setRecordingStatus('error');
-        }
-
-      } catch (error) {
-        console.error("Failed to fetch call details:", error);
-        setRecordingStatus('error');
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    if (isOpen) {
-      fetchData();
-    }
-  }, [isOpen, call]);
-  
-  const handleSaveContact = (savedContact: CrmContact) => {
-      setContact(savedContact);
-  }
-
-  const handleFetchRecording = async () => {
-    if (!call) return;
-    setRecordingStatus('loading');
-    const recordingId = getRecordingId(call);
-    try {
-      const config = await getConfig();
-      const result = await getRecording(config.ari, recordingId);
-      if (result.success && result.dataUri) {
-        setAudioDataUri(result.dataUri);
-        setRecordingStatus('loaded');
-      } else {
-        setRecordingStatus('error');
-        toast({ variant: 'destructive', title: 'Ошибка', description: result.error || 'Не удалось загрузить запись.' });
-      }
-    } catch (error) {
-        setRecordingStatus('error');
-        toast({ variant: 'destructive', title: 'Ошибка', description: 'Не удалось загрузить запись.' });
-    }
-  };
-
-  const priorityMap: Record<Appeal['priority'], string> = {
-    low: 'Низкий',
-    medium: 'Средний',
-    high: 'Высокий',
-  };
-
-  const satisfactionMap: Record<Appeal['satisfaction'], string> = {
-    yes: 'Да',
-    no: 'Нет',
-  };
+  if (!isOpen) return null;
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl">
-        <DialogHeader>
+      <DialogContent className="max-w-4xl p-0">
+        <DialogHeader className="p-4 border-b">
           <DialogTitle>Детали звонка от {call?.callerNumber}</DialogTitle>
           <DialogDescription>
-            Подробная информация об обращении и данные клиента.
+            Подробная информация о звонке, обращении и клиенте.
           </DialogDescription>
         </DialogHeader>
-        {isLoading ? (
-          <div className="flex justify-center items-center h-64">
-            <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-          </div>
+        {call ? (
+             <div className="grid grid-cols-[1fr_2px_1fr] gap-x-4 p-4">
+                <div className="space-y-4">
+                     <h3 className="font-semibold text-lg">Информация о звонке</h3>
+                    <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
+                        <p><strong>Оператор:</strong> {call?.operatorName || 'N/A'}</p>
+                        <p><strong>Статус:</strong> {call?.status ? <Badge variant={call.status === 'ANSWERED' ? 'success' : 'destructive'}>{statusMap[call.status] || call.status}</Badge> : 'N/A'}</p>
+                        <p><strong>Дата:</strong> {formatDate(call.startTime)}</p>
+                        <p><strong>Очередь:</strong> {call?.queue || 'Без очереди'}</p>
+                        <p><strong>Время разговора:</strong> {formatDuration(call.billsec)}</p>
+                        <p><strong>Время ожидания:</strong> {formatDuration(call.waitTime)}</p>
+                    </div>
+                </div>
+                <Separator orientation="vertical" />
+                 <CallRowDetails call={call} user={user} isCrmEditable={isCrmEditable} />
+            </div>
         ) : (
-          <div className="grid gap-6 py-4">
-            <div className="space-y-4">
-                <h3 className="font-semibold text-lg">Информация о звонке</h3>
-                <Separator />
-                <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
-                    <p><strong>Оператор:</strong> {call?.operatorName || 'N/A'}</p>
-                    <p><strong>Статус:</strong> {call?.status ? <Badge variant={call.status === 'ANSWERED' ? 'success' : 'destructive'}>{statusMap[call.status] || call.status}</Badge> : 'N/A'}</p>
-                    <p><strong>Дата:</strong> {call ? formatDate(call.startTime) : 'N/A'}</p>
-                    <p><strong>Очередь:</strong> {call?.queue || 'Без очереди'}</p>
-                    <p><strong>Время разговора:</strong> {call ? formatDuration(call.billsec) : 'N/A'}</p>
-                    <p><strong>Время ожидания:</strong> {call ? formatDuration(call.waitTime) : 'N/A'}</p>
-                </div>
+             <div className="flex justify-center items-center h-64">
+                <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
             </div>
-
-            <div className="space-y-2">
-                <h3 className="font-semibold text-lg">Запись разговора</h3>
-                 <div className="p-3 bg-muted rounded-md min-h-[60px] flex items-center justify-between">
-                    {recordingStatus === 'checking' && <div className="flex items-center gap-2 text-muted-foreground"><Loader2 className="animate-spin h-4 w-4" /> Проверка наличия...</div>}
-                    {recordingStatus === 'exists' && (
-                        <>
-                            <div className="flex items-center gap-2 text-green-600 font-medium"><CheckCircle2 /> Запись найдена</div>
-                            <Button onClick={handleFetchRecording} size="sm"><FileAudio className="mr-2 h-4 w-4" /> Загрузить запись</Button>
-                        </>
-                    )}
-                     {recordingStatus === 'loading' && <div className="flex items-center gap-2 text-muted-foreground"><Loader2 className="animate-spin h-4 w-4" /> Загрузка записи...</div>}
-                     {recordingStatus === 'loaded' && audioDataUri && (
-                        <div className="w-full">
-                            <AudioPlayer 
-                                src={audioDataUri} 
-                                canDownload={canDownloadRecording(user?.role)}
-                                fileName={`recording-${call?.id}.wav`}
-                            />
-                        </div>
-                    )}
-                    {recordingStatus === 'not_found' && <div className="flex items-center gap-2 text-red-600 font-medium"><XCircle /> Запись отсутствует</div>}
-                    {recordingStatus === 'error' && <div className="flex items-center gap-2 text-red-600 font-medium"><XCircle /> Ошибка получения записи</div>}
-                </div>
-            </div>
-
-            <div className="space-y-4">
-                <div className="flex justify-between items-center">
-                    <h3 className="font-semibold text-lg">Детали обращения</h3>
-                </div>
-                <Separator />
-                {appeal ? (
-                    <div className="space-y-2 text-sm">
-                       <div className="grid grid-cols-2 gap-x-4 gap-y-2">
-                         <p><strong>Категория:</strong> <Badge variant="secondary" className="capitalize">{appeal.category}</Badge></p>
-                         <p><strong>Приоритет:</strong> <Badge variant="outline" className="capitalize">{priorityMap[appeal.priority] || appeal.priority}</Badge></p>
-                         <p><strong>Удовлетворенность:</strong> <Badge variant="outline" className="capitalize">{satisfactionMap[appeal.satisfaction] || appeal.satisfaction}</Badge></p>
-                         <p><strong>Нужен контакт:</strong> {appeal.followUp ? 'Да' : 'Нет'}</p>
-                       </div>
-                       <Separator className="my-2" />
-                       <p><strong>Описание:</strong></p>
-                       <p className="p-2 bg-muted rounded-md">{appeal.description}</p>
-                       <p><strong>Решение:</strong></p>
-                       <p className="p-2 bg-muted rounded-md capitalize">{appeal.resolution || 'Не указано'}</p>
-                       {appeal.notes && <>
-                         <p><strong>Доп. заметки:</strong></p>
-                         <p className="p-2 bg-muted rounded-md">{appeal.notes}</p>
-                       </>}
-                    </div>
-                ): (
-                    <div className="text-center text-muted-foreground p-4 border border-dashed rounded-md">
-                        <Info className="mx-auto h-8 w-8 mb-2" />
-                        <p>Для этого звонка не было создано карточки обращения.</p>
-                    </div>
-                )}
-            </div>
-            
-            <CrmEditor
-                contact={contact}
-                phoneNumber={call?.callerNumber || ''}
-                onSave={handleSaveContact}
-                isEditable={isCrmEditable}
-            />
-
-          </div>
         )}
       </DialogContent>
     </Dialog>
   );
 }
+
