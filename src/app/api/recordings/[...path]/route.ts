@@ -30,9 +30,11 @@ export async function GET(
 
     // 2. Construct the full path on the remote server, similar to FreePBX logic
     const rec_parts = recordingfile.split('-');
-    const fyear = rec_parts[3].substring(0, 4);
-    const fmonth = rec_parts[3].substring(4, 2);
-    const fday = rec_parts[3].substring(6, 2);
+    // Example filename: internal-0001-0777-20250711-121514-1752218114.361.wav
+    // rec_parts[3] is "20250711"
+    const fyear = rec_parts[3].substring(0, 4); // "2025"
+    const fmonth = rec_parts[3].substring(4, 6); // "07"
+    const fday = rec_parts[3].substring(6, 8);   // "11"
     
     // Assuming standard FreePBX monitor directory
     const monitor_base = `/var/spool/asterisk/monitor`; 
@@ -96,40 +98,3 @@ export async function GET(
     return NextResponse.json({ error: 'Failed to retrieve recording', details: errorMessage }, { status: 500 });
   }
 }
-
-async function handleFetchRecording(callId: string, toast: any) {
-  if (!callId) return { audioDataUri: null };
-
-  try {
-    // Fetch from our own API proxy
-    const response = await fetch(`/api/recordings/${callId}`);
-    
-    if (!response.ok) {
-      // Handle non-JSON error responses gracefully
-      const errorText = await response.text();
-      try {
-        // Try to parse it as JSON, as our own errors are JSON
-        const errorData = JSON.parse(errorText);
-        throw new Error(errorData.error || errorData.details || `Failed to fetch recording: ${response.statusText}`);
-      } catch (e) {
-        // If parsing fails, it's likely an HTML error page or plain text
-        throw new Error(errorText);
-      }
-    }
-
-    const audioBlob = await response.blob();
-    const reader = new FileReader();
-    
-    return new Promise<{ audioDataUri: string | null }>((resolve) => {
-        reader.onloadend = () => {
-            resolve({ audioDataUri: reader.result as string });
-        };
-        reader.readAsDataURL(audioBlob);
-    });
-
-  } catch (error) {
-      const message = error instanceof Error ? error.message : 'An unknown error occurred';
-      toast({ variant: 'destructive', title: 'Ошибка получения записи', description: message });
-      return { audioDataUri: null };
-  }
-};
