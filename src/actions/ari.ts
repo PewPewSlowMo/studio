@@ -16,26 +16,26 @@ async function fetchFromAri(connection: AriConnection, path: string, options?: R
   const validatedConnection = AriConnectionSchema.parse(connection);
   const { host, port, username, password } = validatedConnection;
   const url = `http://${host}:${port}/ari/${path}`;
+  
+  // Correctly create Basic auth header for Node.js environment
   const auth = Buffer.from(`${username}:${password}`).toString('base64');
 
   const defaultOptions: RequestInit = {
     headers: {
       'Authorization': `Basic ${auth}`,
     },
-    // IMPORTANT: This allows sending credentials over http, which is necessary for local dev setups.
-    // In a production environment with HTTPS, this would still be secure.
-    credentials: 'include', 
     cache: 'no-store',
   };
 
   try {
     const response = await fetch(url, { ...defaultOptions, ...options });
+    // Not OK responses are handled by the caller, just return the response object
     return { ok: response.ok, status: response.status, response };
   } catch (e) {
       const message = e instanceof Error ? e.message : 'A network or fetch error occurred.';
-      console.error(`Fetch Error on ${path}:`, e);
-      // Return a 500 status for network-level errors
-      return { ok: false, status: 500, response: new Response(message, { status: 500 }) };
+      console.error(`[ARI FETCH ERROR] Failed to fetch ${url}:`, e);
+      // Return a synthetic error response
+      return { ok: false, status: 500, response: new Response(JSON.stringify({ message }), { status: 500 }) };
   }
 }
 
@@ -49,21 +49,24 @@ export async function testAriConnection(
         return { success: true, data };
     }
     const errorBody = await response?.text();
-    return { success: false, error: `Connection failed with status ${status}: ${errorBody}` };
+    const errorMessage = `Connection failed with status ${status}: ${errorBody}`;
+    console.error(`[ARI TEST] ${errorMessage}`);
+    return { success: false, error: errorMessage };
   } catch (e) {
     const message = e instanceof Error ? e.message : 'An unknown error occurred.';
+    console.error(`[ARI TEST] Exception: ${message}`);
     return { success: false, error: message };
   }
 }
 
 /**
- * Checks if a recording exists using a GET request and checking the status.
- * ARI does not support HEAD for this endpoint.
+ * Checks if a recording exists. ARI does not support HEAD, so we use GET and check the status.
+ * This is more reliable across different Asterisk versions.
  */
 export async function checkRecordingExists(connection: AriConnection, recordingName: string): Promise<{ success: boolean, exists: boolean, error?: string }> {
+  const fullPath = `recordings/stored/${recordingName}`;
   try {
-    // We use GET because HEAD is not allowed (405 error). We won't read the body.
-    const { ok, status, response } = await fetchFromAri(connection, `recordings/stored/${recordingName}`);
+    const { ok, status, response } = await fetchFromAri(connection, fullPath);
 
     if (ok) {
         return { success: true, exists: true };
@@ -74,12 +77,12 @@ export async function checkRecordingExists(connection: AriConnection, recordingN
     // Any other error code is a failure.
     const errorBody = await response?.text();
     const errorMessage = `ARI request failed with status ${status}: ${errorBody}`;
-    console.error(`Error in checkRecordingExists for ${recordingName}:`, errorMessage);
+    console.error(`[ARI CHECK] Error checking recording at ${fullPath}:`, errorMessage);
     return { success: false, exists: false, error: errorMessage };
 
   } catch (e) {
     const message = e instanceof Error ? e.message : 'An unknown error occurred.';
-    console.error(`Error checking recording for ${recordingName}:`, message);
+    console.error(`[ARI CHECK] Exception while checking ${fullPath}:`, message);
     return { success: false, exists: false, error: message };
   }
 }
@@ -89,13 +92,15 @@ export async function checkRecordingExists(connection: AriConnection, recordingN
  * Gets the actual audio file of a stored recording.
  */
 export async function getRecording(connection: AriConnection, recordingName: string): Promise<{ success: boolean, dataUri?: string, error?: string }> {
+    const fullPath = `recordings/stored/${recordingName}/file`;
     try {
-        // IMPORTANT: The path must end with /file to get the audio data
-        const { ok, response, status } = await fetchFromAri(connection, `recordings/stored/${recordingName}/file`);
+        const { ok, response, status } = await fetchFromAri(connection, fullPath);
         
         if (!ok || !response) {
             const errorBody = await response?.text();
-            return { success: false, error: `Recording not found or error fetching with status ${status}: ${errorBody}` };
+            const errorMessage = `Recording not found or error fetching with status ${status}: ${errorBody}`;
+            console.error(`[ARI GET] Failed to get recording at ${fullPath}:`, errorMessage);
+            return { success: false, error: errorMessage };
         }
         
         const audioBuffer = await response.arrayBuffer();
@@ -105,7 +110,7 @@ export async function getRecording(connection: AriConnection, recordingName: str
         return { success: true, dataUri };
   } catch (e) {
     const message = e instanceof Error ? e.message : 'An unknown error occurred.';
-    console.error(`Error getting recording for ${recordingName}:`, message);
+    console.error(`[ARI GET] Exception while getting ${fullPath}:`, message);
     return { success: false, error: message };
   }
 }
