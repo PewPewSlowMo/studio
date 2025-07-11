@@ -24,11 +24,11 @@ type RecordingStatus = 'checking' | 'exists' | 'not_found' | 'loading' | 'loaded
 
 /**
  * Gets the recording name from the call object.
- * It prioritizes `call.recordingfile` and removes the .wav extension for the ARI query.
+ * It prioritizes `call.recordingfile` and removes the extension for the ARI query.
  */
 const getRecordingName = (call: Call): string | null => {
     if (call.recordingfile && call.recordingfile.trim() !== '') {
-        // ARI expects the name without the file extension.
+        // ARI stored recording API expects the name without the file extension.
         return call.recordingfile.replace(/\.[^/.]+$/, "");
     }
     return null;
@@ -52,7 +52,7 @@ export function CallRowDetails({ call, user, isCrmEditable = true }: CallRowDeta
       setAudioDataUri(null);
 
       const recordingName = getRecordingName(call);
-      setDebugRecordingId(recordingName); // For debugging purposes
+      setDebugRecordingId(recordingName);
 
       try {
         const config = await getConfig();

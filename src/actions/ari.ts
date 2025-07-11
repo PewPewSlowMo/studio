@@ -33,7 +33,7 @@ async function fetchFromAri(connection: AriConnection, path: string, options: Re
       'Authorization': `Basic ${auth}`,
       ...options.headers,
     },
-    cache: 'no-store', // Ensure we always get fresh data from ARI
+    cache: 'no-store',
   };
 
   try {
