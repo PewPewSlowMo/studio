@@ -2,9 +2,13 @@
 
 import type { CallState } from '@/lib/types';
 import { getAmiEndpoint } from './ami';
+import { getAriChannelDetails, getAriEndpointDetails } from './ari';
 import { getConfig } from './config';
 
-const mapDeviceState = (state: string): CallState['status'] => {
+/**
+ * Maps Asterisk device states from AMI to simplified CallState statuses.
+ */
+const mapAmiDeviceState = (state: string): CallState['status'] => {
     state = state?.toLowerCase().trim() || 'unavailable';
     switch (state) {
         case 'not in use': return 'available';
@@ -15,12 +19,28 @@ const mapDeviceState = (state: string): CallState['status'] => {
         case 'on hold': return 'on-call';
         case 'unavailable': return 'unavailable';
         case 'invalid': return 'offline';
-        // We will not map DND or Away as Asterisk doesn't receive this info
-        // from the softphone in the current configuration.
         default: return 'offline';
     }
 };
 
+/**
+ * Maps Asterisk channel states from ARI to simplified CallState statuses.
+ */
+const mapAriChannelState = (state: string): CallState['status'] => {
+    state = state?.toLowerCase().trim();
+    switch (state) {
+        case 'ring': return 'ringing';
+        case 'ringing': return 'ringing';
+        case 'up': return 'on-call';
+        default: return 'available'; // Default to available if channel exists but isn't in a clear "busy" state
+    }
+};
+
+/**
+ * Retrieves the real-time state of an operator, including their status and active call details.
+ * This function implements a robust, multi-layered approach to determine the caller's number,
+ * prioritizing ARI for details and falling back to AMI for basic status.
+ */
 export async function getOperatorState(
     extension: string
 ): Promise<{
@@ -30,34 +50,56 @@ export async function getOperatorState(
 }> {
     try {
         const config = await getConfig();
-        if (!config || !config.ami) {
-            return { success: false, error: 'AMI configuration is missing.' };
+        if (!config.ari || !config.ami) {
+            return { success: false, error: 'ARI or AMI configuration is missing.' };
         }
         
-        const endpointResult = await getAmiEndpoint(config.ami, extension);
-        
-        if (!endpointResult.success || !endpointResult.data) {
-            return { success: false, error: endpointResult.error || `Could not get endpoint ${extension}.` };
+        // --- Step 1: Get base endpoint status from AMI ---
+        // This is a fast and reliable way to get the basic device state.
+        const amiResult = await getAmiEndpoint(config.ami, extension);
+        if (!amiResult.success || !amiResult.data) {
+            return { success: false, error: amiResult.error || `Could not get AMI endpoint ${extension}.` };
         }
-
-        const endpointData = endpointResult.data;
-        const mappedStatus = mapDeviceState(endpointData.devicestate);
+        const amiEndpoint = amiResult.data;
+        const baseStatus = mapAmiDeviceState(amiEndpoint.devicestate);
 
         let finalCallState: CallState = {
-            status: mappedStatus,
-            endpointState: mappedStatus,
+            status: baseStatus,
+            endpointState: baseStatus,
             extension: extension,
         };
+        
+        // --- Step 2: If AMI shows activity, use ARI to get rich details ---
+        // ARI is more reliable for getting specific call details like caller ID and channel info.
+        if (baseStatus === 'on-call' || baseStatus === 'ringing') {
+            const ariEndpoint = await getAriEndpointDetails(config.ari, extension);
+            const channelId = ariEndpoint?.channel_ids?.[0];
+            
+            if (channelId) {
+                const channelDetails = await getAriChannelDetails(config.ari, channelId);
+                if (channelDetails) {
+                    const connectedLineNum = channelDetails.connected?.number || channelDetails.caller?.number;
+                    const uniqueId = channelDetails.dialplan?.exten; // Often contains the uniqueid
 
-        const activeChannelId = endpointData.channel;
-        if (activeChannelId && (mappedStatus === 'on-call' || mappedStatus === 'ringing')) {
-             finalCallState = {
-                ...finalCallState,
-                channelId: activeChannelId,
-                uniqueId: endpointData.uniqueid,
-                callerId: endpointData.connectedlinenum || endpointData.callerid || 'Unknown',
-                queue: endpointData.context,
-            };
+                    finalCallState = {
+                        ...finalCallState,
+                        status: mapAriChannelState(channelDetails.state), // Refine status based on ARI channel state
+                        channelId: channelId,
+                        uniqueId: uniqueId || channelDetails.id, // Fallback to channel ID if uniqueid not in dialplan
+                        callerId: connectedLineNum || 'Unknown',
+                        queue: channelDetails.dialplan?.context,
+                    };
+                }
+            } else {
+                 // Fallback to AMI data if ARI channel details are not available
+                 const connectedLineNum = amiEndpoint.connectedlinenum || amiEndpoint.callerid;
+                 finalCallState = {
+                    ...finalCallState,
+                    callerId: connectedLineNum || 'Unknown',
+                    uniqueId: amiEndpoint.uniqueid,
+                    queue: amiEndpoint.context,
+                 };
+            }
         }
         
         return { success: true, data: finalCallState };

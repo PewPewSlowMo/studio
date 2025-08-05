@@ -1,7 +1,7 @@
 'use server';
 
 import { z } from 'zod';
-import type { UserRole } from '@/lib/types';
+import type { UserRole, CallState } from '@/lib/types';
 
 const AriConnectionSchema = z.object({
   host: z.string().min(1, 'Host is required'),
@@ -12,13 +12,8 @@ const AriConnectionSchema = z.object({
 
 type AriConnection = z.infer<typeof AriConnectionSchema>;
 
-const RecordingNameSchema = z.string().regex(/^[a-zA-Z0-9\-_\.]+$/, {
-    message: "Invalid recording name format."
-});
-
 /**
  * A robust fetch wrapper for making requests to the Asterisk REST Interface (ARI).
- * It handles connection errors, authentication, and logging.
  */
 async function fetchFromAri(connection: AriConnection, path: string, options: RequestInit = {}) {
   const validatedConnection = AriConnectionSchema.parse(connection);
@@ -41,15 +36,30 @@ async function fetchFromAri(connection: AriConnection, path: string, options: Re
     return response;
   } catch (e) {
       if (e instanceof TypeError && e.message.includes('fetch failed')) {
-        console.error(`[ARI FETCH ERROR] Cannot connect to ARI server at ${host}:${port}. Please check host, port, and network.`, e);
-        // Return a synthetic error response that clearly indicates a connection failure.
+        console.error(`[ARI FETCH ERROR] Cannot connect to ARI server at ${host}:${port}.`);
         return new Response(JSON.stringify({ message: `Cannot connect to ARI server at ${host}:${port}` }), { status: 503, statusText: 'Service Unavailable' });
       }
-      
       console.error(`[ARI FETCH ERROR] An unexpected network or fetch error occurred for ${url}:`, e);
       const message = e instanceof Error ? e.message : 'A network or fetch error occurred.';
       return new Response(JSON.stringify({ message }), { status: 500, statusText: 'Internal Server Error' });
   }
+}
+
+export async function getAriChannelDetails(connection: AriConnection, channelId: string): Promise<any> {
+    const response = await fetchFromAri(connection, `channels/${channelId}`);
+    if (!response.ok) {
+        throw new Error(`Failed to get channel details for ${channelId}: ${response.statusText}`);
+    }
+    return response.json();
+}
+
+export async function getAriEndpointDetails(connection: AriConnection, extension: string): Promise<any> {
+    const response = await fetchFromAri(connection, `endpoints/PJSIP/${extension}`);
+    if (!response.ok) {
+        // This is not necessarily an error, endpoint might just not be in use
+        return null;
+    }
+    return response.json();
 }
 
 /**
@@ -80,6 +90,5 @@ export async function testAriConnection(
  */
 export async function canDownloadRecording(role: UserRole | undefined): Promise<boolean> {
     if (!role) return false;
-    // Define roles that can download recordings
     return ['admin', 'supervisor', 'manager'].includes(role);
 }

@@ -146,13 +146,14 @@ export async function getCallById(connection: CdrConnection, callId: string): Pr
             lastapp, lastdata, duration, billsec, disposition, uniqueid, linkedid, userfield, recordingfile
             FROM cdr`;
 
-        // 1. Try to find by exact match first
+        // 1. Try to find by exact match first on both uniqueid and linkedid
         const exactSql = `${baseQuery} WHERE (uniqueid = ? OR linkedid = ?) ORDER BY calldate DESC LIMIT 1`;
         let [rows] = await dbConnection.execute(exactSql, [callId, callId]);
         let results = rows as any[];
         
-        // 2. If no exact match, fall back to LIKE search
+        // 2. If no exact match, fall back to "flexible" LIKE search on the base ID
         if (results.length === 0) {
+            console.log(`[CDR] Exact match for ${callId} not found. Trying flexible search...`);
             const callIdBase = callId.includes('.') ? callId.substring(0, callId.lastIndexOf('.')) : callId;
             const searchTerm = `${callIdBase}.%`;
             const likeSql = `${baseQuery} WHERE (uniqueid LIKE ? OR linkedid LIKE ?) ORDER BY calldate DESC LIMIT 1`;
@@ -161,6 +162,7 @@ export async function getCallById(connection: CdrConnection, callId: string): Pr
         }
 
         if (results.length === 0) {
+             console.warn(`[CDR] Call not found for ID: ${callId} even with flexible search.`);
             return { success: false, error: 'Call not found' };
         }
 
