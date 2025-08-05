@@ -1,3 +1,4 @@
+
 'use server';
 
 import { z } from 'zod';
@@ -45,12 +46,30 @@ async function fetchFromAri(connection: AriConnection, path: string, options: Re
   }
 }
 
+async function getAriChannelVariable(connection: AriConnection, channelId: string, variable: string): Promise<string | null> {
+    const response = await fetchFromAri(connection, `channels/${channelId}/variable?variable=${variable}`);
+    if (!response.ok) {
+        return null;
+    }
+    const result = await response.json();
+    return result.value || null;
+}
+
 export async function getAriChannelDetails(connection: AriConnection, channelId: string): Promise<any> {
     const response = await fetchFromAri(connection, `channels/${channelId}`);
     if (!response.ok) {
         throw new Error(`Failed to get channel details for ${channelId}: ${response.statusText}`);
     }
-    return response.json();
+    const details = await response.json();
+
+    // Now, try to get the most reliable uniqueid from the channel variables
+    const uniqueId = await getAriChannelVariable(connection, channelId, 'CDR(uniqueid)');
+    const linkedId = await getAriChannelVariable(connection, channelId, 'CDR(linkedid)');
+
+    return {
+        ...details,
+        uniqueid_from_vars: uniqueId || linkedId || details.id,
+    };
 }
 
 export async function getAriEndpointDetails(connection: AriConnection, extension: string): Promise<any> {
