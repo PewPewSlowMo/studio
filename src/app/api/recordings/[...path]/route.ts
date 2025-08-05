@@ -31,10 +31,21 @@ export async function GET(
     // 2. Construct the full path on the remote server, similar to FreePBX logic
     const rec_parts = recordingfile.split('-');
     // Example filename: internal-0001-0777-20250711-121514-1752218114.361.wav
-    // rec_parts[3] is "20250711"
-    const fyear = rec_parts[3].substring(0, 4); // "2025"
-    const fmonth = rec_parts[3].substring(4, 6); // "07"
-    const fday = rec_parts[3].substring(6, 8);   // "11"
+    // This logic is fragile, but it's a common pattern for FreePBX.
+    // We assume the date part is always at the same index.
+    if (rec_parts.length < 4) {
+        throw new Error('Recording filename format is unexpected and date cannot be parsed.');
+    }
+    
+    const datePart = rec_parts.find(p => p.length === 8 && !isNaN(parseInt(p)));
+
+    if (!datePart) {
+      throw new Error(`Could not determine date part from filename: ${recordingfile}`);
+    }
+
+    const fyear = datePart.substring(0, 4); // "2025"
+    const fmonth = datePart.substring(4, 6); // "07"
+    const fday = datePart.substring(6, 8);   // "11"
     
     // Assuming standard FreePBX monitor directory
     const monitor_base = `/var/spool/asterisk/monitor`; 
