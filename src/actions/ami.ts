@@ -129,17 +129,20 @@ export async function testAmiConnection(
   connection: AmiConnection
 ): Promise<{ success: boolean; data?: any; error?: string }> {
   try {
-    const action = { Action: 'CoreStatus' };
+    // A reliable way to get the version is to ask for a non-existent endpoint.
+    // The response will still contain the Asterisk version.
+    const action = { Action: 'PJSIPShowEndpoint', Endpoint: 'scc-test-endpoint' };
     const events = await runAmiCommand<any>(
       connection,
       action,
       200
     );
-    // Find an event that has the Asterisk version. This might be in a 'CoreStatus' or similar event.
-    const statusEvent = events.find(e => e.asteriskversion);
-    if (statusEvent) {
-      return { success: true, data: { version: statusEvent.asteriskversion } };
+    // Find an event that has the Asterisk version. This might be in a 'EndpointDetail' or similar event.
+    const eventWithVersion = events.find(e => e.asteriskversion);
+    if (eventWithVersion) {
+      return { success: true, data: { version: eventWithVersion.asteriskversion } };
     }
+    // If for some reason that fails, it means we connected but couldn't get a version.
     return { success: true, data: { version: "Unknown (Connected)" } };
   } catch (e) {
     const message = e instanceof Error ? e.message : 'An unknown error occurred.';
