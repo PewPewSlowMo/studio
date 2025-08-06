@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect, useMemo, useTransition } from 'react';
@@ -110,8 +109,8 @@ export default function ReportsPage() {
                         return { 
                             ...call, 
                             operatorName: userMap.get(call.operatorExtension!),
-                            queueName: call.queue || 'N/A',
-                            resolution: appeal?.resolution || 'N/A'
+                            queueName: call.queue || '-',
+                            resolution: appeal?.resolution || '-'
                         };
                     });
                 setOperatorCalls(enrichedCalls);

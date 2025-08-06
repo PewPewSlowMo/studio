@@ -89,7 +89,7 @@ export default function MissedCallsPage() {
 
         const mainReason = Object.keys(reasonCounts).length > 0
             ? Object.entries(reasonCounts).reduce((a, b) => a[1] > b[1] ? a : b)[0]
-            : 'N/A';
+            : '-';
         
         return { callsWithReason, totalMissed, averageWaitTime, maxWaitTime, mainReason };
     }, [calls]);

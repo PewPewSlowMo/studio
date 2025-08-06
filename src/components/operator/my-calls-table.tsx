@@ -111,7 +111,7 @@ export function MyCallsTable({ calls, isLoading, user }: MyCallsTableProps) {
   };
 
   const formatDuration = (seconds: number | undefined) => {
-    if (seconds === undefined) return 'Н/Д';
+    if (seconds === undefined || seconds === null) return '-';
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
@@ -190,7 +190,7 @@ export function MyCallsTable({ calls, isLoading, user }: MyCallsTableProps) {
                             <span>{call.callerNumber}</span>
                             </div>
                         </TableCell>
-                        <TableCell>{call.callerName || <span className="text-muted-foreground">Неизвестно</span>}</TableCell>
+                        <TableCell>{call.callerName || <span className="text-muted-foreground">-</span>}</TableCell>
                         <TableCell>
                             {call.category ? (
                                 <Badge variant="outline" className="capitalize">{categoryMap[call.category] || call.category}</Badge>

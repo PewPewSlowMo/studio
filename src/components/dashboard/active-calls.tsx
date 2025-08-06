@@ -71,7 +71,7 @@ export function ActiveCallsTable({ liveCalls }: ActiveCallsTableProps) {
                     </TableCell>
                     <TableCell>{call.operatorName}</TableCell>
                     <TableCell>{call.callerId}</TableCell>
-                    <TableCell>{call.queue || 'N/A'}</TableCell>
+                    <TableCell>{call.queue || '-'}</TableCell>
                   </TableRow>
                 );
               })

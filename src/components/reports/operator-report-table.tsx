@@ -1,4 +1,3 @@
-
 'use client';
 
 import * as React from 'react';
@@ -164,7 +163,7 @@ export function OperatorReportTable({ data, isLoading, onOperatorClick, selected
                                 <TableCell>
                                     <div className="flex items-center gap-1">
                                        <Star className={cn("h-4 w-4", op.satisfactionScore > 0 ? "text-yellow-400 fill-yellow-400" : "text-muted-foreground")} />
-                                       <span>{op.satisfactionScore > 0 ? op.satisfactionScore.toFixed(2) : 'N/A'}</span>
+                                       <span>{op.satisfactionScore > 0 ? op.satisfactionScore.toFixed(2) : '-'}</span>
                                     </div>
                                 </TableCell>
                                 <TableCell>{op.transferredToSupervisorCount}</TableCell>

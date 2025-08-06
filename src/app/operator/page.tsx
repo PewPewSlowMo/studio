@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect, useCallback, useRef, Suspense, useMemo } from 'react';
@@ -153,7 +152,7 @@ function MyKpiComponent({ user }: { user: User }) {
 
         const avgSatisfaction = satisfactionScores.length > 0
             ? (satisfactionScores.reduce((acc, score) => acc + score, 0) / satisfactionScores.length).toFixed(2)
-            : 'N/A';
+            : '-';
 
         const totalAnswered = answeredCalls.length;
         const totalTalkTime = answeredCalls.reduce((acc, c) => acc + (c.billsec || 0), 0);
@@ -333,7 +332,7 @@ export default function OperatorPage() {
                 ...callResult.data,
                 operatorName: callResult.data.operatorExtension
                     ? (userMap.get(callResult.data.operatorExtension) || `Ext. ${callResult.data.operatorExtension}`)
-                    : 'N/A',
+                    : '-',
             };
 
             setSelectedCall(enrichedCall);

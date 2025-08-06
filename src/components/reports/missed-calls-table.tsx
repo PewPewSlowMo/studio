@@ -16,7 +16,7 @@ import { PhoneMissed, Calendar } from 'lucide-react';
 import { Skeleton } from '../ui/skeleton';
 
 function formatTime(seconds: number | undefined) {
-    if (seconds === undefined || seconds === null) return 'N/A';
+    if (seconds === undefined || seconds === null) return '-';
     const minutes = Math.floor(seconds / 60);
     const secs = Math.floor(seconds % 60);
     return `${minutes}:${secs.toString().padStart(2, '0')}`;
@@ -93,7 +93,7 @@ export function MissedCallsTable({ calls, isLoading }: { calls: Call[], isLoadin
                                     </div>
                                 </TableCell>
                                 <TableCell>
-                                    <Badge variant="outline">{call.queue || 'N/A'}</Badge>
+                                    <Badge variant="outline">{call.queue || '-'}</Badge>
                                 </TableCell>
                                 <TableCell>
                                     <div className="flex items-center gap-2 text-muted-foreground">

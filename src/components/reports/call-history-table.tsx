@@ -180,7 +180,7 @@ export function CallHistoryTable({ calls, isLoading, user }: { calls: EnrichedOp
                             </TableCell>
                            <TableCell>{call.queueName}</TableCell>
                             <TableCell className="capitalize">{call.resolution}</TableCell>
-                            <TableCell className="text-right">{call.billsec ?? 'N/A'}</TableCell>
+                            <TableCell className="text-right">{call.billsec ?? '-'}</TableCell>
                         </TableRow>
                         {activeRowId === call.id && (
                             <TableRow>
