@@ -3,12 +3,13 @@
 
 import type { CallState } from '@/lib/types';
 import { getAriChannelDetails, getAriEndpointDetails } from './ari';
+import { getAmiEndpoint } from './ami';
 import { getConfig } from './config';
 
 /**
  * Maps Asterisk device states to simplified CallState statuses.
  */
-const mapAriDeviceState = (state: string): CallState['status'] => {
+const mapDeviceState = (state: string): CallState['status'] => {
     state = state?.toLowerCase().trim() || 'unavailable';
     switch (state) {
         case 'not in use': return 'available';
@@ -24,21 +25,8 @@ const mapAriDeviceState = (state: string): CallState['status'] => {
 };
 
 /**
- * Maps Asterisk channel states to simplified CallState statuses.
- */
-const mapAriChannelState = (state: string): CallState['status'] => {
-    state = state?.toLowerCase().trim();
-    switch (state) {
-        case 'ring': return 'ringing';
-        case 'ringing': return 'ringing';
-        case 'up': return 'on-call';
-        default: return 'available'; // Default to available if channel exists but isn't in a clear "busy" state
-    }
-};
-
-/**
  * Retrieves the real-time state of an operator, including their status and active call details.
- * This function uses ARI exclusively for a more reliable and consistent state representation.
+ * This function uses a hybrid AMI/ARI approach for best results.
  */
 export async function getOperatorState(
     extension: string
@@ -49,51 +37,47 @@ export async function getOperatorState(
 }> {
     try {
         const config = await getConfig();
-        if (!config.ari) {
-            return { success: false, error: 'ARI configuration is missing.' };
+        if (!config.ami || !config.ari) {
+            return { success: false, error: 'AMI or ARI configuration is missing.' };
         }
         
-        // --- Step 1: Get endpoint details from ARI ---
-        const ariEndpoint = await getAriEndpointDetails(config.ari, extension);
-        
-        if (!ariEndpoint) {
-            return { success: true, data: { status: 'offline', endpointState: 'offline' } };
+        // --- Step 1: Get endpoint status from AMI for reliability ---
+        const amiResult = await getAmiEndpoint(config.ami, extension);
+
+        if (!amiResult.success || !amiResult.data) {
+             return { success: true, data: { status: 'offline', endpointState: 'offline' } };
         }
         
-        const baseStatus = mapAriDeviceState(ariEndpoint.state);
+        const amiEndpoint = amiResult.data;
+        const baseStatus = mapDeviceState(amiEndpoint.devicestate);
+        
         let finalCallState: CallState = {
             status: baseStatus,
             endpointState: baseStatus,
             extension: extension,
         };
 
-        // --- Step 2: If endpoint is in use, get detailed channel info ---
-        const channelId = ariEndpoint.channel_ids?.[0];
+        // --- Step 2: If on a call, enrich with details from ARI ---
+        const activeCallStatuses = ['on-call', 'ringing'];
+        
+        if (activeCallStatuses.includes(baseStatus)) {
+            // ARI is better for getting detailed call info like caller ID
+            const ariEndpoint = await getAriEndpointDetails(config.ari, extension);
+            const channelId = ariEndpoint?.channel_ids?.[0];
 
-        if (channelId) {
-            // This function can return null if the channel was hung up during polling.
-            const channelDetails = await getAriChannelDetails(config.ari, channelId);
-
-            // If channelDetails exist, it means we are in an active call state.
-            // We enrich the final state with call-specific details.
-            if (channelDetails) {
-                const uniqueId = channelDetails.uniqueid_from_vars;
-                const callerId = channelDetails.connected_line_num;
-
-                finalCallState = {
-                    ...finalCallState,
-                    // Refine status based on the more precise ARI channel state
-                    status: mapAriChannelState(channelDetails.state), 
-                    channelId: channelId,
-                    uniqueId: uniqueId,
-                    callerId: callerId || 'Unknown',
-                    queue: channelDetails.dialplan?.context,
-                };
+            if (channelId) {
+                const channelDetails = await getAriChannelDetails(config.ari, channelId);
+                
+                if (channelDetails) {
+                    finalCallState = {
+                        ...finalCallState,
+                        channelId: channelId,
+                        uniqueId: channelDetails.uniqueid_from_vars,
+                        callerId: channelDetails.connected_line_num || 'Unknown',
+                        queue: channelDetails.dialplan?.context,
+                    };
+                }
             }
-            // If channelDetails is null, it implies the call just ended between polling intervals.
-            // In this case, we don't need to do anything extra. The `finalCallState` already
-            // holds the most recent endpoint status (which is likely 'not in use' now),
-            // and that's what we want to return.
         }
         
         return { success: true, data: finalCallState };

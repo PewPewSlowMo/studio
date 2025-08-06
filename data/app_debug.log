@@ -4531,3 +4531,253 @@ Requesting URL: http://92.46.62.34:8088/ari/endpoints/PJSIP/0001
   "status": 200
 }
 
+[2025-08-06 09:29:37.603] [ARI Fetch (GET)]
+Requesting URL: http://92.46.62.34:8088/ari/endpoints/PJSIP/0001
+
+[2025-08-06 09:29:38.121] [ARI Fetch (GET)]
+{
+  "level": "INFO",
+  "url": "http://92.46.62.34:8088/ari/endpoints/PJSIP/0001",
+  "status": 200
+}
+
+[2025-08-06 09:29:42.919] [ARI Fetch (GET)]
+Requesting URL: http://92.46.62.34:8088/ari/endpoints/PJSIP/0001
+
+[2025-08-06 09:29:43.453] [ARI Fetch (GET)]
+{
+  "level": "INFO",
+  "url": "http://92.46.62.34:8088/ari/endpoints/PJSIP/0001",
+  "status": 200
+}
+
+[2025-08-06 09:29:43.886] [ARI Fetch (GET)]
+Requesting URL: http://92.46.62.34:8088/ari/endpoints/PJSIP/0001
+
+[2025-08-06 09:29:44.164] [ARI Fetch (GET)]
+{
+  "level": "INFO",
+  "url": "http://92.46.62.34:8088/ari/endpoints/PJSIP/0001",
+  "status": 200
+}
+
+[2025-08-06 09:29:45.584] [ARI Fetch (GET)]
+Requesting URL: http://92.46.62.34:8088/ari/endpoints/PJSIP/0001
+
+[2025-08-06 09:29:45.856] [ARI Fetch (GET)]
+{
+  "level": "INFO",
+  "url": "http://92.46.62.34:8088/ari/endpoints/PJSIP/0001",
+  "status": 200
+}
+
+[2025-08-06 09:29:48.583] [ARI Fetch (GET)]
+Requesting URL: http://92.46.62.34:8088/ari/endpoints/PJSIP/0001
+
+[2025-08-06 09:29:48.858] [ARI Fetch (GET)]
+{
+  "level": "INFO",
+  "url": "http://92.46.62.34:8088/ari/endpoints/PJSIP/0001",
+  "status": 200
+}
+
+[2025-08-06 09:29:51.675] [ARI Fetch (GET)]
+Requesting URL: http://92.46.62.34:8088/ari/endpoints/PJSIP/0001
+
+[2025-08-06 09:29:51.950] [ARI Fetch (GET)]
+{
+  "level": "INFO",
+  "url": "http://92.46.62.34:8088/ari/endpoints/PJSIP/0001",
+  "status": 200
+}
+
+[2025-08-06 09:29:54.589] [ARI Fetch (GET)]
+Requesting URL: http://92.46.62.34:8088/ari/endpoints/PJSIP/0001
+
+[2025-08-06 09:29:55.441] [ARI Fetch (GET)]
+{
+  "level": "INFO",
+  "url": "http://92.46.62.34:8088/ari/endpoints/PJSIP/0001",
+  "status": 200
+}
+
+[2025-08-06 09:29:57.781] [ARI Fetch (GET)]
+Requesting URL: http://92.46.62.34:8088/ari/endpoints/PJSIP/0001
+
+[2025-08-06 09:29:58.048] [ARI Fetch (GET)]
+{
+  "level": "INFO",
+  "url": "http://92.46.62.34:8088/ari/endpoints/PJSIP/0001",
+  "status": 200
+}
+
+[2025-08-06 09:30:00.628] [ARI Fetch (GET)]
+Requesting URL: http://92.46.62.34:8088/ari/endpoints/PJSIP/0001
+
+[2025-08-06 09:30:00.908] [ARI Fetch (GET)]
+{
+  "level": "INFO",
+  "url": "http://92.46.62.34:8088/ari/endpoints/PJSIP/0001",
+  "status": 200
+}
+
+[2025-08-06 09:30:03.826] [ARI Fetch (GET)]
+Requesting URL: http://92.46.62.34:8088/ari/endpoints/PJSIP/0001
+
+[2025-08-06 09:30:04.105] [ARI Fetch (GET)]
+{
+  "level": "INFO",
+  "url": "http://92.46.62.34:8088/ari/endpoints/PJSIP/0001",
+  "status": 200
+}
+
+[2025-08-06 09:30:06.577] [ARI Fetch (GET)]
+Requesting URL: http://92.46.62.34:8088/ari/endpoints/PJSIP/0001
+
+[2025-08-06 09:30:06.847] [ARI Fetch (GET)]
+{
+  "level": "INFO",
+  "url": "http://92.46.62.34:8088/ari/endpoints/PJSIP/0001",
+  "status": 200
+}
+
+[2025-08-06 09:30:09.721] [ARI Fetch (GET)]
+Requesting URL: http://92.46.62.34:8088/ari/endpoints/PJSIP/0001
+
+[2025-08-06 09:30:10.001] [ARI Fetch (GET)]
+{
+  "level": "INFO",
+  "url": "http://92.46.62.34:8088/ari/endpoints/PJSIP/0001",
+  "status": 200
+}
+
+[2025-08-06 09:30:12.683] [ARI Fetch (GET)]
+Requesting URL: http://92.46.62.34:8088/ari/endpoints/PJSIP/0001
+
+[2025-08-06 09:30:12.958] [ARI Fetch (GET)]
+{
+  "level": "INFO",
+  "url": "http://92.46.62.34:8088/ari/endpoints/PJSIP/0001",
+  "status": 200
+}
+
+[2025-08-06 09:30:15.759] [ARI Fetch (GET)]
+Requesting URL: http://92.46.62.34:8088/ari/endpoints/PJSIP/0001
+
+[2025-08-06 09:30:16.028] [ARI Fetch (GET)]
+{
+  "level": "INFO",
+  "url": "http://92.46.62.34:8088/ari/endpoints/PJSIP/0001",
+  "status": 200
+}
+
+[2025-08-06 09:30:18.679] [ARI Fetch (GET)]
+Requesting URL: http://92.46.62.34:8088/ari/endpoints/PJSIP/0001
+
+[2025-08-06 09:30:18.955] [ARI Fetch (GET)]
+{
+  "level": "INFO",
+  "url": "http://92.46.62.34:8088/ari/endpoints/PJSIP/0001",
+  "status": 200
+}
+
+[2025-08-06 09:30:21.664] [ARI Fetch (GET)]
+Requesting URL: http://92.46.62.34:8088/ari/endpoints/PJSIP/0001
+
+[2025-08-06 09:30:21.944] [ARI Fetch (GET)]
+{
+  "level": "INFO",
+  "url": "http://92.46.62.34:8088/ari/endpoints/PJSIP/0001",
+  "status": 200
+}
+
+[2025-08-06 09:30:24.736] [ARI Fetch (GET)]
+Requesting URL: http://92.46.62.34:8088/ari/endpoints/PJSIP/0001
+
+[2025-08-06 09:30:25.008] [ARI Fetch (GET)]
+{
+  "level": "INFO",
+  "url": "http://92.46.62.34:8088/ari/endpoints/PJSIP/0001",
+  "status": 200
+}
+
+[2025-08-06 09:30:27.660] [ARI Fetch (GET)]
+Requesting URL: http://92.46.62.34:8088/ari/endpoints/PJSIP/0001
+
+[2025-08-06 09:30:27.932] [ARI Fetch (GET)]
+{
+  "level": "INFO",
+  "url": "http://92.46.62.34:8088/ari/endpoints/PJSIP/0001",
+  "status": 200
+}
+
+[2025-08-06 09:30:30.745] [ARI Fetch (GET)]
+Requesting URL: http://92.46.62.34:8088/ari/endpoints/PJSIP/0001
+
+[2025-08-06 09:30:31.018] [ARI Fetch (GET)]
+{
+  "level": "INFO",
+  "url": "http://92.46.62.34:8088/ari/endpoints/PJSIP/0001",
+  "status": 200
+}
+
+[2025-08-06 09:30:33.665] [ARI Fetch (GET)]
+Requesting URL: http://92.46.62.34:8088/ari/endpoints/PJSIP/0001
+
+[2025-08-06 09:30:33.935] [ARI Fetch (GET)]
+{
+  "level": "INFO",
+  "url": "http://92.46.62.34:8088/ari/endpoints/PJSIP/0001",
+  "status": 200
+}
+
+[2025-08-06 09:30:36.658] [ARI Fetch (GET)]
+Requesting URL: http://92.46.62.34:8088/ari/endpoints/PJSIP/0001
+
+[2025-08-06 09:30:36.929] [ARI Fetch (GET)]
+{
+  "level": "INFO",
+  "url": "http://92.46.62.34:8088/ari/endpoints/PJSIP/0001",
+  "status": 200
+}
+
+[2025-08-06 09:30:39.834] [ARI Fetch (GET)]
+Requesting URL: http://92.46.62.34:8088/ari/endpoints/PJSIP/0001
+
+[2025-08-06 09:30:40.116] [ARI Fetch (GET)]
+{
+  "level": "INFO",
+  "url": "http://92.46.62.34:8088/ari/endpoints/PJSIP/0001",
+  "status": 200
+}
+
+[2025-08-06 09:30:42.804] [ARI Fetch (GET)]
+Requesting URL: http://92.46.62.34:8088/ari/endpoints/PJSIP/0001
+
+[2025-08-06 09:30:43.078] [ARI Fetch (GET)]
+{
+  "level": "INFO",
+  "url": "http://92.46.62.34:8088/ari/endpoints/PJSIP/0001",
+  "status": 200
+}
+
+[2025-08-06 09:30:45.843] [ARI Fetch (GET)]
+Requesting URL: http://92.46.62.34:8088/ari/endpoints/PJSIP/0001
+
+[2025-08-06 09:30:46.128] [ARI Fetch (GET)]
+{
+  "level": "INFO",
+  "url": "http://92.46.62.34:8088/ari/endpoints/PJSIP/0001",
+  "status": 200
+}
+
+[2025-08-06 09:30:48.788] [ARI Fetch (GET)]
+Requesting URL: http://92.46.62.34:8088/ari/endpoints/PJSIP/0001
+
+[2025-08-06 09:30:49.078] [ARI Fetch (GET)]
+{
+  "level": "INFO",
+  "url": "http://92.46.62.34:8088/ari/endpoints/PJSIP/0001",
+  "status": 200
+}
+
