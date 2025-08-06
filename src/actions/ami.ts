@@ -73,6 +73,12 @@ function runAmiCommand<T extends Record<string, any>>(
         results.push(event); // Collect ALL events
       });
       
+      ami.on('response', (response: T) => {
+          // Some commands (like CoreSettings) send their data in the 'response' callback, not as separate events.
+          // Let's add it to our results array.
+          results.push(response);
+      });
+      
       ami.on('error', (err: Error) => {
           if (!isResolved) {
               isResolved = true;
@@ -129,15 +135,13 @@ export async function testAmiConnection(
   connection: AmiConnection
 ): Promise<{ success: boolean; data?: any; error?: string }> {
   try {
-    // A reliable way to get the version is to ask for a non-existent endpoint.
-    // The response will still contain the Asterisk version.
-    const action = { Action: 'PJSIPShowEndpoint', Endpoint: 'scc-test-endpoint' };
+    const action = { Action: 'CoreSettings' };
     const events = await runAmiCommand<any>(
       connection,
       action,
       200
     );
-    // Find an event that has the Asterisk version. This might be in a 'EndpointDetail' or similar event.
+    // Find an event that has the Asterisk version. This might be in a 'response' or a managerevent.
     const eventWithVersion = events.find(e => e.asteriskversion);
     if (eventWithVersion) {
       return { success: true, data: { version: eventWithVersion.asteriskversion } };
