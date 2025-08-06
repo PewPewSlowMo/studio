@@ -24405,3 +24405,54 @@ Requesting URL: http://92.46.62.34:8088/ari/asterisk/info
   }
 }
 
+[2025-08-06 13:54:07.023] [AMI_ACTION]
+{
+  "level": "INFO",
+  "message": "Executing AMI action",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001"
+  }
+}
+
+[2025-08-06 13:54:13.019] [ARI Fetch (GET)]
+Requesting URL: http://92.46.62.34:8088/ari/asterisk/info
+
+[2025-08-06 13:54:15.620] [AMI_ACTION]
+{
+  "level": "INFO",
+  "message": "Executing AMI action",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001"
+  }
+}
+
+[2025-08-06 13:54:23.635] [ARI Fetch (GET)]
+{
+  "level": "ERROR",
+  "url": "http://92.46.62.34:8088/ari/asterisk/info",
+  "error": "Cannot connect to ARI server at 92.46.62.34:8088",
+  "details": {}
+}
+
+[2025-08-06 13:54:26.158] [AMI_ACTION]
+{
+  "level": "INFO",
+  "message": "Executing AMI action",
+  "action": {
+    "Action": "CoreSettings"
+  }
+}
+
+[2025-08-06 13:54:27.025] [AMI_ACTION]
+{
+  "level": "ERROR",
+  "message": "AMI command timed out after 20 seconds.",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001",
+    "actionid": "1754488447030"
+  }
+}
+
