@@ -64,6 +64,15 @@ function mapRowToCall(row: any): Call {
     const operatorExtension = operatorExtMatch ? operatorExtMatch[1] : undefined;
     const waitTime = row.duration - row.billsec;
 
+    let satisfaction: string | undefined = undefined;
+    if (row.userfield) {
+        const voteMatch = row.userfield.match(/Vote:\s*(\d+)/);
+        if (voteMatch && voteMatch[1]) {
+            satisfaction = voteMatch[1];
+        }
+    }
+
+
     return {
         id: row.uniqueid,
         linkedId: row.linkedid,
@@ -77,7 +86,7 @@ function mapRowToCall(row: any): Call {
         waitTime: waitTime >= 0 ? waitTime : 0, // wait time before answer
         queue: row.dcontext,
         isOutgoing: row.dcontext === 'from-internal',
-        satisfaction: row.userfield,
+        satisfaction: satisfaction,
         recordingfile: row.recordingfile || undefined,
     }
 }

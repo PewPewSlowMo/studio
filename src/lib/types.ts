@@ -1,3 +1,4 @@
+
 export type UserRole = 'admin' | 'manager' | 'supervisor' | 'operator';
 
 export interface User {
@@ -44,7 +45,7 @@ export interface Call {
   recordingUrl?: string;
   reason?: string;
   isOutgoing?: boolean;
-  satisfaction?: string;
+  satisfaction?: string; // Correctly a string from DB, e.g., "5"
   recordingfile?: string; // Correct filename from CDR
   // Add new fields for enriched data
   callerName?: string;
@@ -84,7 +85,7 @@ export interface OperatorReportData {
     missedCallsCount: number;
     avgTalkTime: number;
     avgWaitTime: number;
-    satisfactionScore: string;
+    satisfactionScore: number;
     transferredToSupervisorCount: number;
 }
 

@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect, useCallback, useRef, Suspense, useMemo } from 'react';
@@ -6,7 +7,7 @@ import { getConfig } from '@/actions/config';
 import { getOperatorState } from '@/actions/asterisk';
 import { findContactByPhone } from '@/actions/crm';
 import { CallerInfoCard } from '@/components/operator/caller-info-card';
-import { AlertTriangle, Loader2, User as UserIcon, Phone, Clock, MessageSquare, PhoneOff, UserX, UserRound, Moon, Sun, PhoneMissed } from 'lucide-react';
+import { AlertTriangle, Loader2, User as UserIcon, Phone, Clock, MessageSquare, PhoneOff, UserX, UserRound, Moon, Sun, PhoneMissed, Star } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
@@ -146,6 +147,14 @@ function MyKpiComponent({ user }: { user: User }) {
         const answeredCalls = calls.filter(c => c.status === 'ANSWERED' && c.billsec !== undefined);
         const missedCalls = calls.filter(c => c.status !== 'ANSWERED');
 
+        const satisfactionScores = answeredCalls
+            .map(c => c.satisfaction ? parseInt(c.satisfaction, 10) : NaN)
+            .filter(s => !isNaN(s));
+
+        const avgSatisfaction = satisfactionScores.length > 0
+            ? (satisfactionScores.reduce((acc, score) => acc + score, 0) / satisfactionScores.length).toFixed(2)
+            : 'N/A';
+
         const totalAnswered = answeredCalls.length;
         const totalTalkTime = answeredCalls.reduce((acc, c) => acc + (c.billsec || 0), 0);
         const avgHandleTime = totalAnswered > 0 ? totalTalkTime / totalAnswered : 0;
@@ -155,6 +164,7 @@ function MyKpiComponent({ user }: { user: User }) {
             totalMissed: missedCalls.length.toString(),
             totalTalkTime: formatTime(totalTalkTime),
             avgHandleTime: formatTime(avgHandleTime),
+            avgSatisfaction,
         };
     }, [calls]);
 
@@ -171,7 +181,8 @@ function MyKpiComponent({ user }: { user: User }) {
             </CardHeader>
             <CardContent>
                  {isLoading ? (
-                     <div className="grid gap-4 md:grid-cols-4">
+                     <div className="grid gap-4 md:grid-cols-5">
+                        <KpiSkeleton />
                         <KpiSkeleton />
                         <KpiSkeleton />
                         <KpiSkeleton />
@@ -184,11 +195,12 @@ function MyKpiComponent({ user }: { user: User }) {
                         <AlertDescription>{error}</AlertDescription>
                     </Alert>
                 ) : (
-                    <div className="grid gap-4 md:grid-cols-4">
+                    <div className="grid gap-4 md:grid-cols-5">
                         <KpiCard title="Всего отвечено" value={kpiData.totalAnswered} icon={Phone} />
                         <KpiCard title="Пропущено" value={kpiData.totalMissed} icon={PhoneMissed} />
                         <KpiCard title="Общее время разговора" value={kpiData.totalTalkTime} icon={MessageSquare} />
                         <KpiCard title="Среднее время обработки" value={kpiData.avgHandleTime} icon={Clock} />
+                        <KpiCard title="Средняя оценка" value={kpiData.avgSatisfaction} icon={Star} />
                     </div>
                 )}
             </CardContent>

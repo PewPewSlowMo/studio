@@ -1,3 +1,4 @@
+
 'use client';
 
 import * as React from 'react';
@@ -13,7 +14,7 @@ import type { OperatorReportData } from '@/lib/types';
 import { format, parseISO, isValid } from 'date-fns';
 import { ru } from 'date-fns/locale';
 import { Skeleton } from '../ui/skeleton';
-import { ArrowDown, ArrowUp } from 'lucide-react';
+import { ArrowDown, ArrowUp, Star } from 'lucide-react';
 import { Button } from '../ui/button';
 import { Badge } from '../ui/badge';
 import { cn } from '@/lib/utils';
@@ -51,7 +52,7 @@ const TableSkeleton = () => (
                 <TableHead>Пропущено (%)</TableHead>
                 <TableHead>Ср. разговор</TableHead>
                 <TableHead>Ср. ожидание</TableHead>
-                <TableHead>Оценка</TableHead>
+                <TableHead>Ср. оценка</TableHead>
                 <TableHead>Переводы</TableHead>
             </TableRow>
         </TableHeader>
@@ -135,7 +136,7 @@ export function OperatorReportTable({ data, isLoading, onOperatorClick, selected
                         <SortableHeader sortKey="missedCallsPercentage">Пропущено</SortableHeader>
                         <SortableHeader sortKey="avgTalkTime">Ср. разговор</SortableHeader>
                         <SortableHeader sortKey="avgWaitTime">Ср. ожидание</SortableHeader>
-                        <SortableHeader sortKey="satisfactionScore">Оценка</SortableHeader>
+                        <SortableHeader sortKey="satisfactionScore">Ср. оценка</SortableHeader>
                         <SortableHeader sortKey="transferredToSupervisorCount">Переводы</SortableHeader>
                     </TableRow>
                 </TableHeader>
@@ -160,7 +161,12 @@ export function OperatorReportTable({ data, isLoading, onOperatorClick, selected
                                 </TableCell>
                                 <TableCell>{formatTime(op.avgTalkTime)}</TableCell>
                                 <TableCell>{formatTime(op.avgWaitTime)}</TableCell>
-                                <TableCell>{op.satisfactionScore}</TableCell>
+                                <TableCell>
+                                    <div className="flex items-center gap-1">
+                                       <Star className={cn("h-4 w-4", op.satisfactionScore > 0 ? "text-yellow-400 fill-yellow-400" : "text-muted-foreground")} />
+                                       <span>{op.satisfactionScore > 0 ? op.satisfactionScore.toFixed(2) : 'N/A'}</span>
+                                    </div>
+                                </TableCell>
                                 <TableCell>{op.transferredToSupervisorCount}</TableCell>
                             </TableRow>
                         ))

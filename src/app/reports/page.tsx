@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect, useMemo, useTransition } from 'react';
@@ -172,7 +173,7 @@ export default function ReportsPage() {
             const missedCallsPercentage = totalIncoming > 0 ? (missedCallsCount / totalIncoming) * 100 : 0;
             
             const totalTalkTime = answeredIncomingCalls.reduce((acc, c) => acc + (c.billsec || 0), 0);
-            const avgTalkTime = answeredIncomingCalls.length > 0 ? totalTalkTime / totalTalkTime : 0;
+            const avgTalkTime = answeredIncomingCalls.length > 0 ? totalTalkTime / answeredIncomingCalls.length : 0;
             
             const totalWaitTime = answeredIncomingCalls.reduce((acc, c) => acc + (c.waitTime || 0), 0);
             const avgWaitTime = answeredIncomingCalls.length > 0 ? totalWaitTime / answeredIncomingCalls.length : 0;
@@ -181,20 +182,14 @@ export default function ReportsPage() {
             const firstCallTime = callTimestamps.length > 0 ? new Date(Math.min(...callTimestamps)) : null;
             const lastCallTime = callTimestamps.length > 0 ? new Date(Math.max(...callTimestamps)) : null;
 
-            const satisfactionScores = operatorCalls
-                .map(c => findAppealByFlexibleId(appeals, c.id)?.satisfaction)
-                .filter((s): s is 'yes' | 'no' => !!s);
+            const satisfactionScores = answeredIncomingCalls
+                .map(c => c.satisfaction ? parseInt(c.satisfaction, 10) : NaN)
+                .filter(s => !isNaN(s));
             
-            const mostFrequentSatisfaction = (scores: Array<'yes' | 'no'>) => {
-                if (scores.length === 0) return 'N/A';
-                const counts = scores.reduce((acc, score) => {
-                    acc[score] = (acc[score] || 0) + 1;
-                    return acc;
-                }, {} as Record<'yes' | 'no', number>);
-                
-                const mostFrequent = Object.entries(counts).sort((a, b) => b[1] - a[1])[0];
-                return mostFrequent ? (mostFrequent[0] === 'yes' ? 'Положительная' : 'Отрицательная') : 'N/A';
-            };
+            const avgSatisfaction = satisfactionScores.length > 0 
+                ? satisfactionScores.reduce((a, b) => a + b, 0) / satisfactionScores.length
+                : 0;
+
             
             return {
                 operatorId: operator.id,
@@ -207,7 +202,7 @@ export default function ReportsPage() {
                 missedCallsCount: missedCallsCount,
                 avgTalkTime: avgTalkTime,
                 avgWaitTime: avgWaitTime,
-                satisfactionScore: mostFrequentSatisfaction(satisfactionScores), 
+                satisfactionScore: avgSatisfaction,
                 transferredToSupervisorCount: 0, 
             };
         }).filter((data): data is OperatorReportData => data !== null);
