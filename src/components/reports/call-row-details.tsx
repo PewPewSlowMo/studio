@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import type { Call, Appeal, CrmContact, User } from '@/lib/types';
-import { Loader2, Info, CheckCircle2, XCircle, FileAudio, FileText } from 'lucide-react';
+import { Loader2, Info, CheckCircle2, XCircle, FileAudio, FileText, Star } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { getAppeals } from '@/actions/appeals';
 import { findContactByPhone } from '@/actions/crm';
@@ -162,6 +162,7 @@ export function CallRowDetails({ call, user, isCrmEditable = true }: CallRowDeta
                          <p><strong>Приоритет:</strong> <Badge variant="outline" className="capitalize">{priorityMap[appeal.priority] || appeal.priority}</Badge></p>
                          <p><strong>Удовлетворенность:</strong> <Badge variant="outline" className="capitalize">{satisfactionMap[appeal.satisfaction] || appeal.satisfaction}</Badge></p>
                          <p><strong>Нужен контакт:</strong> {appeal.followUp ? 'Да' : 'Нет'}</p>
+                         {call.satisfaction && <p className="flex items-center gap-1"><strong>Оценка (IVR):</strong> <Badge variant="secondary"><Star className="h-3 w-3 mr-1 text-yellow-500 fill-yellow-500" />{call.satisfaction}</Badge></p>}
                        </div>
                        <Separator className="my-2" />
                        <p><strong>Описание:</strong></p>

@@ -9,7 +9,7 @@ import {
   DialogTitle,
   DialogDescription
 } from '@/components/ui/dialog';
-import { Loader2, FileText, Info, CheckCircle2, XCircle, Download, FileAudio } from 'lucide-react';
+import { Loader2, FileText, Info, CheckCircle2, XCircle, Download, FileAudio, Star } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { getAppeals } from '@/actions/appeals';
 import { findContactByPhone } from '@/actions/crm';
@@ -76,6 +76,7 @@ export function CallDetailsDialog({ isOpen, onOpenChange, call, user, isCrmEdita
                         <p><strong>Очередь:</strong> {call?.queue || 'Без очереди'}</p>
                         <p><strong>Время разговора:</strong> {formatDuration(call.billsec)}</p>
                         <p><strong>Время ожидания:</strong> {formatDuration(call.waitTime)}</p>
+                         {call.satisfaction && <p className="flex items-center gap-1"><strong>Оценка (IVR):</strong> <Badge variant="secondary"><Star className="h-3 w-3 mr-1 text-yellow-500 fill-yellow-500" />{call.satisfaction}</Badge></p>}
                     </div>
                 </div>
                 <Separator orientation="vertical" />
@@ -90,4 +91,3 @@ export function CallDetailsDialog({ isOpen, onOpenChange, call, user, isCrmEdita
     </Dialog>
   );
 }
-
