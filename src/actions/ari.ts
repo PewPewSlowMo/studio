@@ -70,6 +70,10 @@ async function fetchFromAri(connection: AriConnection, path: string, options: Re
 
 async function getAriChannelVariable(connection: AriConnection, channelId: string, variable: string): Promise<string | null> {
     const response = await fetchFromAri(connection, `channels/${channelId}/variable?variable=${variable}`);
+    if (response.status === 404) {
+        // This is expected if the channel hung up during polling.
+        return null;
+    }
     if (!response.ok) {
         return null;
     }
@@ -77,8 +81,12 @@ async function getAriChannelVariable(connection: AriConnection, channelId: strin
     return result.value || null;
 }
 
-export async function getAriChannelDetails(connection: AriConnection, channelId: string): Promise<any> {
+export async function getAriChannelDetails(connection: AriConnection, channelId: string): Promise<any | null> {
     const response = await fetchFromAri(connection, `channels/${channelId}`);
+    if (response.status === 404) {
+        // Channel hung up, this is not an error, just means the call is over.
+        return null;
+    }
     if (!response.ok) {
         throw new Error(`Failed to get channel details for ${channelId}: ${response.statusText}`);
     }

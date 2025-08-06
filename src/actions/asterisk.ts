@@ -71,8 +71,12 @@ export async function getOperatorState(
         const channelId = ariEndpoint.channel_ids?.[0];
 
         if (channelId) {
+            // This function can return null if the channel was hung up during polling.
             const channelDetails = await getAriChannelDetails(config.ari, channelId);
 
+            // Only update with channel data if details were successfully fetched.
+            // If channelDetails is null, it means the call just ended, and we should
+            // stick with the base endpoint status.
             if (channelDetails) {
                 // Prioritize the uniqueid from channel variables if available
                 const uniqueId = channelDetails.uniqueid_from_vars;
