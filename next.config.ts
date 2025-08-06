@@ -19,6 +19,10 @@ const nextConfig: NextConfig = {
     ],
   },
   serverExternalPackages: ['asterisk-manager', 'mysql2', 'sqlite3', 'xlsx'],
+  // Ignore watching the data directory to prevent server restarts in dev mode
+  watchOptions: {
+    ignored: ['**/data/**'],
+  },
 };
 
 export default nextConfig;
