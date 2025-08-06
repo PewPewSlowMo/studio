@@ -110,16 +110,16 @@ export default function AdminPage() {
       ]);
       
       setAriStatus(ariResult.success ? 'Connected' : 'Failed');
-      if (ariResult.success) setAriVersion(ariResult.data?.version);
+      if (ariResult.success) setAriVersion(ariResult.data?.version || 'N/A');
 
       setAmiStatus(amiResult.success ? 'Connected' : 'Failed');
-      if (amiResult.success) setAmiVersion(amiResult.data?.version);
+      if (amiResult.success) setAmiVersion(amiResult.data?.version || 'N/A');
 
       setCdrStatus(cdrResult.success ? 'Connected' : 'Failed');
-      if (cdrResult.success) setCdrVersion(cdrResult.data?.version);
+      if (cdrResult.success) setCdrVersion(cdrResult.data?.version || 'N/A');
 
       setAppDbStatus(appDbResult.success ? 'Connected' : 'Failed');
-      if (appDbResult.success) setAppDbVersion(appDbResult.data?.version);
+      if (appDbResult.success) setAppDbVersion(appDbResult.data?.version || 'N/A');
       
       setIsTestingAri(false);
       setIsTestingAmi(false);
@@ -137,7 +137,7 @@ export default function AdminPage() {
     const result = await testAriConnection(ariConnection);
     if (result.success) {
       setAriStatus('Connected');
-      setAriVersion(result.data?.version);
+      setAriVersion(result.data?.version || 'N/A');
       toast({ title: 'ARI Connection Successful', description: `Connected to Asterisk ${result.data?.version || ''}` });
     } else {
       setAriStatus('Failed');
@@ -153,7 +153,7 @@ export default function AdminPage() {
     const result = await testAmiConnection(amiConnection);
     if (result.success) {
       setAmiStatus('Connected');
-      setAmiVersion(result.data?.version);
+      setAmiVersion(result.data?.version || 'N/A');
       toast({ title: 'AMI Connection Successful', description: `Connected to Asterisk ${result.data?.version || ''}` });
     } else {
       setAmiStatus('Failed');
@@ -169,7 +169,7 @@ export default function AdminPage() {
     const result = await testCdrConnection(cdrConnection);
     if (result.success) {
       setCdrStatus('Connected');
-      setCdrVersion(result.data?.version);
+      setCdrVersion(result.data?.version || 'N/A');
       toast({ title: 'CDR DB Connection Test Successful', description: `Connected to MySQL ${result.data?.version || ''}` });
     } else {
       setCdrStatus('Failed');
@@ -185,7 +185,7 @@ export default function AdminPage() {
     const result = await testAppDbConnection();
     if (result.success) {
       setAppDbStatus('Connected');
-      setAppDbVersion(result.data?.version);
+      setAppDbVersion(result.data?.version || 'N/A');
       toast({ title: 'App DB Connection Successful', description: `Connected to the application SQLite database.` });
     } else {
       setAppDbStatus('Failed');
