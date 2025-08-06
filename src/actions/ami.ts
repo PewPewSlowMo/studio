@@ -35,18 +35,21 @@ async function withRetry<T>(fn: () => Promise<T>, retries = 1, delay = 100): Pro
 
 /**
  * Executes an AMI command and reliably collects all related events.
- * It sends an action and then waits for a short, fixed duration to gather all response events,
- * which is more reliable than waiting for a specific completion event that might arrive prematurely.
+ * It sends an action and then waits for a specific "completion" event from Asterisk,
+ * which is more robust than waiting for a fixed duration.
  */
 function runAmiCommand<T extends Record<string, any>>(
   connection: AmiConnection,
   action: Record<string, string>,
-  collectionTimeMs: number = 200 // Time in ms to wait for events after sending the action.
+  completionEventName?: string // Optional: The name of the event that signals the end of the list.
 ): Promise<T[]> {
   const commandFn = () => new Promise<T[]>((resolve, reject) => {
     let ami: any;
     const results: T[] = [];
     let isResolved = false;
+
+    // Use the action's name to generate the default completion event if not provided
+    const finalCompletionEvent = completionEventName || `${action.Action}Complete`;
 
     const timeout = setTimeout(() => {
         if (!isResolved) {
@@ -68,46 +71,58 @@ function runAmiCommand<T extends Record<string, any>>(
         validatedConnection.password,
         true // Enable events
       );
+
+      const cleanUpAndResolve = (data: T[]) => {
+          if (!isResolved) {
+              isResolved = true;
+              clearTimeout(timeout);
+              if (ami) ami.disconnect();
+              writeToLog(LOG_COMPONENT, { level: 'INFO', message: `AMI Action Complete. Total events received: ${data.length}`, action });
+              resolve(data);
+          }
+      }
       
       ami.on('managerevent', (event: T) => {
-        results.push(event); // Collect ALL events
+        // Collect all events until we hit the completion event.
+        if (event.event?.toLowerCase() === finalCompletionEvent.toLowerCase()) {
+            cleanUpAndResolve(results);
+        } else {
+            results.push(event);
+        }
       });
       
-      ami.on('response', (response: T) => {
-          // Some commands (like CoreSettings) send their data in the 'response' callback, not as separate events.
-          // Let's add it to our results array.
+      ami.on('response', (response: T & { eventlist?: string }) => {
+          // Some commands (like CoreSettings) send their data in the 'response' callback.
+          // Or they might indicate that they will be followed by a list of events.
           results.push(response);
+
+          // If the response indicates no further events are coming, we can resolve immediately.
+          if (response.eventlist?.toLowerCase() === 'off' || response.response?.toLowerCase() === 'success') {
+              // This handles simple commands that don't generate event lists.
+              // However, we need to wait a very short moment to catch any stray events.
+              setTimeout(() => cleanUpAndResolve(results), 50);
+          }
       });
       
       ami.on('error', (err: Error) => {
           if (!isResolved) {
               isResolved = true;
+              clearTimeout(timeout);
               if (ami) ami.disconnect();
               writeToLog(LOG_COMPONENT, { level: 'ERROR', message: 'AMI connection error', error: err.message, action });
               reject(err);
           }
       });
       
-      // Send the action, and if it fails immediately, reject.
       ami.action(action, (err: Error | null) => {
         if (err) {
           if (!isResolved) {
             isResolved = true;
+            clearTimeout(timeout);
             if (ami) ami.disconnect();
             writeToLog(LOG_COMPONENT, { level: 'ERROR', message: 'AMI action error', error: err.message, action });
             reject(err);
           }
-        } else {
-            // Action was sent successfully, now wait to collect events.
-            setTimeout(() => {
-                if (!isResolved) {
-                    isResolved = true;
-                    if (ami) ami.disconnect();
-                    clearTimeout(timeout);
-                    writeToLog(LOG_COMPONENT, { level: 'INFO', message: `AMI Action Complete. Total events received: ${results.length}`, action });
-                    resolve(results);
-                }
-            }, collectionTimeMs);
         }
       });
 
@@ -138,8 +153,7 @@ export async function testAmiConnection(
     const action = { Action: 'CoreSettings' };
     const events = await runAmiCommand<any>(
       connection,
-      action,
-      200
+      action
     );
     // Find an event that has the Asterisk version. This might be in a 'response' or a managerevent.
     const eventWithVersion = events.find(e => e.asteriskversion);
@@ -162,7 +176,8 @@ export async function getAmiEndpoint(
     const action = { Action: 'PJSIPShowEndpoint', Endpoint: endpointId };
     const rawEvents = await runAmiCommand<any>(
       connection,
-      action
+      action,
+      'EndpointDetailComplete' // This is the completion event for PJSIPShowEndpoint
     );
 
     // EndpointDetail contains high-level info.
@@ -212,7 +227,8 @@ export async function getAmiEndpoints(
     const action = { Action: 'PJSIPShowEndpoints' };
     const rawEvents = await runAmiCommand<any>(
       connection,
-      action
+      action,
+      'EndpointListComplete' // The official completion event name
     );
     
     const rawEndpoints = rawEvents.filter(e => e.event === 'EndpointList');
@@ -247,7 +263,7 @@ export async function getAmiQueues(
     const rawEvents = await runAmiCommand<any>(
       connection,
       action,
-      500 // Queues can sometimes take a bit longer to report all members.
+      'QueueStatusComplete' // The official completion event name
     );
 
     const rawQueues = rawEvents.filter(q => q.event === 'QueueParams');
@@ -264,3 +280,5 @@ export async function getAmiQueues(
     return { success: false, error: message };
   }
 }
+
+    
