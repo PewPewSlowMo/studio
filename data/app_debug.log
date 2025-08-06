@@ -13513,3 +13513,529 @@ Requesting URL: http://92.46.62.34:8088/ari/asterisk/info
   }
 }
 
+[2025-08-06 12:14:34.607] [AMI_ACTION]
+{
+  "level": "INFO",
+  "message": "Executing AMI action",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001"
+  }
+}
+
+[2025-08-06 12:14:35.582] [AMI_ACTION]
+{
+  "level": "INFO",
+  "message": "AMI Action Complete. Total events received: 8",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001"
+  }
+}
+
+[2025-08-06 12:14:36.523] [AMI_ACTION]
+{
+  "level": "INFO",
+  "message": "Executing AMI action",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001"
+  }
+}
+
+[2025-08-06 12:14:37.440] [AMI_ACTION]
+{
+  "level": "INFO",
+  "message": "AMI Action Complete. Total events received: 8",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001"
+  }
+}
+
+[2025-08-06 12:14:39.356] [AMI_ACTION]
+{
+  "level": "INFO",
+  "message": "Executing AMI action",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001"
+  }
+}
+
+[2025-08-06 12:14:40.344] [AMI_ACTION]
+{
+  "level": "INFO",
+  "message": "AMI Action Complete. Total events received: 8",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001"
+  }
+}
+
+[2025-08-06 12:14:42.388] [AMI_ACTION]
+{
+  "level": "INFO",
+  "message": "Executing AMI action",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001"
+  }
+}
+
+[2025-08-06 12:14:43.373] [AMI_ACTION]
+{
+  "level": "INFO",
+  "message": "AMI Action Complete. Total events received: 8",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001"
+  }
+}
+
+[2025-08-06 12:14:46.556] [AMI_ACTION]
+{
+  "level": "INFO",
+  "message": "Executing AMI action",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001"
+  }
+}
+
+[2025-08-06 12:14:47.561] [AMI_ACTION]
+{
+  "level": "INFO",
+  "message": "AMI Action Complete. Total events received: 8",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001"
+  }
+}
+
+[2025-08-06 12:14:49.083] [AMI_ACTION]
+{
+  "level": "INFO",
+  "message": "Executing AMI action",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001"
+  }
+}
+
+[2025-08-06 12:14:50.081] [AMI_ACTION]
+{
+  "level": "INFO",
+  "message": "AMI Action Complete. Total events received: 8",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001"
+  }
+}
+
+[2025-08-06 12:14:51.622] [AMI_ACTION]
+{
+  "level": "INFO",
+  "message": "Executing AMI action",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001"
+  }
+}
+
+[2025-08-06 12:14:52.632] [AMI_ACTION]
+{
+  "level": "INFO",
+  "message": "AMI Action Complete. Total events received: 8",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001"
+  }
+}
+
+[2025-08-06 12:14:54.578] [AMI_ACTION]
+{
+  "level": "INFO",
+  "message": "Executing AMI action",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001"
+  }
+}
+
+[2025-08-06 12:14:55.567] [AMI_ACTION]
+{
+  "level": "INFO",
+  "message": "AMI Action Complete. Total events received: 8",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001"
+  }
+}
+
+[2025-08-06 12:14:56.858] [AMI_ACTION]
+{
+  "level": "INFO",
+  "message": "Executing AMI action",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001"
+  }
+}
+
+[2025-08-06 12:14:57.765] [AMI_ACTION]
+{
+  "level": "INFO",
+  "message": "AMI Action Complete. Total events received: 8",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001"
+  }
+}
+
+[2025-08-06 12:14:58.719] [ARI Fetch (GET)]
+Requesting URL: http://92.46.62.34:8088/ari/asterisk/info
+
+[2025-08-06 12:14:59.280] [ARI Fetch (GET)]
+{
+  "level": "INFO",
+  "url": "http://92.46.62.34:8088/ari/asterisk/info",
+  "status": 200
+}
+
+[2025-08-06 12:15:00.397] [AMI_ACTION]
+{
+  "level": "INFO",
+  "message": "Executing AMI action",
+  "action": {
+    "Action": "CoreSettings"
+  }
+}
+
+[2025-08-06 12:15:00.744] [AMI_ACTION]
+{
+  "level": "INFO",
+  "message": "Executing AMI action",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001"
+  }
+}
+
+[2025-08-06 12:15:01.382] [AMI_ACTION]
+{
+  "level": "INFO",
+  "message": "AMI Action Complete. Total events received: 3",
+  "action": {
+    "Action": "CoreSettings"
+  }
+}
+
+[2025-08-06 12:15:01.731] [AMI_ACTION]
+{
+  "level": "INFO",
+  "message": "AMI Action Complete. Total events received: 8",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001"
+  }
+}
+
+[2025-08-06 12:15:03.338] [AMI_ACTION]
+{
+  "level": "INFO",
+  "message": "Executing AMI action",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001"
+  }
+}
+
+[2025-08-06 12:15:04.320] [AMI_ACTION]
+{
+  "level": "INFO",
+  "message": "AMI Action Complete. Total events received: 8",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001"
+  }
+}
+
+[2025-08-06 12:15:05.347] [ARI Fetch (GET)]
+Requesting URL: http://92.46.62.34:8088/ari/asterisk/info
+
+[2025-08-06 12:15:05.921] [ARI Fetch (GET)]
+{
+  "level": "INFO",
+  "url": "http://92.46.62.34:8088/ari/asterisk/info",
+  "status": 200
+}
+
+[2025-08-06 12:15:06.634] [AMI_ACTION]
+{
+  "level": "INFO",
+  "message": "Executing AMI action",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001"
+  }
+}
+
+[2025-08-06 12:15:06.975] [AMI_ACTION]
+{
+  "level": "INFO",
+  "message": "Executing AMI action",
+  "action": {
+    "Action": "CoreSettings"
+  }
+}
+
+[2025-08-06 12:15:07.624] [AMI_ACTION]
+{
+  "level": "INFO",
+  "message": "AMI Action Complete. Total events received: 8",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001"
+  }
+}
+
+[2025-08-06 12:15:07.951] [AMI_ACTION]
+{
+  "level": "INFO",
+  "message": "AMI Action Complete. Total events received: 3",
+  "action": {
+    "Action": "CoreSettings"
+  }
+}
+
+[2025-08-06 12:15:09.431] [AMI_ACTION]
+{
+  "level": "INFO",
+  "message": "Executing AMI action",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001"
+  }
+}
+
+[2025-08-06 12:15:10.420] [AMI_ACTION]
+{
+  "level": "INFO",
+  "message": "AMI Action Complete. Total events received: 8",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001"
+  }
+}
+
+[2025-08-06 12:15:11.705] [AMI_ACTION]
+{
+  "level": "INFO",
+  "message": "Executing AMI action",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001"
+  }
+}
+
+[2025-08-06 12:15:12.681] [AMI_ACTION]
+{
+  "level": "INFO",
+  "message": "AMI Action Complete. Total events received: 8",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001"
+  }
+}
+
+[2025-08-06 12:15:14.689] [ARI Fetch (GET)]
+Requesting URL: http://92.46.62.34:8088/ari/asterisk/info
+
+[2025-08-06 12:15:15.253] [ARI Fetch (GET)]
+{
+  "level": "INFO",
+  "url": "http://92.46.62.34:8088/ari/asterisk/info",
+  "status": 200
+}
+
+[2025-08-06 12:15:16.093] [AMI_ACTION]
+{
+  "level": "INFO",
+  "message": "Executing AMI action",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001"
+  }
+}
+
+[2025-08-06 12:15:16.099] [AMI_ACTION]
+{
+  "level": "INFO",
+  "message": "Executing AMI action",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001"
+  }
+}
+
+[2025-08-06 12:15:17.078] [AMI_ACTION]
+{
+  "level": "INFO",
+  "message": "AMI Action Complete. Total events received: 8",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001"
+  }
+}
+
+[2025-08-06 12:15:17.096] [AMI_ACTION]
+{
+  "level": "INFO",
+  "message": "AMI Action Complete. Total events received: 8",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001"
+  }
+}
+
+[2025-08-06 12:15:18.341] [AMI_ACTION]
+{
+  "level": "INFO",
+  "message": "Executing AMI action",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001"
+  }
+}
+
+[2025-08-06 12:15:19.325] [AMI_ACTION]
+{
+  "level": "INFO",
+  "message": "AMI Action Complete. Total events received: 8",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001"
+  }
+}
+
+[2025-08-06 12:15:21.355] [AMI_ACTION]
+{
+  "level": "INFO",
+  "message": "Executing AMI action",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001"
+  }
+}
+
+[2025-08-06 12:15:22.336] [AMI_ACTION]
+{
+  "level": "INFO",
+  "message": "AMI Action Complete. Total events received: 8",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001"
+  }
+}
+
+[2025-08-06 12:15:24.288] [AMI_ACTION]
+{
+  "level": "INFO",
+  "message": "Executing AMI action",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001"
+  }
+}
+
+[2025-08-06 12:15:25.276] [AMI_ACTION]
+{
+  "level": "INFO",
+  "message": "AMI Action Complete. Total events received: 8",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001"
+  }
+}
+
+[2025-08-06 12:15:27.255] [AMI_ACTION]
+{
+  "level": "INFO",
+  "message": "Executing AMI action",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001"
+  }
+}
+
+[2025-08-06 12:15:28.228] [AMI_ACTION]
+{
+  "level": "INFO",
+  "message": "AMI Action Complete. Total events received: 8",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001"
+  }
+}
+
+[2025-08-06 12:15:30.327] [AMI_ACTION]
+{
+  "level": "INFO",
+  "message": "Executing AMI action",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001"
+  }
+}
+
+[2025-08-06 12:15:31.227] [AMI_ACTION]
+{
+  "level": "INFO",
+  "message": "AMI Action Complete. Total events received: 8",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001"
+  }
+}
+
+[2025-08-06 12:16:16.236] [AMI_ACTION]
+{
+  "level": "INFO",
+  "message": "Executing AMI action",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001"
+  }
+}
+
+[2025-08-06 12:16:16.258] [AMI_ACTION]
+{
+  "level": "INFO",
+  "message": "Executing AMI action",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001"
+  }
+}
+
+[2025-08-06 12:16:17.242] [AMI_ACTION]
+{
+  "level": "INFO",
+  "message": "AMI Action Complete. Total events received: 8",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001"
+  }
+}
+
+[2025-08-06 12:16:18.227] [AMI_ACTION]
+{
+  "level": "INFO",
+  "message": "AMI Action Complete. Total events received: 8",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001"
+  }
+}
+

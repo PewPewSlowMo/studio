@@ -127,7 +127,7 @@ export async function testAriConnection(
     const response = await fetchFromAri(connection, 'asterisk/info');
     if (response.ok) {
         const data = await response.json();
-        const systemInfo = data.system_info;
+        const systemInfo = data.system; // Corrected from system_info
         if (systemInfo && systemInfo.version) {
           return { success: true, data: { version: systemInfo.version } };
         }
