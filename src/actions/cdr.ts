@@ -37,14 +37,14 @@ async function createCdrConnection(connection: CdrConnection) {
 
 export async function testCdrConnection(
   connection: CdrConnection
-): Promise<{ success: boolean; error?: string }> {
+): Promise<{ success: boolean; data?: any; error?: string }> {
   let dbConnection;
   try {
     CdrConnectionSchema.parse(connection);
     dbConnection = await createCdrConnection(connection);
-    await dbConnection.ping();
-    return { success: true };
-
+    const [rows] = await dbConnection.execute("SELECT VERSION() as version;");
+    const result = (rows as any)[0];
+    return { success: true, data: { version: result.version } };
   } catch (e) {
     if (e instanceof z.ZodError) {
       return { success: false, error: `Invalid input: ${e.errors.map((err) => err.message).join(', ')}` };

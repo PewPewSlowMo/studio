@@ -126,16 +126,20 @@ function runAmiCommand<T extends Record<string, any>>(
 
 export async function testAmiConnection(
   connection: AmiConnection
-): Promise<{ success: boolean; error?: string }> {
+): Promise<{ success: boolean; data?: any; error?: string }> {
   try {
-    const action = { Action: 'Ping' };
-    // For a simple ping, a very short collection time is fine.
-    await runAmiCommand<any>(
+    const action = { Action: 'CoreStatus' };
+    const events = await runAmiCommand<any>(
       connection,
       action,
-      100
+      200
     );
-    return { success: true };
+    // Find the first event that has the Asterisk version.
+    const statusEvent = events.find(e => e.asteriskversion);
+    if (statusEvent) {
+      return { success: true, data: { version: statusEvent.asteriskversion } };
+    }
+    return { success: true, data: { version: "Unknown (Connected)" } };
   } catch (e) {
     const message = e instanceof Error ? e.message : 'An unknown error occurred.';
     return { success: false, error: message };

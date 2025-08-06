@@ -127,7 +127,11 @@ export async function testAriConnection(
     const response = await fetchFromAri(connection, 'asterisk/info');
     if (response.ok) {
         const data = await response.json();
-        return { success: true, data };
+        const systemInfo = data.system_info;
+        if (systemInfo) {
+          return { success: true, data: { version: systemInfo.version } };
+        }
+        return { success: true, data: { version: 'Unknown (Connected)' } };
     }
     const errorBody = await response.text();
     const errorMessage = `Connection failed with status ${response.status}: ${errorBody}`;
