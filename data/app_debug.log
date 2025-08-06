@@ -5290,3 +5290,53 @@ Requesting URL: http://92.46.62.34:8088/ari/asterisk/info
   "status": 200
 }
 
+[2025-08-06 10:28:10.897] [ARI Fetch (GET)]
+Requesting URL: http://92.46.62.34:8088/ari/asterisk/info
+
+[2025-08-06 10:28:11.384] [ARI Fetch (GET)]
+{
+  "level": "INFO",
+  "url": "http://92.46.62.34:8088/ari/asterisk/info",
+  "status": 200
+}
+
+[2025-08-06 10:28:14.912] [ARI Fetch (GET)]
+Requesting URL: http://92.46.62.34:8088/ari/asterisk/info
+
+[2025-08-06 10:28:15.159] [ARI Fetch (GET)]
+{
+  "level": "INFO",
+  "url": "http://92.46.62.34:8088/ari/asterisk/info",
+  "status": 200
+}
+
+[2025-08-06 10:28:44.094] [ARI Fetch (GET)]
+Requesting URL: http://92.46.62.34:8088/ari/asterisk/info
+
+[2025-08-06 10:28:44.587] [ARI Fetch (GET)]
+{
+  "level": "INFO",
+  "url": "http://92.46.62.34:8088/ari/asterisk/info",
+  "status": 200
+}
+
+[2025-08-06 10:28:48.271] [ARI Fetch (GET)]
+Requesting URL: http://92.46.62.34:8088/ari/asterisk/info
+
+[2025-08-06 10:28:48.515] [ARI Fetch (GET)]
+{
+  "level": "INFO",
+  "url": "http://92.46.62.34:8088/ari/asterisk/info",
+  "status": 200
+}
+
+[2025-08-06 10:28:52.608] [ARI Fetch (GET)]
+Requesting URL: http://92.46.62.34:8088/ari/asterisk/info
+
+[2025-08-06 10:28:53.100] [ARI Fetch (GET)]
+{
+  "level": "INFO",
+  "url": "http://92.46.62.34:8088/ari/asterisk/info",
+  "status": 200
+}
+
