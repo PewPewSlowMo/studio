@@ -130,7 +130,15 @@ export default function ReportsPage() {
         startExportTransition(async () => {
             const result = await exportOperatorReport(dateRange);
             if (result.success && result.data) {
-                const blob = new Blob([result.data], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+                // Decode Base64 and create a Blob
+                const byteCharacters = atob(result.data);
+                const byteNumbers = new Array(byteCharacters.length);
+                for (let i = 0; i < byteCharacters.length; i++) {
+                    byteNumbers[i] = byteCharacters.charCodeAt(i);
+                }
+                const byteArray = new Uint8Array(byteNumbers);
+                const blob = new Blob([byteArray], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+
                 const url = window.URL.createObjectURL(blob);
                 const a = document.createElement('a');
                 a.href = url;
@@ -164,7 +172,7 @@ export default function ReportsPage() {
             const missedCallsPercentage = totalIncoming > 0 ? (missedCallsCount / totalIncoming) * 100 : 0;
             
             const totalTalkTime = answeredIncomingCalls.reduce((acc, c) => acc + (c.billsec || 0), 0);
-            const avgTalkTime = answeredIncomingCalls.length > 0 ? totalTalkTime / answeredIncomingCalls.length : 0;
+            const avgTalkTime = answeredIncomingCalls.length > 0 ? totalTalkTime / totalTalkTime : 0;
             
             const totalWaitTime = answeredIncomingCalls.reduce((acc, c) => acc + (c.waitTime || 0), 0);
             const avgWaitTime = answeredIncomingCalls.length > 0 ? totalWaitTime / answeredIncomingCalls.length : 0;

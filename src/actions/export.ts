@@ -40,7 +40,7 @@ const formatDate = (dateString?: string) => {
     }
 };
 
-export async function exportOperatorReport(dateRange: DateRangeParams): Promise<{ success: boolean; data?: Buffer; error?: string; }> {
+export async function exportOperatorReport(dateRange: DateRangeParams): Promise<{ success: boolean; data?: string; error?: string; }> {
     try {
         const config = await getConfig();
         const [callsResult, users, appeals] = await Promise.all([
@@ -100,8 +100,9 @@ export async function exportOperatorReport(dateRange: DateRangeParams): Promise<
         xlsx.utils.book_append_sheet(wb, wsDetailed, 'Детализация по звонкам');
 
         const buffer = xlsx.write(wb, { type: 'buffer', bookType: 'xlsx' });
+        const base64Data = buffer.toString('base64');
 
-        return { success: true, data: buffer };
+        return { success: true, data: base64Data };
     } catch (e) {
         const message = e instanceof Error ? e.message : 'An unknown error occurred';
         console.error('Failed to export report:', message);
