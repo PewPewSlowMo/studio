@@ -21541,3 +21541,2867 @@ Requesting URL: http://92.46.62.34:8088/ari/asterisk/info
   }
 }
 
+[2025-08-06 13:24:50.937] [AMI_ACTION]
+{
+  "level": "INFO",
+  "message": "Executing AMI action",
+  "action": {
+    "Action": "PJSIPShowEndpoints"
+  }
+}
+
+[2025-08-06 13:25:10.938] [AMI_ACTION]
+{
+  "level": "ERROR",
+  "message": "AMI command timed out after 20 seconds.",
+  "action": {
+    "Action": "PJSIPShowEndpoints",
+    "actionid": "1754486690942"
+  }
+}
+
+[2025-08-06 13:25:16.743] [AMI_ACTION]
+{
+  "level": "INFO",
+  "message": "Executing AMI action",
+  "action": {
+    "Action": "PJSIPShowEndpoints"
+  }
+}
+
+[2025-08-06 13:25:17.095] [AMI_ACTION]
+{
+  "level": "INFO",
+  "message": "Executing AMI action",
+  "action": {
+    "Action": "PJSIPShowEndpoints"
+  }
+}
+
+[2025-08-06 13:25:36.741] [AMI_ACTION]
+{
+  "level": "ERROR",
+  "message": "AMI command timed out after 20 seconds.",
+  "action": {
+    "Action": "PJSIPShowEndpoints",
+    "actionid": "1754486716746"
+  }
+}
+
+[2025-08-06 13:25:37.108] [AMI_ACTION]
+{
+  "level": "ERROR",
+  "message": "AMI command timed out after 20 seconds.",
+  "action": {
+    "Action": "PJSIPShowEndpoints",
+    "actionid": "1754486717099"
+  }
+}
+
+[2025-08-06 13:25:38.944] [AMI_ACTION]
+{
+  "level": "INFO",
+  "message": "Executing AMI action",
+  "action": {
+    "Action": "QueueStatus"
+  }
+}
+
+[2025-08-06 13:25:38.974] [AMI_ACTION]
+{
+  "level": "INFO",
+  "message": "Executing AMI action",
+  "action": {
+    "Action": "QueueStatus"
+  }
+}
+
+[2025-08-06 13:25:52.906] [AMI_ACTION]
+{
+  "level": "INFO",
+  "message": "Executing AMI action",
+  "action": {
+    "Action": "QueueStatus"
+  }
+}
+
+[2025-08-06 13:25:58.946] [AMI_ACTION]
+{
+  "level": "ERROR",
+  "message": "AMI command timed out after 20 seconds.",
+  "action": {
+    "Action": "QueueStatus",
+    "actionid": "1754486738948"
+  }
+}
+
+[2025-08-06 13:25:58.980] [AMI_ACTION]
+{
+  "level": "ERROR",
+  "message": "AMI command timed out after 20 seconds.",
+  "action": {
+    "Action": "QueueStatus",
+    "actionid": "1754486738978"
+  }
+}
+
+[2025-08-06 13:26:04.901] [ARI Fetch (GET)]
+Requesting URL: http://92.46.62.34:8088/ari/asterisk/info
+
+[2025-08-06 13:26:06.097] [ARI Fetch (GET)]
+Requesting URL: http://92.46.62.34:8088/ari/asterisk/info
+
+[2025-08-06 13:26:12.904] [AMI_ACTION]
+{
+  "level": "ERROR",
+  "message": "AMI command timed out after 20 seconds.",
+  "action": {
+    "Action": "QueueStatus",
+    "actionid": "1754486752911"
+  }
+}
+
+[2025-08-06 13:26:14.115] [AMI_ACTION]
+{
+  "level": "INFO",
+  "message": "Executing AMI action",
+  "action": {
+    "Action": "PJSIPShowEndpoints"
+  }
+}
+
+[2025-08-06 13:26:14.191] [AMI_ACTION]
+{
+  "level": "INFO",
+  "message": "Executing AMI action",
+  "action": {
+    "Action": "PJSIPShowEndpoints"
+  }
+}
+
+[2025-08-06 13:26:15.506] [ARI Fetch (GET)]
+{
+  "level": "ERROR",
+  "url": "http://92.46.62.34:8088/ari/asterisk/info",
+  "error": "Cannot connect to ARI server at 92.46.62.34:8088",
+  "details": {}
+}
+
+[2025-08-06 13:26:15.793] [AMI_ACTION]
+{
+  "level": "INFO",
+  "message": "Executing AMI action",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001"
+  }
+}
+
+[2025-08-06 13:26:16.487] [ARI Fetch (GET)]
+{
+  "level": "ERROR",
+  "url": "http://92.46.62.34:8088/ari/asterisk/info",
+  "error": "Cannot connect to ARI server at 92.46.62.34:8088",
+  "details": {}
+}
+
+[2025-08-06 13:26:17.830] [AMI_ACTION]
+{
+  "level": "INFO",
+  "message": "Executing AMI action",
+  "action": {
+    "Action": "CoreSettings"
+  }
+}
+
+[2025-08-06 13:26:34.117] [AMI_ACTION]
+{
+  "level": "ERROR",
+  "message": "AMI command timed out after 20 seconds.",
+  "action": {
+    "Action": "PJSIPShowEndpoints",
+    "actionid": "1754486774115"
+  }
+}
+
+[2025-08-06 13:26:34.192] [AMI_ACTION]
+{
+  "level": "ERROR",
+  "message": "AMI command timed out after 20 seconds.",
+  "action": {
+    "Action": "PJSIPShowEndpoints",
+    "actionid": "1754486774192"
+  }
+}
+
+[2025-08-06 13:26:34.597] [AMI_ACTION]
+{
+  "level": "INFO",
+  "message": "Executing AMI action",
+  "action": {
+    "Action": "QueueStatus"
+  }
+}
+
+[2025-08-06 13:26:34.665] [AMI_ACTION]
+{
+  "level": "INFO",
+  "message": "Executing AMI action",
+  "action": {
+    "Action": "QueueStatus"
+  }
+}
+
+[2025-08-06 13:26:35.794] [AMI_ACTION]
+{
+  "level": "ERROR",
+  "message": "AMI command timed out after 20 seconds.",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001",
+    "actionid": "1754486775804"
+  }
+}
+
+[2025-08-06 13:26:37.832] [AMI_ACTION]
+{
+  "level": "ERROR",
+  "message": "AMI command timed out after 20 seconds.",
+  "action": {
+    "Action": "CoreSettings",
+    "actionid": "1754486777831"
+  }
+}
+
+[2025-08-06 13:26:49.462] [ARI Fetch (GET)]
+Requesting URL: http://92.46.62.34:8088/ari/asterisk/info
+
+[2025-08-06 13:26:54.597] [AMI_ACTION]
+{
+  "level": "ERROR",
+  "message": "AMI command timed out after 20 seconds.",
+  "action": {
+    "Action": "QueueStatus",
+    "actionid": "1754486794599"
+  }
+}
+
+[2025-08-06 13:26:54.665] [AMI_ACTION]
+{
+  "level": "ERROR",
+  "message": "AMI command timed out after 20 seconds.",
+  "action": {
+    "Action": "QueueStatus",
+    "actionid": "1754486794665"
+  }
+}
+
+[2025-08-06 13:26:59.963] [ARI Fetch (GET)]
+{
+  "level": "ERROR",
+  "url": "http://92.46.62.34:8088/ari/asterisk/info",
+  "error": "Cannot connect to ARI server at 92.46.62.34:8088",
+  "details": {}
+}
+
+[2025-08-06 13:27:00.460] [AMI_ACTION]
+{
+  "level": "INFO",
+  "message": "Executing AMI action",
+  "action": {
+    "Action": "CoreSettings"
+  }
+}
+
+[2025-08-06 13:27:09.632] [AMI_ACTION]
+{
+  "level": "INFO",
+  "message": "Executing AMI action",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001"
+  }
+}
+
+[2025-08-06 13:27:09.643] [AMI_ACTION]
+{
+  "level": "INFO",
+  "message": "Executing AMI action",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001"
+  }
+}
+
+[2025-08-06 13:27:15.119] [AMI_ACTION]
+{
+  "level": "INFO",
+  "message": "Executing AMI action",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001"
+  }
+}
+
+[2025-08-06 13:27:20.465] [AMI_ACTION]
+{
+  "level": "ERROR",
+  "message": "AMI command timed out after 20 seconds.",
+  "action": {
+    "Action": "CoreSettings",
+    "actionid": "1754486820463"
+  }
+}
+
+[2025-08-06 13:27:29.636] [AMI_ACTION]
+{
+  "level": "ERROR",
+  "message": "AMI command timed out after 20 seconds.",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001",
+    "actionid": "1754486829633"
+  }
+}
+
+[2025-08-06 13:27:29.652] [AMI_ACTION]
+{
+  "level": "ERROR",
+  "message": "AMI command timed out after 20 seconds.",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001",
+    "actionid": "1754486829643"
+  }
+}
+
+[2025-08-06 13:27:32.177] [ARI Fetch (GET)]
+Requesting URL: http://92.46.62.34:8088/ari/asterisk/info
+
+[2025-08-06 13:27:35.120] [AMI_ACTION]
+{
+  "level": "ERROR",
+  "message": "AMI command timed out after 20 seconds.",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001",
+    "actionid": "1754486835120"
+  }
+}
+
+[2025-08-06 13:27:42.076] [AMI_ACTION]
+{
+  "level": "INFO",
+  "message": "Executing AMI action",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001"
+  }
+}
+
+[2025-08-06 13:27:42.181] [AMI_ACTION]
+{
+  "level": "INFO",
+  "message": "Executing AMI action",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001"
+  }
+}
+
+[2025-08-06 13:27:42.690] [ARI Fetch (GET)]
+{
+  "level": "ERROR",
+  "url": "http://92.46.62.34:8088/ari/asterisk/info",
+  "error": "Cannot connect to ARI server at 92.46.62.34:8088",
+  "details": {}
+}
+
+[2025-08-06 13:27:43.412] [AMI_ACTION]
+{
+  "level": "INFO",
+  "message": "Executing AMI action",
+  "action": {
+    "Action": "CoreSettings"
+  }
+}
+
+[2025-08-06 13:28:02.084] [AMI_ACTION]
+{
+  "level": "ERROR",
+  "message": "AMI command timed out after 20 seconds.",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001",
+    "actionid": "1754486862076"
+  }
+}
+
+[2025-08-06 13:28:02.181] [AMI_ACTION]
+{
+  "level": "ERROR",
+  "message": "AMI command timed out after 20 seconds.",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001",
+    "actionid": "1754486862182"
+  }
+}
+
+[2025-08-06 13:28:03.093] [AMI_ACTION]
+{
+  "level": "INFO",
+  "message": "Executing AMI action",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001"
+  }
+}
+
+[2025-08-06 13:28:03.167] [AMI_ACTION]
+{
+  "level": "INFO",
+  "message": "Executing AMI action",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001"
+  }
+}
+
+[2025-08-06 13:28:03.412] [AMI_ACTION]
+{
+  "level": "ERROR",
+  "message": "AMI command timed out after 20 seconds.",
+  "action": {
+    "Action": "CoreSettings",
+    "actionid": "1754486863414"
+  }
+}
+
+[2025-08-06 13:28:15.760] [AMI_ACTION]
+{
+  "level": "INFO",
+  "message": "Executing AMI action",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001"
+  }
+}
+
+[2025-08-06 13:28:23.097] [AMI_ACTION]
+{
+  "level": "ERROR",
+  "message": "AMI command timed out after 20 seconds.",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001",
+    "actionid": "1754486883093"
+  }
+}
+
+[2025-08-06 13:28:23.166] [AMI_ACTION]
+{
+  "level": "ERROR",
+  "message": "AMI command timed out after 20 seconds.",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001",
+    "actionid": "1754486883167"
+  }
+}
+
+[2025-08-06 13:28:24.903] [AMI_ACTION]
+{
+  "level": "INFO",
+  "message": "Executing AMI action",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001"
+  }
+}
+
+[2025-08-06 13:28:24.928] [AMI_ACTION]
+{
+  "level": "INFO",
+  "message": "Executing AMI action",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001"
+  }
+}
+
+[2025-08-06 13:28:35.763] [AMI_ACTION]
+{
+  "level": "ERROR",
+  "message": "AMI command timed out after 20 seconds.",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001",
+    "actionid": "1754486895761"
+  }
+}
+
+[2025-08-06 13:28:44.903] [AMI_ACTION]
+{
+  "level": "ERROR",
+  "message": "AMI command timed out after 20 seconds.",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001",
+    "actionid": "1754486904904"
+  }
+}
+
+[2025-08-06 13:28:44.938] [AMI_ACTION]
+{
+  "level": "ERROR",
+  "message": "AMI command timed out after 20 seconds.",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001",
+    "actionid": "1754486904929"
+  }
+}
+
+[2025-08-06 13:28:45.610] [AMI_ACTION]
+{
+  "level": "INFO",
+  "message": "Executing AMI action",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001"
+  }
+}
+
+[2025-08-06 13:28:45.623] [AMI_ACTION]
+{
+  "level": "INFO",
+  "message": "Executing AMI action",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001"
+  }
+}
+
+[2025-08-06 13:29:05.617] [AMI_ACTION]
+{
+  "level": "ERROR",
+  "message": "AMI command timed out after 20 seconds.",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001",
+    "actionid": "1754486925610"
+  }
+}
+
+[2025-08-06 13:29:05.637] [AMI_ACTION]
+{
+  "level": "ERROR",
+  "message": "AMI command timed out after 20 seconds.",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001",
+    "actionid": "1754486925623"
+  }
+}
+
+[2025-08-06 13:29:06.390] [AMI_ACTION]
+{
+  "level": "INFO",
+  "message": "Executing AMI action",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001"
+  }
+}
+
+[2025-08-06 13:29:06.418] [AMI_ACTION]
+{
+  "level": "INFO",
+  "message": "Executing AMI action",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001"
+  }
+}
+
+[2025-08-06 13:29:15.197] [AMI_ACTION]
+{
+  "level": "INFO",
+  "message": "Executing AMI action",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001"
+  }
+}
+
+[2025-08-06 13:29:26.393] [AMI_ACTION]
+{
+  "level": "ERROR",
+  "message": "AMI command timed out after 20 seconds.",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001",
+    "actionid": "1754486946390"
+  }
+}
+
+[2025-08-06 13:29:26.419] [AMI_ACTION]
+{
+  "level": "ERROR",
+  "message": "AMI command timed out after 20 seconds.",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001",
+    "actionid": "1754486946418"
+  }
+}
+
+[2025-08-06 13:29:26.954] [AMI_ACTION]
+{
+  "level": "INFO",
+  "message": "Executing AMI action",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001"
+  }
+}
+
+[2025-08-06 13:29:26.995] [AMI_ACTION]
+{
+  "level": "INFO",
+  "message": "Executing AMI action",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001"
+  }
+}
+
+[2025-08-06 13:29:35.198] [AMI_ACTION]
+{
+  "level": "ERROR",
+  "message": "AMI command timed out after 20 seconds.",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001",
+    "actionid": "1754486955197"
+  }
+}
+
+[2025-08-06 13:29:46.956] [AMI_ACTION]
+{
+  "level": "ERROR",
+  "message": "AMI command timed out after 20 seconds.",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001",
+    "actionid": "1754486966955"
+  }
+}
+
+[2025-08-06 13:29:46.994] [AMI_ACTION]
+{
+  "level": "ERROR",
+  "message": "AMI command timed out after 20 seconds.",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001",
+    "actionid": "1754486966996"
+  }
+}
+
+[2025-08-06 13:29:47.647] [AMI_ACTION]
+{
+  "level": "INFO",
+  "message": "Executing AMI action",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001"
+  }
+}
+
+[2025-08-06 13:29:58.227] [AMI_ACTION]
+{
+  "level": "INFO",
+  "message": "Executing AMI action",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001"
+  }
+}
+
+[2025-08-06 13:30:07.651] [AMI_ACTION]
+{
+  "level": "ERROR",
+  "message": "AMI command timed out after 20 seconds.",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001",
+    "actionid": "1754486987648"
+  }
+}
+
+[2025-08-06 13:30:08.309] [ARI Fetch (GET)]
+Requesting URL: http://92.46.62.34:8088/ari/asterisk/info
+
+[2025-08-06 13:30:15.178] [AMI_ACTION]
+{
+  "level": "INFO",
+  "message": "Executing AMI action",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001"
+  }
+}
+
+[2025-08-06 13:30:18.228] [AMI_ACTION]
+{
+  "level": "ERROR",
+  "message": "AMI command timed out after 20 seconds.",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001",
+    "actionid": "1754486998228"
+  }
+}
+
+[2025-08-06 13:30:18.835] [ARI Fetch (GET)]
+{
+  "level": "ERROR",
+  "url": "http://92.46.62.34:8088/ari/asterisk/info",
+  "error": "Cannot connect to ARI server at 92.46.62.34:8088",
+  "details": {}
+}
+
+[2025-08-06 13:30:19.037] [AMI_ACTION]
+{
+  "level": "INFO",
+  "message": "Executing AMI action",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001"
+  }
+}
+
+[2025-08-06 13:30:19.215] [AMI_ACTION]
+{
+  "level": "INFO",
+  "message": "Executing AMI action",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001"
+  }
+}
+
+[2025-08-06 13:30:19.538] [AMI_ACTION]
+{
+  "level": "INFO",
+  "message": "Executing AMI action",
+  "action": {
+    "Action": "CoreSettings"
+  }
+}
+
+[2025-08-06 13:30:35.181] [AMI_ACTION]
+{
+  "level": "ERROR",
+  "message": "AMI command timed out after 20 seconds.",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001",
+    "actionid": "1754487015179"
+  }
+}
+
+[2025-08-06 13:30:39.041] [AMI_ACTION]
+{
+  "level": "ERROR",
+  "message": "AMI command timed out after 20 seconds.",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001",
+    "actionid": "1754487019039"
+  }
+}
+
+[2025-08-06 13:30:39.217] [AMI_ACTION]
+{
+  "level": "ERROR",
+  "message": "AMI command timed out after 20 seconds.",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001",
+    "actionid": "1754487019215"
+  }
+}
+
+[2025-08-06 13:30:39.540] [AMI_ACTION]
+{
+  "level": "ERROR",
+  "message": "AMI command timed out after 20 seconds.",
+  "action": {
+    "Action": "CoreSettings",
+    "actionid": "1754487019539"
+  }
+}
+
+[2025-08-06 13:30:39.803] [AMI_ACTION]
+{
+  "level": "INFO",
+  "message": "Executing AMI action",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001"
+  }
+}
+
+[2025-08-06 13:30:40.098] [AMI_ACTION]
+{
+  "level": "INFO",
+  "message": "Executing AMI action",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001"
+  }
+}
+
+[2025-08-06 13:30:50.996] [ARI Fetch (GET)]
+Requesting URL: http://92.46.62.34:8088/ari/asterisk/info
+
+[2025-08-06 13:30:59.803] [AMI_ACTION]
+{
+  "level": "ERROR",
+  "message": "AMI command timed out after 20 seconds.",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001",
+    "actionid": "1754487039803"
+  }
+}
+
+[2025-08-06 13:31:00.098] [AMI_ACTION]
+{
+  "level": "ERROR",
+  "message": "AMI command timed out after 20 seconds.",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001",
+    "actionid": "1754487040100"
+  }
+}
+
+[2025-08-06 13:31:00.764] [AMI_ACTION]
+{
+  "level": "INFO",
+  "message": "Executing AMI action",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001"
+  }
+}
+
+[2025-08-06 13:31:01.520] [ARI Fetch (GET)]
+{
+  "level": "ERROR",
+  "url": "http://92.46.62.34:8088/ari/asterisk/info",
+  "error": "Cannot connect to ARI server at 92.46.62.34:8088",
+  "details": {}
+}
+
+[2025-08-06 13:31:15.588] [AMI_ACTION]
+{
+  "level": "INFO",
+  "message": "Executing AMI action",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001"
+  }
+}
+
+[2025-08-06 13:31:15.663] [AMI_ACTION]
+{
+  "level": "INFO",
+  "message": "Executing AMI action",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001"
+  }
+}
+
+[2025-08-06 13:31:20.771] [AMI_ACTION]
+{
+  "level": "ERROR",
+  "message": "AMI command timed out after 20 seconds.",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001",
+    "actionid": "1754487060765"
+  }
+}
+
+[2025-08-06 13:31:21.350] [AMI_ACTION]
+{
+  "level": "INFO",
+  "message": "Executing AMI action",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001"
+  }
+}
+
+[2025-08-06 13:31:35.593] [AMI_ACTION]
+{
+  "level": "ERROR",
+  "message": "AMI command timed out after 20 seconds.",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001",
+    "actionid": "1754487075590"
+  }
+}
+
+[2025-08-06 13:31:35.663] [AMI_ACTION]
+{
+  "level": "ERROR",
+  "message": "AMI command timed out after 20 seconds.",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001",
+    "actionid": "1754487075663"
+  }
+}
+
+[2025-08-06 13:31:41.356] [AMI_ACTION]
+{
+  "level": "ERROR",
+  "message": "AMI command timed out after 20 seconds.",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001",
+    "actionid": "1754487081351"
+  }
+}
+
+[2025-08-06 13:31:41.993] [AMI_ACTION]
+{
+  "level": "INFO",
+  "message": "Executing AMI action",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001"
+  }
+}
+
+[2025-08-06 13:32:02.017] [AMI_ACTION]
+{
+  "level": "ERROR",
+  "message": "AMI command timed out after 20 seconds.",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001",
+    "actionid": "1754487101996"
+  }
+}
+
+[2025-08-06 13:32:02.807] [AMI_ACTION]
+{
+  "level": "INFO",
+  "message": "Executing AMI action",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001"
+  }
+}
+
+[2025-08-06 13:32:15.529] [AMI_ACTION]
+{
+  "level": "INFO",
+  "message": "Executing AMI action",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001"
+  }
+}
+
+[2025-08-06 13:32:15.530] [AMI_ACTION]
+{
+  "level": "INFO",
+  "message": "Executing AMI action",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001"
+  }
+}
+
+[2025-08-06 13:32:22.817] [AMI_ACTION]
+{
+  "level": "ERROR",
+  "message": "AMI command timed out after 20 seconds.",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001",
+    "actionid": "1754487122807"
+  }
+}
+
+[2025-08-06 13:32:23.760] [AMI_ACTION]
+{
+  "level": "INFO",
+  "message": "Executing AMI action",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001"
+  }
+}
+
+[2025-08-06 13:32:35.532] [AMI_ACTION]
+{
+  "level": "ERROR",
+  "message": "AMI command timed out after 20 seconds.",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001",
+    "actionid": "1754487135530"
+  }
+}
+
+[2025-08-06 13:32:35.542] [AMI_ACTION]
+{
+  "level": "ERROR",
+  "message": "AMI command timed out after 20 seconds.",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001",
+    "actionid": "1754487135531"
+  }
+}
+
+[2025-08-06 13:32:43.761] [AMI_ACTION]
+{
+  "level": "ERROR",
+  "message": "AMI command timed out after 20 seconds.",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001",
+    "actionid": "1754487143761"
+  }
+}
+
+[2025-08-06 13:32:44.410] [AMI_ACTION]
+{
+  "level": "INFO",
+  "message": "Executing AMI action",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001"
+  }
+}
+
+[2025-08-06 13:33:04.421] [AMI_ACTION]
+{
+  "level": "ERROR",
+  "message": "AMI command timed out after 20 seconds.",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001",
+    "actionid": "1754487164411"
+  }
+}
+
+[2025-08-06 13:33:05.070] [AMI_ACTION]
+{
+  "level": "INFO",
+  "message": "Executing AMI action",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001"
+  }
+}
+
+[2025-08-06 13:33:15.455] [AMI_ACTION]
+{
+  "level": "INFO",
+  "message": "Executing AMI action",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001"
+  }
+}
+
+[2025-08-06 13:33:15.498] [AMI_ACTION]
+{
+  "level": "INFO",
+  "message": "Executing AMI action",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001"
+  }
+}
+
+[2025-08-06 13:33:25.080] [AMI_ACTION]
+{
+  "level": "ERROR",
+  "message": "AMI command timed out after 20 seconds.",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001",
+    "actionid": "1754487185071"
+  }
+}
+
+[2025-08-06 13:33:25.750] [AMI_ACTION]
+{
+  "level": "INFO",
+  "message": "Executing AMI action",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001"
+  }
+}
+
+[2025-08-06 13:33:35.460] [AMI_ACTION]
+{
+  "level": "ERROR",
+  "message": "AMI command timed out after 20 seconds.",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001",
+    "actionid": "1754487195455"
+  }
+}
+
+[2025-08-06 13:33:35.500] [AMI_ACTION]
+{
+  "level": "ERROR",
+  "message": "AMI command timed out after 20 seconds.",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001",
+    "actionid": "1754487195499"
+  }
+}
+
+[2025-08-06 13:33:45.753] [AMI_ACTION]
+{
+  "level": "ERROR",
+  "message": "AMI command timed out after 20 seconds.",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001",
+    "actionid": "1754487205751"
+  }
+}
+
+[2025-08-06 13:33:46.426] [AMI_ACTION]
+{
+  "level": "INFO",
+  "message": "Executing AMI action",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001"
+  }
+}
+
+[2025-08-06 13:34:06.437] [AMI_ACTION]
+{
+  "level": "ERROR",
+  "message": "AMI command timed out after 20 seconds.",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001",
+    "actionid": "1754487226427"
+  }
+}
+
+[2025-08-06 13:34:07.175] [AMI_ACTION]
+{
+  "level": "INFO",
+  "message": "Executing AMI action",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001"
+  }
+}
+
+[2025-08-06 13:34:15.634] [AMI_ACTION]
+{
+  "level": "INFO",
+  "message": "Executing AMI action",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001"
+  }
+}
+
+[2025-08-06 13:34:15.660] [AMI_ACTION]
+{
+  "level": "INFO",
+  "message": "Executing AMI action",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001"
+  }
+}
+
+[2025-08-06 13:34:27.184] [AMI_ACTION]
+{
+  "level": "ERROR",
+  "message": "AMI command timed out after 20 seconds.",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001",
+    "actionid": "1754487247175"
+  }
+}
+
+[2025-08-06 13:34:28.162] [AMI_ACTION]
+{
+  "level": "INFO",
+  "message": "Executing AMI action",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001"
+  }
+}
+
+[2025-08-06 13:34:35.635] [AMI_ACTION]
+{
+  "level": "ERROR",
+  "message": "AMI command timed out after 20 seconds.",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001",
+    "actionid": "1754487255634"
+  }
+}
+
+[2025-08-06 13:34:35.660] [AMI_ACTION]
+{
+  "level": "ERROR",
+  "message": "AMI command timed out after 20 seconds.",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001",
+    "actionid": "1754487255660"
+  }
+}
+
+[2025-08-06 13:34:48.165] [AMI_ACTION]
+{
+  "level": "ERROR",
+  "message": "AMI command timed out after 20 seconds.",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001",
+    "actionid": "1754487268162"
+  }
+}
+
+[2025-08-06 13:34:48.903] [AMI_ACTION]
+{
+  "level": "INFO",
+  "message": "Executing AMI action",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001"
+  }
+}
+
+[2025-08-06 13:35:08.920] [AMI_ACTION]
+{
+  "level": "ERROR",
+  "message": "AMI command timed out after 20 seconds.",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001",
+    "actionid": "1754487288903"
+  }
+}
+
+[2025-08-06 13:35:09.723] [AMI_ACTION]
+{
+  "level": "INFO",
+  "message": "Executing AMI action",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001"
+  }
+}
+
+[2025-08-06 13:35:16.280] [AMI_ACTION]
+{
+  "level": "INFO",
+  "message": "Executing AMI action",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001"
+  }
+}
+
+[2025-08-06 13:35:16.284] [AMI_ACTION]
+{
+  "level": "INFO",
+  "message": "Executing AMI action",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001"
+  }
+}
+
+[2025-08-06 13:35:29.735] [AMI_ACTION]
+{
+  "level": "ERROR",
+  "message": "AMI command timed out after 20 seconds.",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001",
+    "actionid": "1754487309724"
+  }
+}
+
+[2025-08-06 13:35:30.534] [AMI_ACTION]
+{
+  "level": "INFO",
+  "message": "Executing AMI action",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001"
+  }
+}
+
+[2025-08-06 13:35:36.281] [AMI_ACTION]
+{
+  "level": "ERROR",
+  "message": "AMI command timed out after 20 seconds.",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001",
+    "actionid": "1754487316281"
+  }
+}
+
+[2025-08-06 13:35:36.301] [AMI_ACTION]
+{
+  "level": "ERROR",
+  "message": "AMI command timed out after 20 seconds.",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001",
+    "actionid": "1754487316285"
+  }
+}
+
+[2025-08-06 13:35:50.540] [AMI_ACTION]
+{
+  "level": "ERROR",
+  "message": "AMI command timed out after 20 seconds.",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001",
+    "actionid": "1754487330534"
+  }
+}
+
+[2025-08-06 13:35:51.403] [AMI_ACTION]
+{
+  "level": "INFO",
+  "message": "Executing AMI action",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001"
+  }
+}
+
+[2025-08-06 13:35:56.462] [AMI_ACTION]
+{
+  "level": "INFO",
+  "message": "Executing AMI action",
+  "action": {
+    "Action": "CoreSettings"
+  }
+}
+
+[2025-08-06 13:36:11.418] [AMI_ACTION]
+{
+  "level": "ERROR",
+  "message": "AMI command timed out after 20 seconds.",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001",
+    "actionid": "1754487351403"
+  }
+}
+
+[2025-08-06 13:36:12.258] [AMI_ACTION]
+{
+  "level": "INFO",
+  "message": "Executing AMI action",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001"
+  }
+}
+
+[2025-08-06 13:36:15.586] [AMI_ACTION]
+{
+  "level": "INFO",
+  "message": "Executing AMI action",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001"
+  }
+}
+
+[2025-08-06 13:36:15.702] [AMI_ACTION]
+{
+  "level": "INFO",
+  "message": "Executing AMI action",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001"
+  }
+}
+
+[2025-08-06 13:36:16.464] [AMI_ACTION]
+{
+  "level": "ERROR",
+  "message": "AMI command timed out after 20 seconds.",
+  "action": {
+    "Action": "CoreSettings",
+    "actionid": "1754487356463"
+  }
+}
+
+[2025-08-06 13:36:17.305] [ARI Fetch (GET)]
+Requesting URL: http://92.46.62.34:8088/ari/asterisk/info
+
+[2025-08-06 13:36:27.848] [ARI Fetch (GET)]
+{
+  "level": "ERROR",
+  "url": "http://92.46.62.34:8088/ari/asterisk/info",
+  "error": "Cannot connect to ARI server at 92.46.62.34:8088",
+  "details": {}
+}
+
+[2025-08-06 13:36:32.262] [AMI_ACTION]
+{
+  "level": "ERROR",
+  "message": "AMI command timed out after 20 seconds.",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001",
+    "actionid": "1754487372259"
+  }
+}
+
+[2025-08-06 13:36:33.106] [AMI_ACTION]
+{
+  "level": "INFO",
+  "message": "Executing AMI action",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001"
+  }
+}
+
+[2025-08-06 13:36:35.588] [AMI_ACTION]
+{
+  "level": "ERROR",
+  "message": "AMI command timed out after 20 seconds.",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001",
+    "actionid": "1754487375593"
+  }
+}
+
+[2025-08-06 13:36:35.702] [AMI_ACTION]
+{
+  "level": "ERROR",
+  "message": "AMI command timed out after 20 seconds.",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001",
+    "actionid": "1754487375703"
+  }
+}
+
+[2025-08-06 13:36:53.117] [AMI_ACTION]
+{
+  "level": "ERROR",
+  "message": "AMI command timed out after 20 seconds.",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001",
+    "actionid": "1754487393107"
+  }
+}
+
+[2025-08-06 13:36:53.835] [AMI_ACTION]
+{
+  "level": "INFO",
+  "message": "Executing AMI action",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001"
+  }
+}
+
+[2025-08-06 13:37:13.843] [AMI_ACTION]
+{
+  "level": "ERROR",
+  "message": "AMI command timed out after 20 seconds.",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001",
+    "actionid": "1754487413835"
+  }
+}
+
+[2025-08-06 13:37:14.618] [AMI_ACTION]
+{
+  "level": "INFO",
+  "message": "Executing AMI action",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001"
+  }
+}
+
+[2025-08-06 13:37:15.683] [AMI_ACTION]
+{
+  "level": "INFO",
+  "message": "Executing AMI action",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001"
+  }
+}
+
+[2025-08-06 13:37:15.721] [AMI_ACTION]
+{
+  "level": "INFO",
+  "message": "Executing AMI action",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001"
+  }
+}
+
+[2025-08-06 13:37:34.622] [AMI_ACTION]
+{
+  "level": "ERROR",
+  "message": "AMI command timed out after 20 seconds.",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001",
+    "actionid": "1754487434619"
+  }
+}
+
+[2025-08-06 13:37:35.329] [AMI_ACTION]
+{
+  "level": "INFO",
+  "message": "Executing AMI action",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001"
+  }
+}
+
+[2025-08-06 13:37:35.683] [AMI_ACTION]
+{
+  "level": "ERROR",
+  "message": "AMI command timed out after 20 seconds.",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001",
+    "actionid": "1754487435684"
+  }
+}
+
+[2025-08-06 13:37:35.721] [AMI_ACTION]
+{
+  "level": "ERROR",
+  "message": "AMI command timed out after 20 seconds.",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001",
+    "actionid": "1754487435722"
+  }
+}
+
+[2025-08-06 13:37:55.340] [AMI_ACTION]
+{
+  "level": "ERROR",
+  "message": "AMI command timed out after 20 seconds.",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001",
+    "actionid": "1754487455330"
+  }
+}
+
+[2025-08-06 13:37:56.059] [AMI_ACTION]
+{
+  "level": "INFO",
+  "message": "Executing AMI action",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001"
+  }
+}
+
+[2025-08-06 13:38:15.552] [AMI_ACTION]
+{
+  "level": "INFO",
+  "message": "Executing AMI action",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001"
+  }
+}
+
+[2025-08-06 13:38:15.609] [AMI_ACTION]
+{
+  "level": "INFO",
+  "message": "Executing AMI action",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001"
+  }
+}
+
+[2025-08-06 13:38:16.060] [AMI_ACTION]
+{
+  "level": "ERROR",
+  "message": "AMI command timed out after 20 seconds.",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001",
+    "actionid": "1754487476061"
+  }
+}
+
+[2025-08-06 13:38:16.840] [AMI_ACTION]
+{
+  "level": "INFO",
+  "message": "Executing AMI action",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001"
+  }
+}
+
+[2025-08-06 13:38:35.557] [AMI_ACTION]
+{
+  "level": "ERROR",
+  "message": "AMI command timed out after 20 seconds.",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001",
+    "actionid": "1754487495552"
+  }
+}
+
+[2025-08-06 13:38:35.609] [AMI_ACTION]
+{
+  "level": "ERROR",
+  "message": "AMI command timed out after 20 seconds.",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001",
+    "actionid": "1754487495609"
+  }
+}
+
+[2025-08-06 13:38:36.841] [AMI_ACTION]
+{
+  "level": "ERROR",
+  "message": "AMI command timed out after 20 seconds.",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001",
+    "actionid": "1754487496841"
+  }
+}
+
+[2025-08-06 13:38:37.641] [AMI_ACTION]
+{
+  "level": "INFO",
+  "message": "Executing AMI action",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001"
+  }
+}
+
+[2025-08-06 13:38:57.650] [AMI_ACTION]
+{
+  "level": "ERROR",
+  "message": "AMI command timed out after 20 seconds.",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001",
+    "actionid": "1754487517642"
+  }
+}
+
+[2025-08-06 13:38:58.280] [AMI_ACTION]
+{
+  "level": "INFO",
+  "message": "Executing AMI action",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001"
+  }
+}
+
+[2025-08-06 13:39:15.499] [AMI_ACTION]
+{
+  "level": "INFO",
+  "message": "Executing AMI action",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001"
+  }
+}
+
+[2025-08-06 13:39:15.502] [AMI_ACTION]
+{
+  "level": "INFO",
+  "message": "Executing AMI action",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001"
+  }
+}
+
+[2025-08-06 13:39:18.282] [AMI_ACTION]
+{
+  "level": "ERROR",
+  "message": "AMI command timed out after 20 seconds.",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001",
+    "actionid": "1754487538280"
+  }
+}
+
+[2025-08-06 13:39:19.100] [AMI_ACTION]
+{
+  "level": "INFO",
+  "message": "Executing AMI action",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001"
+  }
+}
+
+[2025-08-06 13:39:35.507] [AMI_ACTION]
+{
+  "level": "ERROR",
+  "message": "AMI command timed out after 20 seconds.",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001",
+    "actionid": "1754487555501"
+  }
+}
+
+[2025-08-06 13:39:35.524] [AMI_ACTION]
+{
+  "level": "ERROR",
+  "message": "AMI command timed out after 20 seconds.",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001",
+    "actionid": "1754487555506"
+  }
+}
+
+[2025-08-06 13:39:39.103] [AMI_ACTION]
+{
+  "level": "ERROR",
+  "message": "AMI command timed out after 20 seconds.",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001",
+    "actionid": "1754487559101"
+  }
+}
+
+[2025-08-06 13:39:39.965] [AMI_ACTION]
+{
+  "level": "INFO",
+  "message": "Executing AMI action",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001"
+  }
+}
+
+[2025-08-06 13:39:59.977] [AMI_ACTION]
+{
+  "level": "ERROR",
+  "message": "AMI command timed out after 20 seconds.",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001",
+    "actionid": "1754487579965"
+  }
+}
+
+[2025-08-06 13:40:00.769] [AMI_ACTION]
+{
+  "level": "INFO",
+  "message": "Executing AMI action",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001"
+  }
+}
+
+[2025-08-06 13:40:15.600] [AMI_ACTION]
+{
+  "level": "INFO",
+  "message": "Executing AMI action",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001"
+  }
+}
+
+[2025-08-06 13:40:15.676] [AMI_ACTION]
+{
+  "level": "INFO",
+  "message": "Executing AMI action",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001"
+  }
+}
+
+[2025-08-06 13:40:20.773] [AMI_ACTION]
+{
+  "level": "ERROR",
+  "message": "AMI command timed out after 20 seconds.",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001",
+    "actionid": "1754487600770"
+  }
+}
+
+[2025-08-06 13:40:21.552] [AMI_ACTION]
+{
+  "level": "INFO",
+  "message": "Executing AMI action",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001"
+  }
+}
+
+[2025-08-06 13:40:35.610] [AMI_ACTION]
+{
+  "level": "ERROR",
+  "message": "AMI command timed out after 20 seconds.",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001",
+    "actionid": "1754487615601"
+  }
+}
+
+[2025-08-06 13:40:35.677] [AMI_ACTION]
+{
+  "level": "ERROR",
+  "message": "AMI command timed out after 20 seconds.",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001",
+    "actionid": "1754487615676"
+  }
+}
+
+[2025-08-06 13:40:41.557] [AMI_ACTION]
+{
+  "level": "ERROR",
+  "message": "AMI command timed out after 20 seconds.",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001",
+    "actionid": "1754487621552"
+  }
+}
+
+[2025-08-06 13:40:42.276] [AMI_ACTION]
+{
+  "level": "INFO",
+  "message": "Executing AMI action",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001"
+  }
+}
+
+[2025-08-06 13:41:02.290] [AMI_ACTION]
+{
+  "level": "ERROR",
+  "message": "AMI command timed out after 20 seconds.",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001",
+    "actionid": "1754487642277"
+  }
+}
+
+[2025-08-06 13:41:03.179] [AMI_ACTION]
+{
+  "level": "INFO",
+  "message": "Executing AMI action",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001"
+  }
+}
+
+[2025-08-06 13:41:15.804] [AMI_ACTION]
+{
+  "level": "INFO",
+  "message": "Executing AMI action",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001"
+  }
+}
+
+[2025-08-06 13:41:15.809] [AMI_ACTION]
+{
+  "level": "INFO",
+  "message": "Executing AMI action",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001"
+  }
+}
+
+[2025-08-06 13:41:23.185] [AMI_ACTION]
+{
+  "level": "ERROR",
+  "message": "AMI command timed out after 20 seconds.",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001",
+    "actionid": "1754487663179"
+  }
+}
+
+[2025-08-06 13:41:23.865] [AMI_ACTION]
+{
+  "level": "INFO",
+  "message": "Executing AMI action",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001"
+  }
+}
+
+[2025-08-06 13:41:35.807] [AMI_ACTION]
+{
+  "level": "ERROR",
+  "message": "AMI command timed out after 20 seconds.",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001",
+    "actionid": "1754487675804"
+  }
+}
+
+[2025-08-06 13:41:35.843] [AMI_ACTION]
+{
+  "level": "ERROR",
+  "message": "AMI command timed out after 20 seconds.",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001",
+    "actionid": "1754487675810"
+  }
+}
+
+[2025-08-06 13:41:43.866] [AMI_ACTION]
+{
+  "level": "ERROR",
+  "message": "AMI command timed out after 20 seconds.",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001",
+    "actionid": "1754487683865"
+  }
+}
+
+[2025-08-06 13:41:44.608] [AMI_ACTION]
+{
+  "level": "INFO",
+  "message": "Executing AMI action",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001"
+  }
+}
+
+[2025-08-06 13:42:04.617] [AMI_ACTION]
+{
+  "level": "ERROR",
+  "message": "AMI command timed out after 20 seconds.",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001",
+    "actionid": "1754487704608"
+  }
+}
+
+[2025-08-06 13:42:05.497] [AMI_ACTION]
+{
+  "level": "INFO",
+  "message": "Executing AMI action",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001"
+  }
+}
+
+[2025-08-06 13:42:15.685] [AMI_ACTION]
+{
+  "level": "INFO",
+  "message": "Executing AMI action",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001"
+  }
+}
+
+[2025-08-06 13:42:15.693] [AMI_ACTION]
+{
+  "level": "INFO",
+  "message": "Executing AMI action",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001"
+  }
+}
+
+[2025-08-06 13:42:25.505] [AMI_ACTION]
+{
+  "level": "ERROR",
+  "message": "AMI command timed out after 20 seconds.",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001",
+    "actionid": "1754487725497"
+  }
+}
+
+[2025-08-06 13:42:26.204] [AMI_ACTION]
+{
+  "level": "INFO",
+  "message": "Executing AMI action",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001"
+  }
+}
+
+[2025-08-06 13:42:35.688] [AMI_ACTION]
+{
+  "level": "ERROR",
+  "message": "AMI command timed out after 20 seconds.",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001",
+    "actionid": "1754487735685"
+  }
+}
+
+[2025-08-06 13:42:35.701] [AMI_ACTION]
+{
+  "level": "ERROR",
+  "message": "AMI command timed out after 20 seconds.",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001",
+    "actionid": "1754487735694"
+  }
+}
+
+[2025-08-06 13:42:46.205] [AMI_ACTION]
+{
+  "level": "ERROR",
+  "message": "AMI command timed out after 20 seconds.",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001",
+    "actionid": "1754487746204"
+  }
+}
+
+[2025-08-06 13:42:47.003] [AMI_ACTION]
+{
+  "level": "INFO",
+  "message": "Executing AMI action",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001"
+  }
+}
+
+[2025-08-06 13:43:07.017] [AMI_ACTION]
+{
+  "level": "ERROR",
+  "message": "AMI command timed out after 20 seconds.",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001",
+    "actionid": "1754487767003"
+  }
+}
+
+[2025-08-06 13:43:07.830] [AMI_ACTION]
+{
+  "level": "INFO",
+  "message": "Executing AMI action",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001"
+  }
+}
+
+[2025-08-06 13:43:16.090] [AMI_ACTION]
+{
+  "level": "INFO",
+  "message": "Executing AMI action",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001"
+  }
+}
+
+[2025-08-06 13:43:16.113] [AMI_ACTION]
+{
+  "level": "INFO",
+  "message": "Executing AMI action",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001"
+  }
+}
+
+[2025-08-06 13:43:27.841] [AMI_ACTION]
+{
+  "level": "ERROR",
+  "message": "AMI command timed out after 20 seconds.",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001",
+    "actionid": "1754487787831"
+  }
+}
+
+[2025-08-06 13:43:28.703] [AMI_ACTION]
+{
+  "level": "INFO",
+  "message": "Executing AMI action",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001"
+  }
+}
+
+[2025-08-06 13:43:36.091] [AMI_ACTION]
+{
+  "level": "ERROR",
+  "message": "AMI command timed out after 20 seconds.",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001",
+    "actionid": "1754487796090"
+  }
+}
+
+[2025-08-06 13:43:36.117] [AMI_ACTION]
+{
+  "level": "ERROR",
+  "message": "AMI command timed out after 20 seconds.",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001",
+    "actionid": "1754487796113"
+  }
+}
+
+[2025-08-06 13:43:48.705] [AMI_ACTION]
+{
+  "level": "ERROR",
+  "message": "AMI command timed out after 20 seconds.",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001",
+    "actionid": "1754487808704"
+  }
+}
+
+[2025-08-06 13:43:49.761] [AMI_ACTION]
+{
+  "level": "INFO",
+  "message": "Executing AMI action",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001"
+  }
+}
+
+[2025-08-06 13:44:09.774] [AMI_ACTION]
+{
+  "level": "ERROR",
+  "message": "AMI command timed out after 20 seconds.",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001",
+    "actionid": "1754487829762"
+  }
+}
+
+[2025-08-06 13:44:10.766] [AMI_ACTION]
+{
+  "level": "INFO",
+  "message": "Executing AMI action",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001"
+  }
+}
+
+[2025-08-06 13:44:15.967] [AMI_ACTION]
+{
+  "level": "INFO",
+  "message": "Executing AMI action",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001"
+  }
+}
+
+[2025-08-06 13:44:15.976] [AMI_ACTION]
+{
+  "level": "INFO",
+  "message": "Executing AMI action",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001"
+  }
+}
+
+[2025-08-06 13:44:30.777] [AMI_ACTION]
+{
+  "level": "ERROR",
+  "message": "AMI command timed out after 20 seconds.",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001",
+    "actionid": "1754487850767"
+  }
+}
+
+[2025-08-06 13:44:31.827] [AMI_ACTION]
+{
+  "level": "INFO",
+  "message": "Executing AMI action",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001"
+  }
+}
+
+[2025-08-06 13:44:35.970] [AMI_ACTION]
+{
+  "level": "ERROR",
+  "message": "AMI command timed out after 20 seconds.",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001",
+    "actionid": "1754487855968"
+  }
+}
+
+[2025-08-06 13:44:35.984] [AMI_ACTION]
+{
+  "level": "ERROR",
+  "message": "AMI command timed out after 20 seconds.",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001",
+    "actionid": "1754487855977"
+  }
+}
+
+[2025-08-06 13:44:51.833] [AMI_ACTION]
+{
+  "level": "ERROR",
+  "message": "AMI command timed out after 20 seconds.",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001",
+    "actionid": "1754487871828"
+  }
+}
+
+[2025-08-06 13:44:52.676] [AMI_ACTION]
+{
+  "level": "INFO",
+  "message": "Executing AMI action",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001"
+  }
+}
+
+[2025-08-06 13:45:06.536] [ARI Fetch (GET)]
+Requesting URL: http://92.46.62.34:8088/ari/asterisk/info
+
+[2025-08-06 13:45:12.677] [AMI_ACTION]
+{
+  "level": "ERROR",
+  "message": "AMI command timed out after 20 seconds.",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001",
+    "actionid": "1754487892677"
+  }
+}
+
+[2025-08-06 13:45:13.753] [AMI_ACTION]
+{
+  "level": "INFO",
+  "message": "Executing AMI action",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001"
+  }
+}
+
+[2025-08-06 13:45:15.753] [AMI_ACTION]
+{
+  "level": "INFO",
+  "message": "Executing AMI action",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001"
+  }
+}
+
+[2025-08-06 13:45:15.756] [AMI_ACTION]
+{
+  "level": "INFO",
+  "message": "Executing AMI action",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001"
+  }
+}
+
+[2025-08-06 13:45:17.062] [ARI Fetch (GET)]
+{
+  "level": "ERROR",
+  "url": "http://92.46.62.34:8088/ari/asterisk/info",
+  "error": "Cannot connect to ARI server at 92.46.62.34:8088",
+  "details": {}
+}
+
+[2025-08-06 13:45:18.305] [AMI_ACTION]
+{
+  "level": "INFO",
+  "message": "Executing AMI action",
+  "action": {
+    "Action": "CoreSettings"
+  }
+}
+
+[2025-08-06 13:45:33.760] [AMI_ACTION]
+{
+  "level": "ERROR",
+  "message": "AMI command timed out after 20 seconds.",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001",
+    "actionid": "1754487913753"
+  }
+}
+
+[2025-08-06 13:45:34.565] [AMI_ACTION]
+{
+  "level": "INFO",
+  "message": "Executing AMI action",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001"
+  }
+}
+
+[2025-08-06 13:45:35.753] [AMI_ACTION]
+{
+  "level": "ERROR",
+  "message": "AMI command timed out after 20 seconds.",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001",
+    "actionid": "1754487915755"
+  }
+}
+
+[2025-08-06 13:45:35.769] [AMI_ACTION]
+{
+  "level": "ERROR",
+  "message": "AMI command timed out after 20 seconds.",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001",
+    "actionid": "1754487915756"
+  }
+}
+
+[2025-08-06 13:45:38.306] [AMI_ACTION]
+{
+  "level": "ERROR",
+  "message": "AMI command timed out after 20 seconds.",
+  "action": {
+    "Action": "CoreSettings",
+    "actionid": "1754487918306"
+  }
+}
+
+[2025-08-06 13:45:54.571] [AMI_ACTION]
+{
+  "level": "ERROR",
+  "message": "AMI command timed out after 20 seconds.",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001",
+    "actionid": "1754487934566"
+  }
+}
+
+[2025-08-06 13:45:55.549] [AMI_ACTION]
+{
+  "level": "INFO",
+  "message": "Executing AMI action",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001"
+  }
+}
+
+[2025-08-06 13:46:10.220] [ARI Fetch (GET)]
+Requesting URL: http://92.46.62.34:8088/ari/asterisk/info
+
+[2025-08-06 13:46:15.549] [AMI_ACTION]
+{
+  "level": "ERROR",
+  "message": "AMI command timed out after 20 seconds.",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001",
+    "actionid": "1754487955549"
+  }
+}
+
+[2025-08-06 13:46:16.004] [AMI_ACTION]
+{
+  "level": "INFO",
+  "message": "Executing AMI action",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001"
+  }
+}
+
+[2025-08-06 13:46:16.066] [AMI_ACTION]
+{
+  "level": "INFO",
+  "message": "Executing AMI action",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001"
+  }
+}
+
+[2025-08-06 13:46:16.719] [AMI_ACTION]
+{
+  "level": "INFO",
+  "message": "Executing AMI action",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001"
+  }
+}
+
+[2025-08-06 13:46:20.771] [ARI Fetch (GET)]
+{
+  "level": "ERROR",
+  "url": "http://92.46.62.34:8088/ari/asterisk/info",
+  "error": "Cannot connect to ARI server at 92.46.62.34:8088",
+  "details": {}
+}
+
+[2025-08-06 13:46:21.695] [AMI_ACTION]
+{
+  "level": "INFO",
+  "message": "Executing AMI action",
+  "action": {
+    "Action": "CoreSettings"
+  }
+}
+
+[2025-08-06 13:46:36.012] [AMI_ACTION]
+{
+  "level": "ERROR",
+  "message": "AMI command timed out after 20 seconds.",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001",
+    "actionid": "1754487976005"
+  }
+}
+
+[2025-08-06 13:46:36.069] [AMI_ACTION]
+{
+  "level": "ERROR",
+  "message": "AMI command timed out after 20 seconds.",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001",
+    "actionid": "1754487976067"
+  }
+}
+
+[2025-08-06 13:46:36.722] [AMI_ACTION]
+{
+  "level": "ERROR",
+  "message": "AMI command timed out after 20 seconds.",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001",
+    "actionid": "1754487976720"
+  }
+}
+
+[2025-08-06 13:46:37.337] [AMI_ACTION]
+{
+  "level": "INFO",
+  "message": "Executing AMI action",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001"
+  }
+}
+
+[2025-08-06 13:46:41.698] [AMI_ACTION]
+{
+  "level": "ERROR",
+  "message": "AMI command timed out after 20 seconds.",
+  "action": {
+    "Action": "CoreSettings",
+    "actionid": "1754487981695"
+  }
+}
+
+[2025-08-06 13:46:53.849] [ARI Fetch (GET)]
+Requesting URL: http://92.46.62.34:8088/ari/asterisk/info
+
+[2025-08-06 13:46:57.338] [AMI_ACTION]
+{
+  "level": "ERROR",
+  "message": "AMI command timed out after 20 seconds.",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001",
+    "actionid": "1754487997338"
+  }
+}
+
+[2025-08-06 13:46:58.466] [AMI_ACTION]
+{
+  "level": "INFO",
+  "message": "Executing AMI action",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001"
+  }
+}
+
+[2025-08-06 13:47:04.404] [ARI Fetch (GET)]
+{
+  "level": "ERROR",
+  "url": "http://92.46.62.34:8088/ari/asterisk/info",
+  "error": "Cannot connect to ARI server at 92.46.62.34:8088",
+  "details": {}
+}
+
+[2025-08-06 13:47:05.439] [AMI_ACTION]
+{
+  "level": "INFO",
+  "message": "Executing AMI action",
+  "action": {
+    "Action": "CoreSettings"
+  }
+}
+
+[2025-08-06 13:47:16.099] [AMI_ACTION]
+{
+  "level": "INFO",
+  "message": "Executing AMI action",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001"
+  }
+}
+
+[2025-08-06 13:47:16.138] [AMI_ACTION]
+{
+  "level": "INFO",
+  "message": "Executing AMI action",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001"
+  }
+}
+
+[2025-08-06 13:47:18.468] [AMI_ACTION]
+{
+  "level": "ERROR",
+  "message": "AMI command timed out after 20 seconds.",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001",
+    "actionid": "1754488018467"
+  }
+}
+
+[2025-08-06 13:47:19.396] [AMI_ACTION]
+{
+  "level": "INFO",
+  "message": "Executing AMI action",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001"
+  }
+}
+
+[2025-08-06 13:47:25.441] [AMI_ACTION]
+{
+  "level": "ERROR",
+  "message": "AMI command timed out after 20 seconds.",
+  "action": {
+    "Action": "CoreSettings",
+    "actionid": "1754488025450"
+  }
+}
+
+[2025-08-06 13:47:36.106] [AMI_ACTION]
+{
+  "level": "ERROR",
+  "message": "AMI command timed out after 20 seconds.",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001",
+    "actionid": "1754488036100"
+  }
+}
+
+[2025-08-06 13:47:36.142] [AMI_ACTION]
+{
+  "level": "ERROR",
+  "message": "AMI command timed out after 20 seconds.",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001",
+    "actionid": "1754488036139"
+  }
+}
+
+[2025-08-06 13:47:39.399] [AMI_ACTION]
+{
+  "level": "ERROR",
+  "message": "AMI command timed out after 20 seconds.",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001",
+    "actionid": "1754488039396"
+  }
+}
+
+[2025-08-06 13:47:40.399] [AMI_ACTION]
+{
+  "level": "INFO",
+  "message": "Executing AMI action",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001"
+  }
+}
+
+[2025-08-06 13:47:46.986] [ARI Fetch (GET)]
+Requesting URL: http://92.46.62.34:8088/ari/asterisk/info
+
+[2025-08-06 13:47:57.538] [ARI Fetch (GET)]
+{
+  "level": "ERROR",
+  "url": "http://92.46.62.34:8088/ari/asterisk/info",
+  "error": "Cannot connect to ARI server at 92.46.62.34:8088",
+  "details": {}
+}
+
+[2025-08-06 13:47:58.541] [AMI_ACTION]
+{
+  "level": "INFO",
+  "message": "Executing AMI action",
+  "action": {
+    "Action": "CoreSettings"
+  }
+}
+
+[2025-08-06 13:48:00.401] [AMI_ACTION]
+{
+  "level": "ERROR",
+  "message": "AMI command timed out after 20 seconds.",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001",
+    "actionid": "1754488060400"
+  }
+}
+
+[2025-08-06 13:48:01.512] [AMI_ACTION]
+{
+  "level": "INFO",
+  "message": "Executing AMI action",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001"
+  }
+}
+
+[2025-08-06 13:48:15.966] [AMI_ACTION]
+{
+  "level": "INFO",
+  "message": "Executing AMI action",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001"
+  }
+}
+
+[2025-08-06 13:48:15.985] [AMI_ACTION]
+{
+  "level": "INFO",
+  "message": "Executing AMI action",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001"
+  }
+}
+
+[2025-08-06 13:48:18.542] [AMI_ACTION]
+{
+  "level": "ERROR",
+  "message": "AMI command timed out after 20 seconds.",
+  "action": {
+    "Action": "CoreSettings",
+    "actionid": "1754488078542"
+  }
+}
+
+[2025-08-06 13:48:21.519] [AMI_ACTION]
+{
+  "level": "ERROR",
+  "message": "AMI command timed out after 20 seconds.",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001",
+    "actionid": "1754488081512"
+  }
+}
+
+[2025-08-06 13:48:22.687] [AMI_ACTION]
+{
+  "level": "INFO",
+  "message": "Executing AMI action",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001"
+  }
+}
+
+[2025-08-06 13:48:30.989] [ARI Fetch (GET)]
+Requesting URL: http://92.46.62.34:8088/ari/asterisk/info
+
+[2025-08-06 13:48:35.965] [AMI_ACTION]
+{
+  "level": "ERROR",
+  "message": "AMI command timed out after 20 seconds.",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001",
+    "actionid": "1754488095967"
+  }
+}
+
+[2025-08-06 13:48:35.987] [AMI_ACTION]
+{
+  "level": "ERROR",
+  "message": "AMI command timed out after 20 seconds.",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001",
+    "actionid": "1754488095986"
+  }
+}
+
+[2025-08-06 13:48:41.554] [ARI Fetch (GET)]
+{
+  "level": "ERROR",
+  "url": "http://92.46.62.34:8088/ari/asterisk/info",
+  "error": "Cannot connect to ARI server at 92.46.62.34:8088",
+  "details": {}
+}
+
+[2025-08-06 13:48:42.686] [AMI_ACTION]
+{
+  "level": "ERROR",
+  "message": "AMI command timed out after 20 seconds.",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001",
+    "actionid": "1754488102687"
+  }
+}
+
+[2025-08-06 13:48:43.937] [AMI_ACTION]
+{
+  "level": "INFO",
+  "message": "Executing AMI action",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001"
+  }
+}
+
+[2025-08-06 13:48:44.232] [AMI_ACTION]
+{
+  "level": "INFO",
+  "message": "Executing AMI action",
+  "action": {
+    "Action": "CoreSettings"
+  }
+}
+
