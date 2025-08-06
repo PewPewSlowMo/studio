@@ -74,24 +74,26 @@ export async function getOperatorState(
             // This function can return null if the channel was hung up during polling.
             const channelDetails = await getAriChannelDetails(config.ari, channelId);
 
-            // Only update with channel data if details were successfully fetched.
-            // If channelDetails is null, it means the call just ended, and we should
-            // stick with the base endpoint status.
+            // If channelDetails exist, it means we are in an active call state.
+            // We enrich the final state with call-specific details.
             if (channelDetails) {
-                // Prioritize the uniqueid from channel variables if available
                 const uniqueId = channelDetails.uniqueid_from_vars;
-                // Prioritize the connected line number from channel variables
                 const callerId = channelDetails.connected_line_num;
 
                 finalCallState = {
                     ...finalCallState,
-                    status: mapAriChannelState(channelDetails.state), // Refine status based on ARI channel state
+                    // Refine status based on the more precise ARI channel state
+                    status: mapAriChannelState(channelDetails.state), 
                     channelId: channelId,
                     uniqueId: uniqueId,
                     callerId: callerId || 'Unknown',
                     queue: channelDetails.dialplan?.context,
                 };
             }
+            // If channelDetails is null, it implies the call just ended between polling intervals.
+            // In this case, we don't need to do anything extra. The `finalCallState` already
+            // holds the most recent endpoint status (which is likely 'not in use' now),
+            // and that's what we want to return.
         }
         
         return { success: true, data: finalCallState };
