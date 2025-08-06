@@ -6005,3 +6005,1138 @@ Step 5: Constructed remote file path: /var/spool/asterisk/monitor/2025/08/06/int
   }
 }
 
+[2025-08-06 11:42:52.808] [AMI_ACTION]
+{
+  "level": "INFO",
+  "message": "Executing AMI action",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001"
+  }
+}
+
+[2025-08-06 11:42:53.544] [AMI_ACTION]
+{
+  "level": "INFO",
+  "message": "AMI Action Complete. Total events received: 6",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001"
+  },
+  "completionEvent": "EndpointDetailComplete"
+}
+
+[2025-08-06 11:42:54.644] [AMI_ACTION]
+{
+  "level": "INFO",
+  "message": "Executing AMI action",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001"
+  }
+}
+
+[2025-08-06 11:42:55.363] [AMI_ACTION]
+{
+  "level": "INFO",
+  "message": "AMI Action Complete. Total events received: 6",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001"
+  },
+  "completionEvent": "EndpointDetailComplete"
+}
+
+[2025-08-06 11:42:58.542] [AMI_ACTION]
+{
+  "level": "INFO",
+  "message": "Executing AMI action",
+  "action": {
+    "Action": "PJSIPShowEndpoints"
+  }
+}
+
+[2025-08-06 11:42:59.010] [AMI_ACTION]
+{
+  "level": "INFO",
+  "message": "Executing AMI action",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001"
+  }
+}
+
+[2025-08-06 11:42:59.267] [AMI_ACTION]
+{
+  "level": "INFO",
+  "message": "AMI Action Complete. Total events received: 6",
+  "action": {
+    "Action": "PJSIPShowEndpoints"
+  },
+  "completionEvent": "EndpointListComplete"
+}
+
+[2025-08-06 11:42:59.708] [AMI_ACTION]
+{
+  "level": "INFO",
+  "message": "AMI Action Complete. Total events received: 6",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001"
+  },
+  "completionEvent": "EndpointDetailComplete"
+}
+
+[2025-08-06 11:42:59.909] [AMI_ACTION]
+{
+  "level": "INFO",
+  "message": "Executing AMI action",
+  "action": {
+    "Action": "QueueStatus"
+  }
+}
+
+[2025-08-06 11:43:00.460] [AMI_ACTION]
+{
+  "level": "INFO",
+  "message": "Executing AMI action",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001"
+  }
+}
+
+[2025-08-06 11:43:00.616] [AMI_ACTION]
+{
+  "level": "INFO",
+  "message": "AMI Action Complete. Total events received: 7",
+  "action": {
+    "Action": "QueueStatus"
+  },
+  "completionEvent": "QueueStatusComplete"
+}
+
+[2025-08-06 11:43:01.167] [AMI_ACTION]
+{
+  "level": "INFO",
+  "message": "AMI Action Complete. Total events received: 6",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001"
+  },
+  "completionEvent": "EndpointDetailComplete"
+}
+
+[2025-08-06 11:43:02.866] [AMI_ACTION]
+{
+  "level": "INFO",
+  "message": "Executing AMI action",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001"
+  }
+}
+
+[2025-08-06 11:43:03.647] [AMI_ACTION]
+{
+  "level": "INFO",
+  "message": "AMI Action Complete. Total events received: 6",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001"
+  },
+  "completionEvent": "EndpointDetailComplete"
+}
+
+[2025-08-06 11:43:04.563] [AMI_ACTION]
+{
+  "level": "INFO",
+  "message": "Executing AMI action",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001"
+  }
+}
+
+[2025-08-06 11:43:04.588] [AMI_ACTION]
+{
+  "level": "INFO",
+  "message": "Executing AMI action",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001"
+  }
+}
+
+[2025-08-06 11:43:04.677] [AMI_ACTION]
+{
+  "level": "INFO",
+  "message": "Executing AMI action",
+  "action": {
+    "Action": "PJSIPShowEndpoints"
+  }
+}
+
+[2025-08-06 11:43:05.260] [AMI_ACTION]
+{
+  "level": "INFO",
+  "message": "AMI Action Complete. Total events received: 6",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001"
+  },
+  "completionEvent": "EndpointDetailComplete"
+}
+
+[2025-08-06 11:43:05.361] [AMI_ACTION]
+{
+  "level": "INFO",
+  "message": "AMI Action Complete. Total events received: 6",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001"
+  },
+  "completionEvent": "EndpointDetailComplete"
+}
+
+[2025-08-06 11:43:05.449] [AMI_ACTION]
+{
+  "level": "INFO",
+  "message": "AMI Action Complete. Total events received: 6",
+  "action": {
+    "Action": "PJSIPShowEndpoints"
+  },
+  "completionEvent": "EndpointListComplete"
+}
+
+[2025-08-06 11:43:06.257] [AMI_ACTION]
+{
+  "level": "INFO",
+  "message": "Executing AMI action",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001"
+  }
+}
+
+[2025-08-06 11:43:06.317] [AMI_ACTION]
+{
+  "level": "INFO",
+  "message": "Executing AMI action",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001"
+  }
+}
+
+[2025-08-06 11:43:06.365] [AMI_ACTION]
+{
+  "level": "INFO",
+  "message": "Executing AMI action",
+  "action": {
+    "Action": "QueueStatus"
+  }
+}
+
+[2025-08-06 11:43:06.960] [AMI_ACTION]
+{
+  "level": "INFO",
+  "message": "AMI Action Complete. Total events received: 6",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001"
+  },
+  "completionEvent": "EndpointDetailComplete"
+}
+
+[2025-08-06 11:43:07.015] [AMI_ACTION]
+{
+  "level": "INFO",
+  "message": "AMI Action Complete. Total events received: 6",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001"
+  },
+  "completionEvent": "EndpointDetailComplete"
+}
+
+[2025-08-06 11:43:07.064] [AMI_ACTION]
+{
+  "level": "INFO",
+  "message": "AMI Action Complete. Total events received: 7",
+  "action": {
+    "Action": "QueueStatus"
+  },
+  "completionEvent": "QueueStatusComplete"
+}
+
+[2025-08-06 11:43:07.892] [AMI_ACTION]
+{
+  "level": "INFO",
+  "message": "Executing AMI action",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001"
+  }
+}
+
+[2025-08-06 11:43:08.000] [AMI_ACTION]
+{
+  "level": "INFO",
+  "message": "Executing AMI action",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001"
+  }
+}
+
+[2025-08-06 11:43:08.681] [AMI_ACTION]
+{
+  "level": "INFO",
+  "message": "AMI Action Complete. Total events received: 6",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001"
+  },
+  "completionEvent": "EndpointDetailComplete"
+}
+
+[2025-08-06 11:43:08.782] [AMI_ACTION]
+{
+  "level": "INFO",
+  "message": "AMI Action Complete. Total events received: 6",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001"
+  },
+  "completionEvent": "EndpointDetailComplete"
+}
+
+[2025-08-06 11:43:09.433] [AMI_ACTION]
+{
+  "level": "INFO",
+  "message": "Executing AMI action",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001"
+  }
+}
+
+[2025-08-06 11:43:09.556] [AMI_ACTION]
+{
+  "level": "INFO",
+  "message": "Executing AMI action",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001"
+  }
+}
+
+[2025-08-06 11:43:10.208] [AMI_ACTION]
+{
+  "level": "INFO",
+  "message": "AMI Action Complete. Total events received: 6",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001"
+  },
+  "completionEvent": "EndpointDetailComplete"
+}
+
+[2025-08-06 11:43:10.334] [AMI_ACTION]
+{
+  "level": "INFO",
+  "message": "AMI Action Complete. Total events received: 6",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001"
+  },
+  "completionEvent": "EndpointDetailComplete"
+}
+
+[2025-08-06 11:43:10.936] [AMI_ACTION]
+{
+  "level": "INFO",
+  "message": "Executing AMI action",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001"
+  }
+}
+
+[2025-08-06 11:43:10.979] [AMI_ACTION]
+{
+  "level": "INFO",
+  "message": "Executing AMI action",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001"
+  }
+}
+
+[2025-08-06 11:43:11.646] [AMI_ACTION]
+{
+  "level": "INFO",
+  "message": "AMI Action Complete. Total events received: 6",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001"
+  },
+  "completionEvent": "EndpointDetailComplete"
+}
+
+[2025-08-06 11:43:11.779] [AMI_ACTION]
+{
+  "level": "ERROR",
+  "message": "AMI connection error",
+  "error": "read ECONNRESET",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001"
+  }
+}
+
+[2025-08-06 11:43:11.782] [AMI_ACTION]
+AMI connection reset. Retrying in 100ms... (1 retries left)
+
+[2025-08-06 11:43:11.896] [AMI_ACTION]
+{
+  "level": "INFO",
+  "message": "Executing AMI action",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001"
+  }
+}
+
+[2025-08-06 11:43:12.666] [AMI_ACTION]
+{
+  "level": "INFO",
+  "message": "AMI Action Complete. Total events received: 6",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001"
+  },
+  "completionEvent": "EndpointDetailComplete"
+}
+
+[2025-08-06 11:43:12.670] [ARI Fetch (GET)]
+Requesting URL: http://92.46.62.34:8088/ari/endpoints/PJSIP/0001
+
+[2025-08-06 11:43:12.809] [AMI_ACTION]
+{
+  "level": "ERROR",
+  "message": "AMI command timed out after 20 seconds.",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001"
+  }
+}
+
+[2025-08-06 11:43:13.252] [ARI Fetch (GET)]
+{
+  "level": "INFO",
+  "url": "http://92.46.62.34:8088/ari/endpoints/PJSIP/0001",
+  "status": 200
+}
+
+[2025-08-06 11:43:13.276] [ARI Fetch (GET)]
+Requesting URL: http://92.46.62.34:8088/ari/channels/1754480591.232
+
+[2025-08-06 11:43:13.567] [ARI Fetch (GET)]
+{
+  "level": "INFO",
+  "url": "http://92.46.62.34:8088/ari/channels/1754480591.232",
+  "status": 200
+}
+
+[2025-08-06 11:43:13.589] [ARI Fetch (GET)]
+Requesting URL: http://92.46.62.34:8088/ari/channels/1754480591.232/variable?variable=CDR(uniqueid)
+
+[2025-08-06 11:43:13.883] [ARI Fetch (GET)]
+{
+  "level": "INFO",
+  "url": "http://92.46.62.34:8088/ari/channels/1754480591.232/variable?variable=CDR(uniqueid)",
+  "status": 200
+}
+
+[2025-08-06 11:43:13.907] [ARI Fetch (GET)]
+Requesting URL: http://92.46.62.34:8088/ari/channels/1754480591.232/variable?variable=CDR(linkedid)
+
+[2025-08-06 11:43:14.134] [AMI_ACTION]
+{
+  "level": "INFO",
+  "message": "Executing AMI action",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001"
+  }
+}
+
+[2025-08-06 11:43:14.195] [ARI Fetch (GET)]
+{
+  "level": "INFO",
+  "url": "http://92.46.62.34:8088/ari/channels/1754480591.232/variable?variable=CDR(linkedid)",
+  "status": 200
+}
+
+[2025-08-06 11:43:14.200] [ARI Fetch (GET)]
+Requesting URL: http://92.46.62.34:8088/ari/channels/1754480591.232/variable?variable=CONNECTEDLINE(num)
+
+[2025-08-06 11:43:14.485] [ARI Fetch (GET)]
+{
+  "level": "INFO",
+  "url": "http://92.46.62.34:8088/ari/channels/1754480591.232/variable?variable=CONNECTEDLINE(num)",
+  "status": 200
+}
+
+[2025-08-06 11:43:14.644] [AMI_ACTION]
+{
+  "level": "ERROR",
+  "message": "AMI command timed out after 20 seconds.",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001"
+  }
+}
+
+[2025-08-06 11:43:14.908] [AMI_ACTION]
+{
+  "level": "INFO",
+  "message": "AMI Action Complete. Total events received: 6",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001"
+  },
+  "completionEvent": "EndpointDetailComplete"
+}
+
+[2025-08-06 11:43:14.914] [ARI Fetch (GET)]
+Requesting URL: http://92.46.62.34:8088/ari/endpoints/PJSIP/0001
+
+[2025-08-06 11:43:15.216] [ARI Fetch (GET)]
+{
+  "level": "INFO",
+  "url": "http://92.46.62.34:8088/ari/endpoints/PJSIP/0001",
+  "status": 200
+}
+
+[2025-08-06 11:43:15.242] [ARI Fetch (GET)]
+Requesting URL: http://92.46.62.34:8088/ari/channels/1754480591.232
+
+[2025-08-06 11:43:15.527] [ARI Fetch (GET)]
+{
+  "level": "INFO",
+  "url": "http://92.46.62.34:8088/ari/channels/1754480591.232",
+  "status": 200
+}
+
+[2025-08-06 11:43:15.547] [ARI Fetch (GET)]
+Requesting URL: http://92.46.62.34:8088/ari/channels/1754480591.232/variable?variable=CDR(uniqueid)
+
+[2025-08-06 11:43:15.752] [AMI_ACTION]
+{
+  "level": "INFO",
+  "message": "Executing AMI action",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001"
+  }
+}
+
+[2025-08-06 11:43:15.842] [ARI Fetch (GET)]
+{
+  "level": "INFO",
+  "url": "http://92.46.62.34:8088/ari/channels/1754480591.232/variable?variable=CDR(uniqueid)",
+  "status": 200
+}
+
+[2025-08-06 11:43:15.846] [ARI Fetch (GET)]
+Requesting URL: http://92.46.62.34:8088/ari/channels/1754480591.232/variable?variable=CDR(linkedid)
+
+[2025-08-06 11:43:16.123] [ARI Fetch (GET)]
+{
+  "level": "INFO",
+  "url": "http://92.46.62.34:8088/ari/channels/1754480591.232/variable?variable=CDR(linkedid)",
+  "status": 200
+}
+
+[2025-08-06 11:43:16.130] [ARI Fetch (GET)]
+Requesting URL: http://92.46.62.34:8088/ari/channels/1754480591.232/variable?variable=CONNECTEDLINE(num)
+
+[2025-08-06 11:43:16.414] [ARI Fetch (GET)]
+{
+  "level": "INFO",
+  "url": "http://92.46.62.34:8088/ari/channels/1754480591.232/variable?variable=CONNECTEDLINE(num)",
+  "status": 200
+}
+
+[2025-08-06 11:43:16.456] [AMI_ACTION]
+{
+  "level": "INFO",
+  "message": "AMI Action Complete. Total events received: 6",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001"
+  },
+  "completionEvent": "EndpointDetailComplete"
+}
+
+[2025-08-06 11:43:16.462] [ARI Fetch (GET)]
+Requesting URL: http://92.46.62.34:8088/ari/endpoints/PJSIP/0001
+
+[2025-08-06 11:43:16.752] [ARI Fetch (GET)]
+{
+  "level": "INFO",
+  "url": "http://92.46.62.34:8088/ari/endpoints/PJSIP/0001",
+  "status": 200
+}
+
+[2025-08-06 11:43:16.761] [ARI Fetch (GET)]
+Requesting URL: http://92.46.62.34:8088/ari/channels/1754480591.232
+
+[2025-08-06 11:43:17.055] [ARI Fetch (GET)]
+{
+  "level": "INFO",
+  "url": "http://92.46.62.34:8088/ari/channels/1754480591.232",
+  "status": 200
+}
+
+[2025-08-06 11:43:17.077] [ARI Fetch (GET)]
+Requesting URL: http://92.46.62.34:8088/ari/channels/1754480591.232/variable?variable=CDR(uniqueid)
+
+[2025-08-06 11:43:17.182] [AMI_ACTION]
+{
+  "level": "INFO",
+  "message": "Executing AMI action",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001"
+  }
+}
+
+[2025-08-06 11:43:17.372] [ARI Fetch (GET)]
+{
+  "level": "INFO",
+  "url": "http://92.46.62.34:8088/ari/channels/1754480591.232/variable?variable=CDR(uniqueid)",
+  "status": 200
+}
+
+[2025-08-06 11:43:17.383] [ARI Fetch (GET)]
+Requesting URL: http://92.46.62.34:8088/ari/channels/1754480591.232/variable?variable=CDR(linkedid)
+
+[2025-08-06 11:43:17.663] [ARI Fetch (GET)]
+{
+  "level": "INFO",
+  "url": "http://92.46.62.34:8088/ari/channels/1754480591.232/variable?variable=CDR(linkedid)",
+  "status": 200
+}
+
+[2025-08-06 11:43:17.677] [ARI Fetch (GET)]
+Requesting URL: http://92.46.62.34:8088/ari/channels/1754480591.232/variable?variable=CONNECTEDLINE(num)
+
+[2025-08-06 11:43:17.902] [AMI_ACTION]
+{
+  "level": "INFO",
+  "message": "Executing AMI action",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001"
+  }
+}
+
+[2025-08-06 11:43:17.956] [ARI Fetch (GET)]
+{
+  "level": "ERROR",
+  "url": "http://92.46.62.34:8088/ari/channels/1754480591.232/variable?variable=CONNECTEDLINE(num)",
+  "status": 404,
+  "statusText": "Channel Not Found",
+  "body": "{\n  \"message\": \"Provided channel was not found\"\n}"
+}
+
+[2025-08-06 11:43:18.169] [AMI_ACTION]
+{
+  "level": "INFO",
+  "message": "AMI Action Complete. Total events received: 178",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001"
+  },
+  "completionEvent": "EndpointDetailComplete"
+}
+
+[2025-08-06 11:43:18.542] [AMI_ACTION]
+{
+  "level": "ERROR",
+  "message": "AMI command timed out after 20 seconds.",
+  "action": {
+    "Action": "PJSIPShowEndpoints"
+  }
+}
+
+[2025-08-06 11:43:18.712] [AMI_ACTION]
+{
+  "level": "INFO",
+  "message": "AMI Action Complete. Total events received: 6",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001"
+  },
+  "completionEvent": "EndpointDetailComplete"
+}
+
+[2025-08-06 11:43:19.010] [AMI_ACTION]
+{
+  "level": "ERROR",
+  "message": "AMI command timed out after 20 seconds.",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001"
+  }
+}
+
+[2025-08-06 11:43:19.909] [AMI_ACTION]
+{
+  "level": "ERROR",
+  "message": "AMI command timed out after 20 seconds.",
+  "action": {
+    "Action": "QueueStatus"
+  }
+}
+
+[2025-08-06 11:43:20.092] [AMI_ACTION]
+{
+  "level": "INFO",
+  "message": "Executing AMI action",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001"
+  }
+}
+
+[2025-08-06 11:43:20.464] [AMI_ACTION]
+{
+  "level": "ERROR",
+  "message": "AMI command timed out after 20 seconds.",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001"
+  }
+}
+
+[2025-08-06 11:43:20.867] [AMI_ACTION]
+{
+  "level": "INFO",
+  "message": "AMI Action Complete. Total events received: 6",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001"
+  },
+  "completionEvent": "EndpointDetailComplete"
+}
+
+[2025-08-06 11:43:22.869] [AMI_ACTION]
+{
+  "level": "ERROR",
+  "message": "AMI command timed out after 20 seconds.",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001"
+  }
+}
+
+[2025-08-06 11:43:23.095] [AMI_ACTION]
+{
+  "level": "INFO",
+  "message": "Executing AMI action",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001"
+  }
+}
+
+[2025-08-06 11:43:23.793] [AMI_ACTION]
+{
+  "level": "INFO",
+  "message": "AMI Action Complete. Total events received: 6",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001"
+  },
+  "completionEvent": "EndpointDetailComplete"
+}
+
+[2025-08-06 11:43:24.564] [AMI_ACTION]
+{
+  "level": "ERROR",
+  "message": "AMI command timed out after 20 seconds.",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001"
+  }
+}
+
+[2025-08-06 11:43:24.589] [AMI_ACTION]
+{
+  "level": "ERROR",
+  "message": "AMI command timed out after 20 seconds.",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001"
+  }
+}
+
+[2025-08-06 11:43:24.677] [AMI_ACTION]
+{
+  "level": "ERROR",
+  "message": "AMI command timed out after 20 seconds.",
+  "action": {
+    "Action": "PJSIPShowEndpoints"
+  }
+}
+
+[2025-08-06 11:43:26.058] [AMI_ACTION]
+{
+  "level": "INFO",
+  "message": "Executing AMI action",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001"
+  }
+}
+
+[2025-08-06 11:43:26.257] [AMI_ACTION]
+{
+  "level": "ERROR",
+  "message": "AMI command timed out after 20 seconds.",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001"
+  }
+}
+
+[2025-08-06 11:43:26.317] [AMI_ACTION]
+{
+  "level": "ERROR",
+  "message": "AMI command timed out after 20 seconds.",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001"
+  }
+}
+
+[2025-08-06 11:43:26.365] [AMI_ACTION]
+{
+  "level": "ERROR",
+  "message": "AMI command timed out after 20 seconds.",
+  "action": {
+    "Action": "QueueStatus"
+  }
+}
+
+[2025-08-06 11:43:26.831] [AMI_ACTION]
+{
+  "level": "INFO",
+  "message": "AMI Action Complete. Total events received: 6",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001"
+  },
+  "completionEvent": "EndpointDetailComplete"
+}
+
+[2025-08-06 11:43:27.893] [AMI_ACTION]
+{
+  "level": "ERROR",
+  "message": "AMI command timed out after 20 seconds.",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001"
+  }
+}
+
+[2025-08-06 11:43:28.000] [AMI_ACTION]
+{
+  "level": "ERROR",
+  "message": "AMI command timed out after 20 seconds.",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001"
+  }
+}
+
+[2025-08-06 11:43:29.173] [AMI_ACTION]
+{
+  "level": "INFO",
+  "message": "Executing AMI action",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001"
+  }
+}
+
+[2025-08-06 11:43:29.435] [AMI_ACTION]
+{
+  "level": "ERROR",
+  "message": "AMI command timed out after 20 seconds.",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001"
+  }
+}
+
+[2025-08-06 11:43:29.556] [AMI_ACTION]
+{
+  "level": "ERROR",
+  "message": "AMI command timed out after 20 seconds.",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001"
+  }
+}
+
+[2025-08-06 11:43:29.950] [AMI_ACTION]
+{
+  "level": "INFO",
+  "message": "AMI Action Complete. Total events received: 6",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001"
+  },
+  "completionEvent": "EndpointDetailComplete"
+}
+
+[2025-08-06 11:43:30.937] [AMI_ACTION]
+{
+  "level": "ERROR",
+  "message": "AMI command timed out after 20 seconds.",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001"
+  }
+}
+
+[2025-08-06 11:43:30.979] [AMI_ACTION]
+{
+  "level": "ERROR",
+  "message": "AMI command timed out after 20 seconds.",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001"
+  }
+}
+
+[2025-08-06 11:43:31.897] [AMI_ACTION]
+{
+  "level": "ERROR",
+  "message": "AMI command timed out after 20 seconds.",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001"
+  }
+}
+
+[2025-08-06 11:43:32.159] [AMI_ACTION]
+{
+  "level": "INFO",
+  "message": "Executing AMI action",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001"
+  }
+}
+
+[2025-08-06 11:43:32.860] [AMI_ACTION]
+{
+  "level": "INFO",
+  "message": "AMI Action Complete. Total events received: 6",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001"
+  },
+  "completionEvent": "EndpointDetailComplete"
+}
+
+[2025-08-06 11:43:34.135] [AMI_ACTION]
+{
+  "level": "ERROR",
+  "message": "AMI command timed out after 20 seconds.",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001"
+  }
+}
+
+[2025-08-06 11:43:35.754] [AMI_ACTION]
+{
+  "level": "ERROR",
+  "message": "AMI command timed out after 20 seconds.",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001"
+  }
+}
+
+[2025-08-06 11:43:37.183] [AMI_ACTION]
+{
+  "level": "ERROR",
+  "message": "AMI command timed out after 20 seconds.",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001"
+  }
+}
+
+[2025-08-06 11:43:37.903] [AMI_ACTION]
+{
+  "level": "ERROR",
+  "message": "AMI command timed out after 20 seconds.",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001"
+  }
+}
+
+[2025-08-06 11:43:40.094] [AMI_ACTION]
+{
+  "level": "ERROR",
+  "message": "AMI command timed out after 20 seconds.",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001"
+  }
+}
+
+[2025-08-06 11:43:43.097] [AMI_ACTION]
+{
+  "level": "ERROR",
+  "message": "AMI command timed out after 20 seconds.",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001"
+  }
+}
+
+[2025-08-06 11:43:46.060] [AMI_ACTION]
+{
+  "level": "ERROR",
+  "message": "AMI command timed out after 20 seconds.",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001"
+  }
+}
+
+[2025-08-06 11:43:49.174] [AMI_ACTION]
+{
+  "level": "ERROR",
+  "message": "AMI command timed out after 20 seconds.",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001"
+  }
+}
+
+[2025-08-06 11:43:52.161] [AMI_ACTION]
+{
+  "level": "ERROR",
+  "message": "AMI command timed out after 20 seconds.",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001"
+  }
+}
+
+[2025-08-06 11:44:16.402] [AMI_ACTION]
+{
+  "level": "INFO",
+  "message": "Executing AMI action",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001"
+  }
+}
+
+[2025-08-06 11:44:16.417] [AMI_ACTION]
+{
+  "level": "INFO",
+  "message": "Executing AMI action",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001"
+  }
+}
+
+[2025-08-06 11:44:16.437] [AMI_ACTION]
+{
+  "level": "INFO",
+  "message": "Executing AMI action",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001"
+  }
+}
+
+[2025-08-06 11:44:17.178] [AMI_ACTION]
+{
+  "level": "INFO",
+  "message": "AMI Action Complete. Total events received: 6",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001"
+  },
+  "completionEvent": "EndpointDetailComplete"
+}
+
+[2025-08-06 11:44:17.215] [AMI_ACTION]
+{
+  "level": "INFO",
+  "message": "AMI Action Complete. Total events received: 6",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001"
+  },
+  "completionEvent": "EndpointDetailComplete"
+}
+
+[2025-08-06 11:44:17.254] [AMI_ACTION]
+{
+  "level": "INFO",
+  "message": "AMI Action Complete. Total events received: 6",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001"
+  },
+  "completionEvent": "EndpointDetailComplete"
+}
+
+[2025-08-06 11:44:36.412] [AMI_ACTION]
+{
+  "level": "ERROR",
+  "message": "AMI command timed out after 20 seconds.",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001"
+  }
+}
+
+[2025-08-06 11:44:36.418] [AMI_ACTION]
+{
+  "level": "ERROR",
+  "message": "AMI command timed out after 20 seconds.",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001"
+  }
+}
+
+[2025-08-06 11:44:36.439] [AMI_ACTION]
+{
+  "level": "ERROR",
+  "message": "AMI command timed out after 20 seconds.",
+  "action": {
+    "Action": "PJSIPShowEndpoint",
+    "Endpoint": "0001"
+  }
+}
+

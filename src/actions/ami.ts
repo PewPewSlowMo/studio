@@ -32,18 +32,29 @@ async function withRetry<T>(fn: () => Promise<T>, retries = 1, delay = 100): Pro
   }
 }
 
+/**
+ * Executes an AMI command and reliably collects all related events.
+ * It sends an action and then waits for a short, fixed duration to gather all response events,
+ * which is more reliable than waiting for a specific completion event that might arrive prematurely.
+ */
 function runAmiCommand<T extends Record<string, any>>(
   connection: AmiConnection,
   action: Record<string, string>,
-  completionEvent: string
+  collectionTimeMs: number = 200 // Time in ms to wait for events after sending the action.
 ): Promise<T[]> {
   const commandFn = () => new Promise<T[]>((resolve, reject) => {
     let ami: any;
+    const results: T[] = [];
+    let isResolved = false;
+
     const timeout = setTimeout(() => {
-        if (ami) ami.disconnect();
-        writeToLog(LOG_COMPONENT, { level: 'ERROR', message: 'AMI command timed out after 20 seconds.', action });
-        reject(new Error('AMI command timed out after 20 seconds.'));
-    }, 20000); // Increased timeout to 20 seconds
+        if (!isResolved) {
+            isResolved = true;
+            if (ami) ami.disconnect();
+            writeToLog(LOG_COMPONENT, { level: 'ERROR', message: 'AMI command timed out after 20 seconds.', action });
+            reject(new Error('AMI command timed out after 20 seconds.'));
+        }
+    }, 20000); // Overall safety timeout
 
     try {
       const validatedConnection = AmiConnectionSchema.parse(connection);
@@ -56,45 +67,55 @@ function runAmiCommand<T extends Record<string, any>>(
         validatedConnection.password,
         true // Enable events
       );
-
-      const results: T[] = [];
-
-      ami.on('disconnect', () => {
-        clearTimeout(timeout);
-      });
-
+      
       ami.on('managerevent', (event: T) => {
         results.push(event); // Collect ALL events
-        if (event.event === completionEvent) {
-          ami.disconnect();
-          writeToLog(LOG_COMPONENT, { level: 'INFO', message: `AMI Action Complete. Total events received: ${results.length}`, action, completionEvent });
-          resolve(results);
-        }
       });
       
       ami.on('error', (err: Error) => {
-          ami.disconnect();
-          writeToLog(LOG_COMPONENT, { level: 'ERROR', message: 'AMI connection error', error: err.message, action });
-          reject(err);
+          if (!isResolved) {
+              isResolved = true;
+              if (ami) ami.disconnect();
+              writeToLog(LOG_COMPONENT, { level: 'ERROR', message: 'AMI connection error', error: err.message, action });
+              reject(err);
+          }
       });
-
+      
+      // Send the action, and if it fails immediately, reject.
       ami.action(action, (err: Error | null) => {
         if (err) {
-          ami.disconnect();
-          writeToLog(LOG_COMPONENT, { level: 'ERROR', message: 'AMI action error', error: err.message, action });
-          reject(err);
+          if (!isResolved) {
+            isResolved = true;
+            if (ami) ami.disconnect();
+            writeToLog(LOG_COMPONENT, { level: 'ERROR', message: 'AMI action error', error: err.message, action });
+            reject(err);
+          }
+        } else {
+            // Action was sent successfully, now wait to collect events.
+            setTimeout(() => {
+                if (!isResolved) {
+                    isResolved = true;
+                    if (ami) ami.disconnect();
+                    clearTimeout(timeout);
+                    writeToLog(LOG_COMPONENT, { level: 'INFO', message: `AMI Action Complete. Total events received: ${results.length}`, action });
+                    resolve(results);
+                }
+            }, collectionTimeMs);
         }
       });
 
     } catch (e) {
-      clearTimeout(timeout);
-      const errorMessage = e instanceof Error ? e.message : 'An unknown error occurred';
-      writeToLog(LOG_COMPONENT, { level: 'ERROR', message: `AMI command execution failed.`, error: errorMessage, action });
+      if (!isResolved) {
+        isResolved = true;
+        clearTimeout(timeout);
+        const errorMessage = e instanceof Error ? e.message : 'An unknown error occurred';
+        writeToLog(LOG_COMPONENT, { level: 'ERROR', message: `AMI command execution failed.`, error: errorMessage, action });
 
-      if (e instanceof z.ZodError) {
-        reject(new Error(`Invalid input: ${e.errors.map((err) => err.message).join(', ')}`));
-      } else {
-        reject(new Error(errorMessage));
+        if (e instanceof z.ZodError) {
+            reject(new Error(`Invalid input: ${e.errors.map((err) => err.message).join(', ')}`));
+        } else {
+            reject(new Error(errorMessage));
+        }
       }
     }
   });
@@ -108,10 +129,11 @@ export async function testAmiConnection(
 ): Promise<{ success: boolean; error?: string }> {
   try {
     const action = { Action: 'Ping' };
+    // For a simple ping, a very short collection time is fine.
     await runAmiCommand<any>(
       connection,
       action,
-      'Pong'
+      100
     );
     return { success: true };
   } catch (e) {
@@ -128,8 +150,7 @@ export async function getAmiEndpoint(
     const action = { Action: 'PJSIPShowEndpoint', Endpoint: endpointId };
     const rawEvents = await runAmiCommand<any>(
       connection,
-      action,
-      'EndpointDetailComplete'
+      action
     );
 
     // EndpointDetail contains high-level info.
@@ -179,8 +200,7 @@ export async function getAmiEndpoints(
     const action = { Action: 'PJSIPShowEndpoints' };
     const rawEvents = await runAmiCommand<any>(
       connection,
-      action,
-      'EndpointListComplete'
+      action
     );
     
     const rawEndpoints = rawEvents.filter(e => e.event === 'EndpointList');
@@ -215,7 +235,7 @@ export async function getAmiQueues(
     const rawEvents = await runAmiCommand<any>(
       connection,
       action,
-      'QueueStatusComplete'
+      500 // Queues can sometimes take a bit longer to report all members.
     );
 
     const rawQueues = rawEvents.filter(q => q.event === 'QueueParams');
