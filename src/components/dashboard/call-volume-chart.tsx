@@ -48,12 +48,12 @@ export function CallVolumeChart({ data, liveCalls }: CallVolumeChartProps) {
       <Card className="h-full">
         <CardHeader>
           <CardTitle>Статистика по звонкам</CardTitle>
-          <CardDescription>Звонки за последние 24 часа</CardDescription>
+          <CardDescription>Звонки с начала дня</CardDescription>
         </CardHeader>
         <CardContent className="pl-2 h-[300px] flex items-center justify-center">
           <div className="text-center text-muted-foreground">
             <BarChartIcon className="h-12 w-12 mx-auto mb-4" />
-            <p className="font-semibold">Нет данных о звонках за последние 24 часа.</p>
+            <p className="font-semibold">Нет данных о звонках за сегодня.</p>
             <p className="text-sm">
               График заполнится, как только начнут поступать звонки.
             </p>
@@ -69,7 +69,7 @@ export function CallVolumeChart({ data, liveCalls }: CallVolumeChartProps) {
         <div className="flex justify-between items-start">
             <div>
                  <CardTitle>Статистика по звонкам</CardTitle>
-                 <CardDescription>Звонки за последние 24 часа</CardDescription>
+                 <CardDescription>Звонки с начала дня</CardDescription>
             </div>
             <div className="text-right">
                 <p className="text-sm text-muted-foreground">Звонков сейчас</p>
