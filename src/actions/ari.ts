@@ -21,7 +21,7 @@ async function fetchFromAri(connection: AriConnection, path: string, options: Re
   const { host, port, username, password } = validatedConnection;
   const url = `http://${host}:${port}/ari/${path}`;
   
-  console.log(`[ARI] Request to: ${url} with method ${options.method || 'GET'}`);
+  // console.log(`[ARI] Request to: ${url} with method ${options.method || 'GET'}`);
 
   const auth = Buffer.from(`${username}:${password}`).toString('base64');
   const defaultOptions: RequestInit = {
@@ -65,10 +65,16 @@ export async function getAriChannelDetails(connection: AriConnection, channelId:
     // Now, try to get the most reliable uniqueid from the channel variables
     const uniqueId = await getAriChannelVariable(connection, channelId, 'CDR(uniqueid)');
     const linkedId = await getAriChannelVariable(connection, channelId, 'CDR(linkedid)');
+    const connectedLineNum = await getAriChannelVariable(connection, channelId, 'CONNECTEDLINE(num)');
+
 
     return {
         ...details,
+        // Prioritize the CDR uniqueid, as it's the one that will be in the DB.
+        // Fall back to other IDs if it's not available yet.
         uniqueid_from_vars: uniqueId || linkedId || details.id,
+        // Prioritize CONNECTEDLINE(num), as it's more reliable for the external number.
+        connected_line_num: connectedLineNum || details.caller?.number,
     };
 }
 

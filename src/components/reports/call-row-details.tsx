@@ -37,12 +37,15 @@ export function CallRowDetails({ call, user, isCrmEditable = true }: CallRowDeta
       setAudioDataUri(null);
 
       try {
-        const [appealsResult, contactResult] = await Promise.all([
+        const [allAppeals, contactResult] = await Promise.all([
           getAppeals(),
           findContactByPhone(call.callerNumber),
         ]);
         
-        const foundAppeal = appealsResult.find(a => a.callId === call.id) || null;
+        // Flexible search for appeal
+        const callIdBase = call.id.includes('.') ? call.id.substring(0, call.id.lastIndexOf('.')) : call.id;
+        const foundAppeal = allAppeals.find(a => a.callId.startsWith(callIdBase)) || null;
+
         setAppeal(foundAppeal);
         setContact(contactResult.contact || null);
 

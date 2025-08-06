@@ -74,19 +74,17 @@ export async function getOperatorState(
             const channelDetails = await getAriChannelDetails(config.ari, channelId);
 
             if (channelDetails) {
-                // Prioritize CONNECTEDLINE(num) for the caller's number, as it's more reliable.
-                // Fallback to caller.number if the first is not available.
-                const connectedLineNum = channelDetails.connected?.number || channelDetails.caller?.number;
-
                 // Prioritize the uniqueid from channel variables if available
-                const uniqueId = channelDetails.uniqueid_from_vars || channelDetails.id;
+                const uniqueId = channelDetails.uniqueid_from_vars;
+                // Prioritize the connected line number from channel variables
+                const callerId = channelDetails.connected_line_num;
 
                 finalCallState = {
                     ...finalCallState,
                     status: mapAriChannelState(channelDetails.state), // Refine status based on ARI channel state
                     channelId: channelId,
                     uniqueId: uniqueId,
-                    callerId: connectedLineNum || 'Unknown',
+                    callerId: callerId || 'Unknown',
                     queue: channelDetails.dialplan?.context,
                 };
             }

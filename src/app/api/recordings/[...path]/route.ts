@@ -28,24 +28,15 @@ export async function GET(
       return NextResponse.json({ error: 'No recording file associated with this call' }, { status: 404 });
     }
 
-    // 2. Construct the full path on the remote server, similar to FreePBX logic
-    const rec_parts = recordingfile.split('-');
+    // 2. Construct the full path on the remote server
     // Example filename: internal-0001-0777-20250711-121514-1752218114.361.wav
-    // This logic is fragile, but it's a common pattern for FreePBX.
-    // We assume the date part is always at the same index.
-    if (rec_parts.length < 4) {
-        throw new Error('Recording filename format is unexpected and date cannot be parsed.');
-    }
-    
-    const datePart = rec_parts.find(p => p.length === 8 && !isNaN(parseInt(p)));
+    const datePartMatch = recordingfile.match(/(\d{4})(\d{2})(\d{2})-\d{6}/);
 
-    if (!datePart) {
+    if (!datePartMatch) {
       throw new Error(`Could not determine date part from filename: ${recordingfile}`);
     }
-
-    const fyear = datePart.substring(0, 4); // "2025"
-    const fmonth = datePart.substring(4, 6); // "07"
-    const fday = datePart.substring(6, 8);   // "11"
+    
+    const [, fyear, fmonth, fday] = datePartMatch;
     
     // Assuming standard FreePBX monitor directory
     const monitor_base = `/var/spool/asterisk/monitor`; 
@@ -53,8 +44,7 @@ export async function GET(
 
     // 3. Connect via SFTP and download the file
     const sftp = new SftpClient();
-    // We use AMI config for SSH, assuming it's the same server. 
-    // This could be a separate config in the future.
+    // We use AMI config for SSH, assuming it's the same server.
     const sftpConfig = {
       host: config.ami.host,
       port: 22, // Standard SSH port, explicitly set
