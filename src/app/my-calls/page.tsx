@@ -21,6 +21,23 @@ export type EnrichedCall = Call & {
     followUpCompleted?: boolean;
 };
 
+// Helper function for flexible ID matching
+const findAppealByFlexibleId = (appeals: Appeal[], callId: string): Appeal | undefined => {
+    // 1. Try exact match first
+    let appeal = appeals.find(a => a.callId === callId);
+    if (appeal) return appeal;
+
+    // 2. Fallback to flexible matching (base part of the ID)
+    if (callId.includes('.')) {
+        const callIdBase = callId.substring(0, callId.lastIndexOf('.'));
+        appeal = appeals.find(a => a.callId.startsWith(callIdBase));
+        if (appeal) return appeal;
+    }
+    
+    return undefined;
+};
+
+
 export default function MyCallsPage() {
     const searchParams = useSearchParams();
     const [user, setUser] = useState<User | null>(null);
@@ -68,12 +85,11 @@ export default function MyCallsPage() {
                 }
                 
                 const contactMap = new Map(contacts.map(c => [c.phoneNumber, c.name]));
-                const appealMap = new Map(appeals.map(a => [a.callId, a]));
-
+                
                 const userCalls = callsResult.data
                     .filter(call => call.operatorExtension === user.extension)
                     .map((call): EnrichedCall => {
-                        const appeal = appealMap.get(call.id);
+                        const appeal = findAppealByFlexibleId(appeals, call.id);
                         return {
                             ...call,
                             callerName: contactMap.get(call.callerNumber),

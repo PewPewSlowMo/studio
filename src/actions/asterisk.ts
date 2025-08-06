@@ -62,21 +62,28 @@ export async function getOperatorState(
         
         if (activeCallStatuses.includes(baseStatus)) {
             // ARI is better for getting detailed call info like caller ID
-            const ariEndpoint = await getAriEndpointDetails(config.ari, extension);
-            const channelId = ariEndpoint?.channel_ids?.[0];
+            try {
+                const ariEndpoint = await getAriEndpointDetails(config.ari, extension);
+                const channelId = ariEndpoint?.channel_ids?.[0];
 
-            if (channelId) {
-                const channelDetails = await getAriChannelDetails(config.ari, channelId);
-                
-                if (channelDetails) {
-                    finalCallState = {
-                        ...finalCallState,
-                        channelId: channelId,
-                        uniqueId: channelDetails.uniqueid_from_vars,
-                        callerId: channelDetails.connected_line_num || 'Unknown',
-                        queue: channelDetails.dialplan?.context,
-                    };
+                if (channelId) {
+                    const channelDetails = await getAriChannelDetails(config.ari, channelId);
+                    
+                    if (channelDetails) {
+                        finalCallState = {
+                            ...finalCallState,
+                            channelId: channelId,
+                            uniqueId: channelDetails.uniqueid_from_vars,
+                            callerId: channelDetails.connected_line_num || 'Unknown',
+                            queue: channelDetails.dialplan?.context,
+                        };
+                    }
                 }
+            } catch (ariError) {
+                // This can happen if the call ends between the AMI and ARI checks.
+                // It's not a critical failure; we just won't have call details.
+                // The base status from AMI is still valid.
+                console.warn(`[getOperatorState] ARI enrichment failed for ext ${extension}, but AMI status is likely correct. Error:`, ariError instanceof Error ? ariError.message : ariError);
             }
         }
         

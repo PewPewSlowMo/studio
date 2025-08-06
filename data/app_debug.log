@@ -4781,3 +4781,492 @@ Requesting URL: http://92.46.62.34:8088/ari/endpoints/PJSIP/0001
   "status": 200
 }
 
+[2025-08-06 09:31:54.467] [ARI Fetch (GET)]
+Requesting URL: http://92.46.62.34:8088/ari/endpoints/PJSIP/0001
+
+[2025-08-06 09:31:54.956] [ARI Fetch (GET)]
+{
+  "level": "INFO",
+  "url": "http://92.46.62.34:8088/ari/endpoints/PJSIP/0001",
+  "status": 200
+}
+
+[2025-08-06 09:31:54.959] [ARI Fetch (GET)]
+Requesting URL: http://92.46.62.34:8088/ari/channels/1754472709.223
+
+[2025-08-06 09:31:55.209] [ARI Fetch (GET)]
+{
+  "level": "INFO",
+  "url": "http://92.46.62.34:8088/ari/channels/1754472709.223",
+  "status": 200
+}
+
+[2025-08-06 09:31:55.214] [ARI Fetch (GET)]
+Requesting URL: http://92.46.62.34:8088/ari/channels/1754472709.223/variable?variable=CDR(uniqueid)
+
+[2025-08-06 09:31:55.456] [ARI Fetch (GET)]
+{
+  "level": "INFO",
+  "url": "http://92.46.62.34:8088/ari/channels/1754472709.223/variable?variable=CDR(uniqueid)",
+  "status": 200
+}
+
+[2025-08-06 09:31:55.458] [ARI Fetch (GET)]
+Requesting URL: http://92.46.62.34:8088/ari/channels/1754472709.223/variable?variable=CDR(linkedid)
+
+[2025-08-06 09:31:55.701] [ARI Fetch (GET)]
+{
+  "level": "INFO",
+  "url": "http://92.46.62.34:8088/ari/channels/1754472709.223/variable?variable=CDR(linkedid)",
+  "status": 200
+}
+
+[2025-08-06 09:31:55.705] [ARI Fetch (GET)]
+Requesting URL: http://92.46.62.34:8088/ari/channels/1754472709.223/variable?variable=CONNECTEDLINE(num)
+
+[2025-08-06 09:31:55.954] [ARI Fetch (GET)]
+{
+  "level": "INFO",
+  "url": "http://92.46.62.34:8088/ari/channels/1754472709.223/variable?variable=CONNECTEDLINE(num)",
+  "status": 200
+}
+
+[2025-08-06 09:31:57.161] [ARI Fetch (GET)]
+Requesting URL: http://92.46.62.34:8088/ari/endpoints/PJSIP/0001
+
+[2025-08-06 09:31:57.405] [ARI Fetch (GET)]
+{
+  "level": "INFO",
+  "url": "http://92.46.62.34:8088/ari/endpoints/PJSIP/0001",
+  "status": 200
+}
+
+[2025-08-06 09:31:57.407] [ARI Fetch (GET)]
+Requesting URL: http://92.46.62.34:8088/ari/channels/1754472709.223
+
+[2025-08-06 09:31:57.652] [ARI Fetch (GET)]
+{
+  "level": "INFO",
+  "url": "http://92.46.62.34:8088/ari/channels/1754472709.223",
+  "status": 200
+}
+
+[2025-08-06 09:31:57.659] [ARI Fetch (GET)]
+Requesting URL: http://92.46.62.34:8088/ari/channels/1754472709.223/variable?variable=CDR(uniqueid)
+
+[2025-08-06 09:31:57.901] [ARI Fetch (GET)]
+{
+  "level": "INFO",
+  "url": "http://92.46.62.34:8088/ari/channels/1754472709.223/variable?variable=CDR(uniqueid)",
+  "status": 200
+}
+
+[2025-08-06 09:31:57.903] [ARI Fetch (GET)]
+Requesting URL: http://92.46.62.34:8088/ari/channels/1754472709.223/variable?variable=CDR(linkedid)
+
+[2025-08-06 09:31:58.152] [ARI Fetch (GET)]
+{
+  "level": "INFO",
+  "url": "http://92.46.62.34:8088/ari/channels/1754472709.223/variable?variable=CDR(linkedid)",
+  "status": 200
+}
+
+[2025-08-06 09:31:58.156] [ARI Fetch (GET)]
+Requesting URL: http://92.46.62.34:8088/ari/channels/1754472709.223/variable?variable=CONNECTEDLINE(num)
+
+[2025-08-06 09:31:58.402] [ARI Fetch (GET)]
+{
+  "level": "INFO",
+  "url": "http://92.46.62.34:8088/ari/channels/1754472709.223/variable?variable=CONNECTEDLINE(num)",
+  "status": 200
+}
+
+[2025-08-06 09:31:59.551] [ARI Fetch (GET)]
+Requesting URL: http://92.46.62.34:8088/ari/endpoints/PJSIP/0001
+
+[2025-08-06 09:31:59.803] [ARI Fetch (GET)]
+{
+  "level": "INFO",
+  "url": "http://92.46.62.34:8088/ari/endpoints/PJSIP/0001",
+  "status": 200
+}
+
+[2025-08-06 09:31:59.818] [ARI Fetch (GET)]
+Requesting URL: http://92.46.62.34:8088/ari/channels/1754472709.223
+
+[2025-08-06 09:32:00.072] [ARI Fetch (GET)]
+{
+  "level": "INFO",
+  "url": "http://92.46.62.34:8088/ari/channels/1754472709.223",
+  "status": 200
+}
+
+[2025-08-06 09:32:00.075] [ARI Fetch (GET)]
+Requesting URL: http://92.46.62.34:8088/ari/channels/1754472709.223/variable?variable=CDR(uniqueid)
+
+[2025-08-06 09:32:00.321] [ARI Fetch (GET)]
+{
+  "level": "INFO",
+  "url": "http://92.46.62.34:8088/ari/channels/1754472709.223/variable?variable=CDR(uniqueid)",
+  "status": 200
+}
+
+[2025-08-06 09:32:00.324] [ARI Fetch (GET)]
+Requesting URL: http://92.46.62.34:8088/ari/channels/1754472709.223/variable?variable=CDR(linkedid)
+
+[2025-08-06 09:32:00.566] [ARI Fetch (GET)]
+{
+  "level": "INFO",
+  "url": "http://92.46.62.34:8088/ari/channels/1754472709.223/variable?variable=CDR(linkedid)",
+  "status": 200
+}
+
+[2025-08-06 09:32:00.568] [ARI Fetch (GET)]
+Requesting URL: http://92.46.62.34:8088/ari/channels/1754472709.223/variable?variable=CONNECTEDLINE(num)
+
+[2025-08-06 09:32:00.816] [ARI Fetch (GET)]
+{
+  "level": "INFO",
+  "url": "http://92.46.62.34:8088/ari/channels/1754472709.223/variable?variable=CONNECTEDLINE(num)",
+  "status": 200
+}
+
+[2025-08-06 09:32:03.862] [ARI Fetch (GET)]
+Requesting URL: http://92.46.62.34:8088/ari/endpoints/PJSIP/0001
+
+[2025-08-06 09:32:04.103] [ARI Fetch (GET)]
+{
+  "level": "INFO",
+  "url": "http://92.46.62.34:8088/ari/endpoints/PJSIP/0001",
+  "status": 200
+}
+
+[2025-08-06 09:32:04.108] [ARI Fetch (GET)]
+Requesting URL: http://92.46.62.34:8088/ari/channels/1754472709.223
+
+[2025-08-06 09:32:04.358] [ARI Fetch (GET)]
+{
+  "level": "INFO",
+  "url": "http://92.46.62.34:8088/ari/channels/1754472709.223",
+  "status": 200
+}
+
+[2025-08-06 09:32:04.363] [ARI Fetch (GET)]
+Requesting URL: http://92.46.62.34:8088/ari/channels/1754472709.223/variable?variable=CDR(uniqueid)
+
+[2025-08-06 09:32:04.608] [ARI Fetch (GET)]
+{
+  "level": "INFO",
+  "url": "http://92.46.62.34:8088/ari/channels/1754472709.223/variable?variable=CDR(uniqueid)",
+  "status": 200
+}
+
+[2025-08-06 09:32:04.610] [ARI Fetch (GET)]
+Requesting URL: http://92.46.62.34:8088/ari/channels/1754472709.223/variable?variable=CDR(linkedid)
+
+[2025-08-06 09:32:04.850] [ARI Fetch (GET)]
+{
+  "level": "INFO",
+  "url": "http://92.46.62.34:8088/ari/channels/1754472709.223/variable?variable=CDR(linkedid)",
+  "status": 200
+}
+
+[2025-08-06 09:32:04.853] [ARI Fetch (GET)]
+Requesting URL: http://92.46.62.34:8088/ari/channels/1754472709.223/variable?variable=CONNECTEDLINE(num)
+
+[2025-08-06 09:32:05.096] [ARI Fetch (GET)]
+{
+  "level": "INFO",
+  "url": "http://92.46.62.34:8088/ari/channels/1754472709.223/variable?variable=CONNECTEDLINE(num)",
+  "status": 200
+}
+
+[2025-08-06 09:32:06.259] [ARI Fetch (GET)]
+Requesting URL: http://92.46.62.34:8088/ari/endpoints/PJSIP/0001
+
+[2025-08-06 09:32:06.502] [ARI Fetch (GET)]
+{
+  "level": "INFO",
+  "url": "http://92.46.62.34:8088/ari/endpoints/PJSIP/0001",
+  "status": 200
+}
+
+[2025-08-06 09:32:06.507] [ARI Fetch (GET)]
+Requesting URL: http://92.46.62.34:8088/ari/channels/1754472709.223
+
+[2025-08-06 09:32:06.748] [ARI Fetch (GET)]
+{
+  "level": "INFO",
+  "url": "http://92.46.62.34:8088/ari/channels/1754472709.223",
+  "status": 200
+}
+
+[2025-08-06 09:32:06.757] [ARI Fetch (GET)]
+Requesting URL: http://92.46.62.34:8088/ari/channels/1754472709.223/variable?variable=CDR(uniqueid)
+
+[2025-08-06 09:32:07.013] [ARI Fetch (GET)]
+{
+  "level": "INFO",
+  "url": "http://92.46.62.34:8088/ari/channels/1754472709.223/variable?variable=CDR(uniqueid)",
+  "status": 200
+}
+
+[2025-08-06 09:32:07.016] [ARI Fetch (GET)]
+Requesting URL: http://92.46.62.34:8088/ari/channels/1754472709.223/variable?variable=CDR(linkedid)
+
+[2025-08-06 09:32:07.259] [ARI Fetch (GET)]
+{
+  "level": "INFO",
+  "url": "http://92.46.62.34:8088/ari/channels/1754472709.223/variable?variable=CDR(linkedid)",
+  "status": 200
+}
+
+[2025-08-06 09:32:07.263] [ARI Fetch (GET)]
+Requesting URL: http://92.46.62.34:8088/ari/channels/1754472709.223/variable?variable=CONNECTEDLINE(num)
+
+[2025-08-06 09:32:07.507] [ARI Fetch (GET)]
+{
+  "level": "INFO",
+  "url": "http://92.46.62.34:8088/ari/channels/1754472709.223/variable?variable=CONNECTEDLINE(num)",
+  "status": 200
+}
+
+[2025-08-06 09:32:08.610] [ARI Fetch (GET)]
+Requesting URL: http://92.46.62.34:8088/ari/endpoints/PJSIP/0001
+
+[2025-08-06 09:32:08.848] [ARI Fetch (GET)]
+{
+  "level": "INFO",
+  "url": "http://92.46.62.34:8088/ari/endpoints/PJSIP/0001",
+  "status": 200
+}
+
+[2025-08-06 09:32:08.850] [ARI Fetch (GET)]
+Requesting URL: http://92.46.62.34:8088/ari/channels/1754472709.223
+
+[2025-08-06 09:32:09.089] [ARI Fetch (GET)]
+{
+  "level": "INFO",
+  "url": "http://92.46.62.34:8088/ari/channels/1754472709.223",
+  "status": 200
+}
+
+[2025-08-06 09:32:09.091] [ARI Fetch (GET)]
+Requesting URL: http://92.46.62.34:8088/ari/channels/1754472709.223/variable?variable=CDR(uniqueid)
+
+[2025-08-06 09:32:09.334] [ARI Fetch (GET)]
+{
+  "level": "INFO",
+  "url": "http://92.46.62.34:8088/ari/channels/1754472709.223/variable?variable=CDR(uniqueid)",
+  "status": 200
+}
+
+[2025-08-06 09:32:09.338] [ARI Fetch (GET)]
+Requesting URL: http://92.46.62.34:8088/ari/channels/1754472709.223/variable?variable=CDR(linkedid)
+
+[2025-08-06 09:32:09.578] [ARI Fetch (GET)]
+{
+  "level": "INFO",
+  "url": "http://92.46.62.34:8088/ari/channels/1754472709.223/variable?variable=CDR(linkedid)",
+  "status": 200
+}
+
+[2025-08-06 09:32:09.580] [ARI Fetch (GET)]
+Requesting URL: http://92.46.62.34:8088/ari/channels/1754472709.223/variable?variable=CONNECTEDLINE(num)
+
+[2025-08-06 09:32:09.821] [ARI Fetch (GET)]
+{
+  "level": "INFO",
+  "url": "http://92.46.62.34:8088/ari/channels/1754472709.223/variable?variable=CONNECTEDLINE(num)",
+  "status": 200
+}
+
+[2025-08-06 09:32:10.882] [ARI Fetch (GET)]
+Requesting URL: http://92.46.62.34:8088/ari/endpoints/PJSIP/0001
+
+[2025-08-06 09:32:11.118] [ARI Fetch (GET)]
+{
+  "level": "INFO",
+  "url": "http://92.46.62.34:8088/ari/endpoints/PJSIP/0001",
+  "status": 200
+}
+
+[2025-08-06 09:32:11.120] [ARI Fetch (GET)]
+Requesting URL: http://92.46.62.34:8088/ari/channels/1754472709.223
+
+[2025-08-06 09:32:11.366] [ARI Fetch (GET)]
+{
+  "level": "INFO",
+  "url": "http://92.46.62.34:8088/ari/channels/1754472709.223",
+  "status": 200
+}
+
+[2025-08-06 09:32:11.367] [ARI Fetch (GET)]
+Requesting URL: http://92.46.62.34:8088/ari/channels/1754472709.223/variable?variable=CDR(uniqueid)
+
+[2025-08-06 09:32:11.607] [ARI Fetch (GET)]
+{
+  "level": "INFO",
+  "url": "http://92.46.62.34:8088/ari/channels/1754472709.223/variable?variable=CDR(uniqueid)",
+  "status": 200
+}
+
+[2025-08-06 09:32:11.609] [ARI Fetch (GET)]
+Requesting URL: http://92.46.62.34:8088/ari/channels/1754472709.223/variable?variable=CDR(linkedid)
+
+[2025-08-06 09:32:11.850] [ARI Fetch (GET)]
+{
+  "level": "INFO",
+  "url": "http://92.46.62.34:8088/ari/channels/1754472709.223/variable?variable=CDR(linkedid)",
+  "status": 200
+}
+
+[2025-08-06 09:32:11.855] [ARI Fetch (GET)]
+Requesting URL: http://92.46.62.34:8088/ari/channels/1754472709.223/variable?variable=CONNECTEDLINE(num)
+
+[2025-08-06 09:32:12.108] [ARI Fetch (GET)]
+{
+  "level": "INFO",
+  "url": "http://92.46.62.34:8088/ari/channels/1754472709.223/variable?variable=CONNECTEDLINE(num)",
+  "status": 200
+}
+
+[2025-08-06 09:32:13.230] [ARI Fetch (GET)]
+Requesting URL: http://92.46.62.34:8088/ari/endpoints/PJSIP/0001
+
+[2025-08-06 09:32:13.469] [ARI Fetch (GET)]
+{
+  "level": "INFO",
+  "url": "http://92.46.62.34:8088/ari/endpoints/PJSIP/0001",
+  "status": 200
+}
+
+[2025-08-06 09:32:13.470] [ARI Fetch (GET)]
+Requesting URL: http://92.46.62.34:8088/ari/channels/1754472709.223
+
+[2025-08-06 09:32:13.710] [ARI Fetch (GET)]
+{
+  "level": "INFO",
+  "url": "http://92.46.62.34:8088/ari/channels/1754472709.223",
+  "status": 200
+}
+
+[2025-08-06 09:32:13.713] [ARI Fetch (GET)]
+Requesting URL: http://92.46.62.34:8088/ari/channels/1754472709.223/variable?variable=CDR(uniqueid)
+
+[2025-08-06 09:32:13.953] [ARI Fetch (GET)]
+{
+  "level": "INFO",
+  "url": "http://92.46.62.34:8088/ari/channels/1754472709.223/variable?variable=CDR(uniqueid)",
+  "status": 200
+}
+
+[2025-08-06 09:32:13.957] [ARI Fetch (GET)]
+Requesting URL: http://92.46.62.34:8088/ari/channels/1754472709.223/variable?variable=CDR(linkedid)
+
+[2025-08-06 09:32:14.195] [ARI Fetch (GET)]
+{
+  "level": "INFO",
+  "url": "http://92.46.62.34:8088/ari/channels/1754472709.223/variable?variable=CDR(linkedid)",
+  "status": 200
+}
+
+[2025-08-06 09:32:14.199] [ARI Fetch (GET)]
+Requesting URL: http://92.46.62.34:8088/ari/channels/1754472709.223/variable?variable=CONNECTEDLINE(num)
+
+[2025-08-06 09:32:14.437] [ARI Fetch (GET)]
+{
+  "level": "INFO",
+  "url": "http://92.46.62.34:8088/ari/channels/1754472709.223/variable?variable=CONNECTEDLINE(num)",
+  "status": 200
+}
+
+[2025-08-06 09:32:16.017] [ARI Fetch (GET)]
+Requesting URL: http://92.46.62.34:8088/ari/endpoints/PJSIP/0001
+
+[2025-08-06 09:32:16.255] [ARI Fetch (GET)]
+{
+  "level": "INFO",
+  "url": "http://92.46.62.34:8088/ari/endpoints/PJSIP/0001",
+  "status": 200
+}
+
+[2025-08-06 09:32:16.259] [ARI Fetch (GET)]
+Requesting URL: http://92.46.62.34:8088/ari/channels/1754472709.223
+
+[2025-08-06 09:32:16.499] [ARI Fetch (GET)]
+{
+  "level": "INFO",
+  "url": "http://92.46.62.34:8088/ari/channels/1754472709.223",
+  "status": 200
+}
+
+[2025-08-06 09:32:16.502] [ARI Fetch (GET)]
+Requesting URL: http://92.46.62.34:8088/ari/channels/1754472709.223/variable?variable=CDR(uniqueid)
+
+[2025-08-06 09:32:16.742] [ARI Fetch (GET)]
+{
+  "level": "INFO",
+  "url": "http://92.46.62.34:8088/ari/channels/1754472709.223/variable?variable=CDR(uniqueid)",
+  "status": 200
+}
+
+[2025-08-06 09:32:16.747] [ARI Fetch (GET)]
+Requesting URL: http://92.46.62.34:8088/ari/channels/1754472709.223/variable?variable=CDR(linkedid)
+
+[2025-08-06 09:32:16.992] [ARI Fetch (GET)]
+{
+  "level": "INFO",
+  "url": "http://92.46.62.34:8088/ari/channels/1754472709.223/variable?variable=CDR(linkedid)",
+  "status": 200
+}
+
+[2025-08-06 09:32:16.994] [ARI Fetch (GET)]
+Requesting URL: http://92.46.62.34:8088/ari/channels/1754472709.223/variable?variable=CONNECTEDLINE(num)
+
+[2025-08-06 09:32:17.233] [ARI Fetch (GET)]
+{
+  "level": "INFO",
+  "url": "http://92.46.62.34:8088/ari/channels/1754472709.223/variable?variable=CONNECTEDLINE(num)",
+  "status": 200
+}
+
+[2025-08-06 09:33:00.743] [RECORDING_API]
+--- New recording request received ---
+
+[2025-08-06 09:33:00.777] [RECORDING_API]
+Step 1: Received request for uniqueid: 1754472709.222
+
+[2025-08-06 09:33:00.867] [RECORDING_API]
+Step 2: Successfully loaded system configuration.
+
+[2025-08-06 09:33:00.888] [RECORDING_API]
+Step 3: Fetching call details from CDR for uniqueid: 1754472709.222
+
+[2025-08-06 09:33:02.232] [RECORDING_API]
+{
+  "message": "Step 4: Found call in CDR.",
+  "uniqueid": "1754472709.222",
+  "recordingfile": "internal-0001-0777-20250806-143149-1754472709.222.wav"
+}
+
+[2025-08-06 09:33:02.238] [RECORDING_API]
+Step 5: Constructed remote file path: /var/spool/asterisk/monitor/2025/08/06/internal-0001-0777-20250806-143149-1754472709.222.wav
+
+[2025-08-06 09:33:02.240] [RECORDING_API]
+{
+  "message": "Step 6: Attempting to connect to SFTP server.",
+  "host": "92.46.62.34",
+  "port": 22,
+  "username": "smart_call_cent"
+}
+
+[2025-08-06 09:34:07.284] [RECORDING_API]
+{
+  "level": "CRITICAL_ERROR",
+  "message": "An error occurred during the recording retrieval process.",
+  "uniqueid": "1754472709.222",
+  "error": "connect: getConnection: Timed out while waiting for handshake",
+  "stack": "Error: connect: getConnection: Timed out while waiting for handshake\n    at SftpClient.fmtError (/home/user/studio/.next/server/chunks/node_modules_8ed08d31._.js:9171:26)\n    at SftpClient.connect (/home/user/studio/.next/server/chunks/node_modules_8ed08d31._.js:9295:43)\n    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at async GET (/home/user/studio/.next/server/chunks/[root-of-the-server]__dd4c95fe._.js:708:9)\n    at async AppRouteRouteModule.do (/home/user/studio/node_modules/next/dist/compiled/next-server/app-route-turbo.runtime.dev.js:26:34112)\n    at async AppRouteRouteModule.handle (/home/user/studio/node_modules/next/dist/compiled/next-server/app-route-turbo.runtime.dev.js:26:41338)\n    at async doRender (/home/user/studio/node_modules/next/dist/server/base-server.js:1518:42)\n    at async DevServer.renderToResponseWithComponentsImpl (/home/user/studio/node_modules/next/dist/server/base-server.js:1920:28)\n    at async DevServer.renderPageComponent (/home/user/studio/node_modules/next/dist/server/base-server.js:2408:24)\n    at async DevServer.renderToResponseImpl (/home/user/studio/node_modules/next/dist/server/base-server.js:2445:32)\n    at async DevServer.pipeImpl (/home/user/studio/node_modules/next/dist/server/base-server.js:1008:25)\n    at async NextNodeServer.handleCatchallRenderRequest (/home/user/studio/node_modules/next/dist/server/next-server.js:305:17)\n    at async DevServer.handleRequestImpl (/home/user/studio/node_modules/next/dist/server/base-server.js:900:17)\n    at async /home/user/studio/node_modules/next/dist/server/dev/next-dev-server.js:371:20\n    at async Span.traceAsyncFn (/home/user/studio/node_modules/next/dist/trace/trace.js:157:20)\n    at async DevServer.handleRequest (/home/user/studio/node_modules/next/dist/server/dev/next-dev-server.js:368:24)\n    at async invokeRender (/home/user/studio/node_modules/next/dist/server/lib/router-server.js:237:21)\n    at async handleRequest (/home/user/studio/node_modules/next/dist/server/lib/router-server.js:428:24)\n    at async requestHandlerImpl (/home/user/studio/node_modules/next/dist/server/lib/router-server.js:452:13)\n    at async Server.requestListener (/home/user/studio/node_modules/next/dist/server/lib/start-server.js:158:13)"
+}
+
