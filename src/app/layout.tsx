@@ -3,7 +3,6 @@ import { Inter } from 'next/font/google';
 import './globals.css';
 import { cn } from '@/lib/utils';
 import { AppLayout } from '@/components/layout/app-layout';
-import { Toaster } from '@/components/ui/toaster';
 import { ThemeProvider } from '@/components/layout/theme-provider';
 
 const inter = Inter({
@@ -14,7 +13,6 @@ const inter = Inter({
 export const metadata: Metadata = {
   title: 'CallSync Central | Аналитика',
   description: 'Система управления и аналитики для колл-центра',
-  icons: null,
 };
 
 export default function RootLayout({
@@ -32,7 +30,6 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           <AppLayout>{children}</AppLayout>
-          <Toaster />
         </ThemeProvider>
       </body>
     </html>

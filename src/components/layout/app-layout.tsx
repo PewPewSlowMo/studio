@@ -42,6 +42,8 @@ import { Button } from '@/components/ui/button';
 import type { User, UserRole } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import { useTheme } from 'next-themes';
+import { Toaster } from '@/components/ui/toaster';
+
 
 const allMenuItems: Array<{ href: string; label: string; icon: React.ElementType; roles: UserRole[] }> = [
     { href: '/operator', label: 'Рабочее место', icon: Cpu, roles: ['operator'] },
@@ -225,6 +227,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
         </header>
         <main className="flex-1 p-6">{children}</main>
       </SidebarInset>
+      <Toaster />
     </SidebarProvider>
   );
 }

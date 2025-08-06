@@ -2,10 +2,13 @@
 
 import { z } from 'zod';
 import type { AsteriskEndpoint, AsteriskQueue } from '@/lib/types';
+import { writeToLog } from './logger';
 
 // This is a CommonJS module. We configure Next.js to treat it as an external
 // package on the server via `serverComponentsExternalPackages` in next.config.ts.
 const Ami = require('asterisk-manager');
+
+const LOG_COMPONENT = 'AMI_ACTION';
 
 const AmiConnectionSchema = z.object({
   host: z.string().min(1, 'Host is required'),
@@ -21,7 +24,7 @@ async function withRetry<T>(fn: () => Promise<T>, retries = 1, delay = 100): Pro
     return await fn();
   } catch (err: any) {
     if (retries > 0 && err.code === 'ECONNRESET') {
-      console.warn(`AMI connection reset. Retrying in ${delay}ms... (${retries} retries left)`);
+      await writeToLog(LOG_COMPONENT, `AMI connection reset. Retrying in ${delay}ms... (${retries} retries left)`);
       await new Promise(res => setTimeout(res, delay));
       return withRetry(fn, retries - 1, delay * 2);
     }
@@ -38,11 +41,13 @@ function runAmiCommand<T extends Record<string, any>>(
     let ami: any;
     const timeout = setTimeout(() => {
         if (ami) ami.disconnect();
+        writeToLog(LOG_COMPONENT, { level: 'ERROR', message: 'AMI command timed out after 20 seconds.', action });
         reject(new Error('AMI command timed out after 20 seconds.'));
     }, 20000); // Increased timeout to 20 seconds
 
     try {
       const validatedConnection = AmiConnectionSchema.parse(connection);
+      writeToLog(LOG_COMPONENT, { level: 'INFO', message: `Executing AMI action`, action });
 
       ami = new Ami(
         Number(validatedConnection.port),
@@ -59,34 +64,37 @@ function runAmiCommand<T extends Record<string, any>>(
       });
 
       ami.on('managerevent', (event: T) => {
+        results.push(event); // Collect ALL events
         if (event.event === completionEvent) {
           ami.disconnect();
+          writeToLog(LOG_COMPONENT, { level: 'INFO', message: `AMI Action Complete. Total events received: ${results.length}`, action, completionEvent });
           resolve(results);
-        } else {
-          results.push(event);
         }
       });
       
       ami.on('error', (err: Error) => {
           ami.disconnect();
+          writeToLog(LOG_COMPONENT, { level: 'ERROR', message: 'AMI connection error', error: err.message, action });
           reject(err);
       });
 
       ami.action(action, (err: Error | null) => {
         if (err) {
           ami.disconnect();
+          writeToLog(LOG_COMPONENT, { level: 'ERROR', message: 'AMI action error', error: err.message, action });
           reject(err);
         }
       });
 
     } catch (e) {
       clearTimeout(timeout);
+      const errorMessage = e instanceof Error ? e.message : 'An unknown error occurred';
+      writeToLog(LOG_COMPONENT, { level: 'ERROR', message: `AMI command execution failed.`, error: errorMessage, action });
+
       if (e instanceof z.ZodError) {
         reject(new Error(`Invalid input: ${e.errors.map((err) => err.message).join(', ')}`));
-      } else if (e instanceof Error) {
-        reject(e);
       } else {
-        reject(new Error('An unknown error occurred during AMI command execution.'));
+        reject(new Error(errorMessage));
       }
     }
   });
@@ -99,11 +107,11 @@ export async function testAmiConnection(
   connection: AmiConnection
 ): Promise<{ success: boolean; error?: string }> {
   try {
-    const action = { Action: 'PJSIPShowEndpoints' };
+    const action = { Action: 'Ping' };
     await runAmiCommand<any>(
       connection,
       action,
-      'EndpointListComplete'
+      'Pong'
     );
     return { success: true };
   } catch (e) {
@@ -176,13 +184,21 @@ export async function getAmiEndpoints(
     );
     
     const rawEndpoints = rawEvents.filter(e => e.event === 'EndpointList');
+    const contactStatuses = rawEvents.filter(e => e.event === 'ContactStatusDetail');
+    const contactStatusMap = new Map(contactStatuses.map(cs => [cs.aor, cs]));
 
-    const data = rawEndpoints.map((e) => ({
-      technology: 'PJSIP',
-      resource: e.objectname,
-      state: e.devicestate?.toLowerCase() || 'unknown',
-      channel_ids: e.channel ? [e.channel] : [],
-    }));
+    const data = rawEndpoints.map((e) => {
+      const contactStatus = contactStatusMap.get(e.objectname);
+      // Prefer the more specific ContactStatus, fallback to the general DeviceState
+      const state = contactStatus?.status || e.devicestate;
+
+      return {
+        technology: 'PJSIP',
+        resource: e.objectname,
+        state: state?.toLowerCase() || 'unknown',
+        channel_ids: e.channel ? [e.channel] : [],
+      };
+    });
 
     return { success: true, data };
   } catch (e) {
