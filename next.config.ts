@@ -18,7 +18,7 @@ const nextConfig: NextConfig = {
       },
     ],
   },
-  serverExternalPackages: ['asterisk-manager', 'mysql2', 'sqlite3'],
+  serverExternalPackages: ['asterisk-manager', 'mysql2', 'sqlite3', 'xlsx'],
 };
 
 export default nextConfig;
