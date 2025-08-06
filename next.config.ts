@@ -19,11 +19,6 @@ const nextConfig: NextConfig = {
     ],
   },
   serverExternalPackages: ['asterisk-manager', 'mysql2', 'sqlite3', 'xlsx'],
-  watchOptions: {
-    ignored: [
-        '**/data/**'
-    ]
-  }
 };
 
 export default nextConfig;
