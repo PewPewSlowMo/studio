@@ -3,6 +3,7 @@
 
 import { z } from 'zod';
 import type { UserRole, CallState } from '@/lib/types';
+import { writeToLog } from './logger';
 
 const AriConnectionSchema = z.object({
   host: z.string().min(1, 'Host is required'),
@@ -21,7 +22,8 @@ async function fetchFromAri(connection: AriConnection, path: string, options: Re
   const { host, port, username, password } = validatedConnection;
   const url = `http://${host}:${port}/ari/${path}`;
   
-  // console.log(`[ARI] Request to: ${url} with method ${options.method || 'GET'}`);
+  const logContext = `ARI Fetch (${options.method || 'GET'})`;
+  await writeToLog(logContext, `Requesting URL: ${url}`);
 
   const auth = Buffer.from(`${username}:${password}`).toString('base64');
   const defaultOptions: RequestInit = {
@@ -34,14 +36,34 @@ async function fetchFromAri(connection: AriConnection, path: string, options: Re
 
   try {
     const response = await fetch(url, { ...options, ...defaultOptions });
+    
+    if (!response.ok) {
+        const errorBody = await response.text();
+        await writeToLog(logContext, {
+            level: 'ERROR',
+            url: url,
+            status: response.status,
+            statusText: response.statusText,
+            body: errorBody
+        });
+    } else {
+         await writeToLog(logContext, {
+            level: 'INFO',
+            url: url,
+            status: response.status
+        });
+    }
+
     return response;
   } catch (e) {
       if (e instanceof TypeError && e.message.includes('fetch failed')) {
-        console.error(`[ARI FETCH ERROR] Cannot connect to ARI server at ${host}:${port}.`);
-        return new Response(JSON.stringify({ message: `Cannot connect to ARI server at ${host}:${port}` }), { status: 503, statusText: 'Service Unavailable' });
+        const errorMessage = `Cannot connect to ARI server at ${host}:${port}`;
+        await writeToLog(logContext, { level: 'ERROR', url: url, error: errorMessage, details: e });
+        return new Response(JSON.stringify({ message: errorMessage }), { status: 503, statusText: 'Service Unavailable' });
       }
-      console.error(`[ARI FETCH ERROR] An unexpected network or fetch error occurred for ${url}:`, e);
+      
       const message = e instanceof Error ? e.message : 'A network or fetch error occurred.';
+      await writeToLog(logContext, { level: 'ERROR', url: url, error: message, details: e });
       return new Response(JSON.stringify({ message }), { status: 500, statusText: 'Internal Server Error' });
   }
 }
@@ -101,11 +123,9 @@ export async function testAriConnection(
     }
     const errorBody = await response.text();
     const errorMessage = `Connection failed with status ${response.status}: ${errorBody}`;
-    console.error(`[ARI TEST] ${errorMessage}`);
     return { success: false, error: errorMessage };
   } catch (e) {
     const message = e instanceof Error ? e.message : 'An unknown error occurred.';
-    console.error(`[ARI TEST] Exception: ${message}`);
     return { success: false, error: message };
   }
 }
