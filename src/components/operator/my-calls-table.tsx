@@ -15,7 +15,7 @@ import { format, parseISO, isValid } from 'date-fns';
 import { ru } from 'date-fns/locale';
 import { Skeleton } from '../ui/skeleton';
 import { Button } from '../ui/button';
-import { ArrowUp, ArrowDown, FileText, PhoneOutgoing } from 'lucide-react';
+import { ArrowUp, ArrowDown, FileText, PhoneOutgoing, Star } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import type { EnrichedCall } from '@/app/my-calls/page';
@@ -125,6 +125,7 @@ export function MyCallsTable({ calls, isLoading, user }: MyCallsTableProps) {
           <TableHead>ФИО</TableHead>
           <TableHead>Категория</TableHead>
           <TableHead>Статус</TableHead>
+          <TableHead>Оценка</TableHead>
           <TableHead>Дата и время</TableHead>
           <TableHead className="text-right">Разговор</TableHead>
         </TableRow>
@@ -136,6 +137,7 @@ export function MyCallsTable({ calls, isLoading, user }: MyCallsTableProps) {
             <TableCell><Skeleton className="h-4 w-32" /></TableCell>
             <TableCell><Skeleton className="h-6 w-28 rounded-full" /></TableCell>
             <TableCell><Skeleton className="h-6 w-20 rounded-full" /></TableCell>
+            <TableCell><Skeleton className="h-4 w-12" /></TableCell>
             <TableCell><Skeleton className="h-4 w-40" /></TableCell>
             <TableCell><Skeleton className="h-4 w-12 ml-auto" /></TableCell>
           </TableRow>
@@ -155,6 +157,7 @@ export function MyCallsTable({ calls, isLoading, user }: MyCallsTableProps) {
                 <SortableHeader sortKey="callerName">ФИО</SortableHeader>
                 <SortableHeader sortKey="category">Категория</SortableHeader>
                 <SortableHeader sortKey="status">Статус</SortableHeader>
+                <SortableHeader sortKey="satisfaction">Оценка</SortableHeader>
                 <SortableHeader sortKey="startTime">Дата и время</SortableHeader>
                 <SortableHeader sortKey="billsec" className="text-right">Разговор</SortableHeader>
             </TableRow>
@@ -202,12 +205,22 @@ export function MyCallsTable({ calls, isLoading, user }: MyCallsTableProps) {
                             {statusMap[call.status] || call.status}
                         </Badge>
                         </TableCell>
+                        <TableCell>
+                            {call.satisfaction ? (
+                                <div className="flex items-center gap-1">
+                                   <Star className="h-4 w-4 text-yellow-400 fill-yellow-400" />
+                                   <span>{call.satisfaction}</span>
+                                </div>
+                            ) : (
+                                <span className="text-muted-foreground">-</span>
+                            )}
+                        </TableCell>
                         <TableCell>{formatDate(call.startTime)}</TableCell>
                         <TableCell className="text-right">{formatDuration(call.billsec)}</TableCell>
                     </TableRow>
                      {activeRowId === call.id && (
                         <TableRow>
-                            <TableCell colSpan={6} className="p-0">
+                            <TableCell colSpan={7} className="p-0">
                                 <CallRowDetails call={call} user={user} isCrmEditable={false} />
                             </TableCell>
                         </TableRow>
@@ -216,7 +229,7 @@ export function MyCallsTable({ calls, isLoading, user }: MyCallsTableProps) {
               ))
             ) : (
               <TableRow>
-                <TableCell colSpan={6} className="h-24 text-center">
+                <TableCell colSpan={7} className="h-24 text-center">
                   Звонки за выбранный период не найдены.
                 </TableCell>
               </TableRow>
