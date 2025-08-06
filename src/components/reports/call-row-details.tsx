@@ -11,6 +11,7 @@ import { Separator } from '@/components/ui/separator';
 import { Button } from '../ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { AudioPlayer } from '@/components/operator/audio-player';
+import { canDownloadRecording } from '@/actions/ari';
 
 interface CallRowDetailsProps {
   call: Call;
@@ -27,6 +28,7 @@ export function CallRowDetails({ call, user, isCrmEditable = true }: CallRowDeta
   const [isLoading, setIsLoading] = useState(true);
   const [recordingStatus, setRecordingStatus] = useState<RecordingStatus>('checking');
   const [audioDataUri, setAudioDataUri] = useState<string | null>(null);
+  const [downloadAllowed, setDownloadAllowed] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -37,10 +39,13 @@ export function CallRowDetails({ call, user, isCrmEditable = true }: CallRowDeta
       setAudioDataUri(null);
 
       try {
-        const [allAppeals, contactResult] = await Promise.all([
+        const [allAppeals, contactResult, canDownload] = await Promise.all([
           getAppeals(),
           findContactByPhone(call.callerNumber),
+          canDownloadRecording(user?.role),
         ]);
+        
+        setDownloadAllowed(canDownload);
         
         // Flexible search for appeal
         const callIdBase = call.id.includes('.') ? call.id.substring(0, call.id.lastIndexOf('.')) : call.id;
@@ -67,7 +72,7 @@ export function CallRowDetails({ call, user, isCrmEditable = true }: CallRowDeta
     };
 
     fetchData();
-  }, [call, toast]);
+  }, [call, user?.role, toast]);
   
   const handleSaveContact = (savedContact: CrmContact) => {
       setContact(savedContact);
@@ -137,8 +142,7 @@ export function CallRowDetails({ call, user, isCrmEditable = true }: CallRowDeta
                         <div className="w-full">
                             <AudioPlayer 
                                 src={audioDataUri} 
-                                // Simplified canDownload logic for now
-                                canDownload={user?.role === 'admin' || user?.role === 'supervisor'}
+                                canDownload={downloadAllowed}
                                 fileName={`${call.recordingfile}`}
                             />
                         </div>
