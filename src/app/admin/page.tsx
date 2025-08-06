@@ -5,6 +5,7 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { UserManagement } from '@/components/admin/user-management';
 import { SystemSettings } from '@/components/admin/system-settings';
+import { QueueManagement } from '@/components/admin/queue-management';
 import { ConnectionStatusCard } from '@/components/admin/connection-status-card';
 import { testAriConnection } from '@/actions/ari';
 import { testAmiConnection } from '@/actions/ami';
@@ -38,6 +39,8 @@ export default function AdminPage() {
   const [cdrUsername, setCdrUsername] = useState('');
   const [cdrPassword, setCdrPassword] = useState('');
   const [cdrDatabase, setCdrDatabase] = useState('');
+
+  const [queueMappings, setQueueMappings] = useState<Record<string, string>>({});
   
   // State for connection testing
   const [isTestingAri, setIsTestingAri] = useState(false);
@@ -88,6 +91,7 @@ export default function AdminPage() {
       setCdrUsername(config.cdr.username);
       setCdrPassword(config.cdr.password);
       setCdrDatabase(config.cdr.database);
+      setQueueMappings(config.queueMappings || {});
       
       const [ariResult, amiResult, cdrResult, appDbResult] = await Promise.all([
         testAriConnection(config.ari),
@@ -174,6 +178,7 @@ export default function AdminPage() {
       ari: ariConnection,
       ami: amiConnection,
       cdr: cdrConnection,
+      queueMappings: queueMappings
     };
     const result = await saveConfig(newConfig);
     if (result.success) {
@@ -223,9 +228,10 @@ export default function AdminPage() {
       </Alert>
 
       <Tabs defaultValue="settings" className="w-full">
-        <TabsList className="grid w-full grid-cols-2 max-w-sm">
+        <TabsList className="grid w-full grid-cols-3 max-w-md">
           <TabsTrigger value="settings">Настройки системы</TabsTrigger>
           <TabsTrigger value="users">Управление пользователями</TabsTrigger>
+          <TabsTrigger value="mappings">Связки</TabsTrigger>
         </TabsList>
 
         <TabsContent value="settings" className="mt-6 space-y-8">
@@ -278,9 +284,15 @@ export default function AdminPage() {
         <TabsContent value="users" className="mt-6">
           <UserManagement connection={amiConnection} users={users} fetchUsers={fetchUsers} isFetchingUsers={isFetchingUsers} />
         </TabsContent>
+         <TabsContent value="mappings" className="mt-6">
+          <QueueManagement 
+            amiConnection={amiConnection}
+            mappings={queueMappings}
+            onSave={handleSaveSettings}
+            onMappingsChange={setQueueMappings}
+          />
+        </TabsContent>
       </Tabs>
     </div>
   );
 }
-
-    

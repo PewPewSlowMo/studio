@@ -5270,3 +5270,23 @@ Step 5: Constructed remote file path: /var/spool/asterisk/monitor/2025/08/06/int
   "stack": "Error: connect: getConnection: Timed out while waiting for handshake\n    at SftpClient.fmtError (/home/user/studio/.next/server/chunks/node_modules_8ed08d31._.js:9171:26)\n    at SftpClient.connect (/home/user/studio/.next/server/chunks/node_modules_8ed08d31._.js:9295:43)\n    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at async GET (/home/user/studio/.next/server/chunks/[root-of-the-server]__dd4c95fe._.js:708:9)\n    at async AppRouteRouteModule.do (/home/user/studio/node_modules/next/dist/compiled/next-server/app-route-turbo.runtime.dev.js:26:34112)\n    at async AppRouteRouteModule.handle (/home/user/studio/node_modules/next/dist/compiled/next-server/app-route-turbo.runtime.dev.js:26:41338)\n    at async doRender (/home/user/studio/node_modules/next/dist/server/base-server.js:1518:42)\n    at async DevServer.renderToResponseWithComponentsImpl (/home/user/studio/node_modules/next/dist/server/base-server.js:1920:28)\n    at async DevServer.renderPageComponent (/home/user/studio/node_modules/next/dist/server/base-server.js:2408:24)\n    at async DevServer.renderToResponseImpl (/home/user/studio/node_modules/next/dist/server/base-server.js:2445:32)\n    at async DevServer.pipeImpl (/home/user/studio/node_modules/next/dist/server/base-server.js:1008:25)\n    at async NextNodeServer.handleCatchallRenderRequest (/home/user/studio/node_modules/next/dist/server/next-server.js:305:17)\n    at async DevServer.handleRequestImpl (/home/user/studio/node_modules/next/dist/server/base-server.js:900:17)\n    at async /home/user/studio/node_modules/next/dist/server/dev/next-dev-server.js:371:20\n    at async Span.traceAsyncFn (/home/user/studio/node_modules/next/dist/trace/trace.js:157:20)\n    at async DevServer.handleRequest (/home/user/studio/node_modules/next/dist/server/dev/next-dev-server.js:368:24)\n    at async invokeRender (/home/user/studio/node_modules/next/dist/server/lib/router-server.js:237:21)\n    at async handleRequest (/home/user/studio/node_modules/next/dist/server/lib/router-server.js:428:24)\n    at async requestHandlerImpl (/home/user/studio/node_modules/next/dist/server/lib/router-server.js:452:13)\n    at async Server.requestListener (/home/user/studio/node_modules/next/dist/server/lib/start-server.js:158:13)"
 }
 
+[2025-08-06 10:24:12.515] [ARI Fetch (GET)]
+Requesting URL: http://92.46.62.34:8088/ari/asterisk/info
+
+[2025-08-06 10:24:13.015] [ARI Fetch (GET)]
+{
+  "level": "INFO",
+  "url": "http://92.46.62.34:8088/ari/asterisk/info",
+  "status": 200
+}
+
+[2025-08-06 10:24:16.587] [ARI Fetch (GET)]
+Requesting URL: http://92.46.62.34:8088/ari/asterisk/info
+
+[2025-08-06 10:24:16.829] [ARI Fetch (GET)]
+{
+  "level": "INFO",
+  "url": "http://92.46.62.34:8088/ari/asterisk/info",
+  "status": 200
+}
+

@@ -21,6 +21,7 @@ export default function QueueReportsPage() {
     const [error, setError] = useState<string | null>(null);
     const [queues, setQueues] = useState<AsteriskQueue[]>([]);
     const [calls, setCalls] = useState<Call[]>([]);
+    const [queueMappings, setQueueMappings] = useState<Record<string, string>>({});
 
     useEffect(() => {
         const fetchData = async () => {
@@ -35,6 +36,8 @@ export default function QueueReportsPage() {
                 const dateRange: DateRangeParams = { from: format(from, 'yyyy-MM-dd'), to: format(to, 'yyyy-MM-dd') };
 
                 const config = await getConfig();
+                setQueueMappings(config.queueMappings || {});
+
                 const [queuesResult, callsResult] = await Promise.all([
                     getAmiQueues(config.ami),
                     getCallHistory(config.cdr, dateRange)
@@ -76,7 +79,7 @@ export default function QueueReportsPage() {
             const abandonmentRate = totalCalls > 0 ? (missedCalls.length / totalCalls) * 100 : 0;
 
             return {
-                queueName: queue.name,
+                queueName: queueMappings[queue.name] || queue.name,
                 totalCalls: totalCalls,
                 answeredCalls: totalAnswered,
                 missedCalls: missedCalls.length,
@@ -86,7 +89,7 @@ export default function QueueReportsPage() {
                 avgHandleTime: avgHandleTime,
             }
         }).sort((a, b) => b.totalCalls - a.totalCalls);
-    }, [queues, calls]);
+    }, [queues, calls, queueMappings]);
   
     if (error) {
         return (

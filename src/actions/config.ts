@@ -22,6 +22,7 @@ const ConfigSchema = z.object({
   ari: ConnectionSchema,
   ami: ConnectionSchema,
   cdr: DbConnectionSchema,
+  queueMappings: z.record(z.string()).optional(),
 });
 
 export type AppConfig = z.infer<typeof ConfigSchema>;
@@ -46,19 +47,24 @@ const defaultConfig: AppConfig = {
     password: 'StrongPassword123!',
     database: 'asteriskcdrdb',
   },
+  queueMappings: {},
 };
 
 export async function getConfig(): Promise<AppConfig> {
   try {
     await fs.mkdir(path.dirname(CONFIG_PATH), { recursive: true });
     const data = await fs.readFile(CONFIG_PATH, 'utf-8');
-    // Ensure data is parsed and then validated.
     const parsedData = JSON.parse(data);
-    // Merge with defaults to ensure all keys are present
-    const mergedConfig = { ...defaultConfig, ...parsedData };
+    const mergedConfig = { 
+        ...defaultConfig, 
+        ...parsedData,
+        queueMappings: {
+            ...defaultConfig.queueMappings,
+            ...(parsedData.queueMappings || {})
+        }
+    };
     return ConfigSchema.parse(mergedConfig);
   } catch (error) {
-    // If file doesn't exist or is invalid, write the default and return it
     await fs.writeFile(CONFIG_PATH, JSON.stringify(defaultConfig, null, 2), 'utf-8');
     return defaultConfig;
   }
@@ -66,12 +72,18 @@ export async function getConfig(): Promise<AppConfig> {
 
 export async function saveConfig(newConfig: Omit<AppConfig, 'app_db'>): Promise<{ success: boolean; error?: string }> {
   try {
-    const validatedConfig = ConfigSchema.parse(newConfig);
+    // We need to fetch the existing config to not overwrite fields that are not part of the form, like queueMappings
+    const existingConfig = await getConfig();
+    const fullConfig = { ...existingConfig, ...newConfig };
+
+    const validatedConfig = ConfigSchema.parse(fullConfig);
     await fs.writeFile(CONFIG_PATH, JSON.stringify(validatedConfig, null, 2), 'utf-8');
-    // Revalidate paths that use this config
+    
     revalidatePath('/');
     revalidatePath('/reports');
     revalidatePath('/admin');
+    revalidatePath('/queue-reports');
+
     return { success: true };
   } catch (error) {
     const message = error instanceof Error ? error.message : 'An unknown error occurred.';
