@@ -172,6 +172,21 @@ export default function ReportsPage() {
             const callTimestamps = operatorCalls.map(c => parseISO(c.startTime).getTime());
             const firstCallTime = callTimestamps.length > 0 ? new Date(Math.min(...callTimestamps)) : null;
             const lastCallTime = callTimestamps.length > 0 ? new Date(Math.max(...callTimestamps)) : null;
+
+            const satisfactionScores = operatorCalls
+                .map(c => findAppealByFlexibleId(appeals, c.id)?.satisfaction)
+                .filter((s): s is 'yes' | 'no' => !!s);
+            
+            const mostFrequentSatisfaction = (scores: Array<'yes' | 'no'>) => {
+                if (scores.length === 0) return 'N/A';
+                const counts = scores.reduce((acc, score) => {
+                    acc[score] = (acc[score] || 0) + 1;
+                    return acc;
+                }, {} as Record<'yes' | 'no', number>);
+                
+                const mostFrequent = Object.entries(counts).sort((a, b) => b[1] - a[1])[0];
+                return mostFrequent ? (mostFrequent[0] === 'yes' ? 'Положительная' : 'Отрицательная') : 'N/A';
+            };
             
             return {
                 operatorId: operator.id,
@@ -184,12 +199,12 @@ export default function ReportsPage() {
                 missedCallsCount: missedCallsCount,
                 avgTalkTime: avgTalkTime,
                 avgWaitTime: avgWaitTime,
-                satisfactionScore: 'N/A', 
+                satisfactionScore: mostFrequentSatisfaction(satisfactionScores), 
                 transferredToSupervisorCount: 0, 
             };
         }).filter((data): data is OperatorReportData => data !== null);
 
-    }, [calls, users]);
+    }, [calls, users, appeals]);
 
     if (error) {
         return (
