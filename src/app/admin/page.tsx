@@ -5,7 +5,7 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { UserManagement } from '@/components/admin/user-management';
 import { SystemSettings } from '@/components/admin/system-settings';
-import { QueueManagement } from '@/components/admin/queue-management';
+import { BindingsManagement } from '@/components/admin/bindings-management';
 import { ConnectionStatusCard } from '@/components/admin/connection-status-card';
 import { testAriConnection } from '@/actions/ari';
 import { testAmiConnection } from '@/actions/ami';
@@ -14,7 +14,7 @@ import { initializeDatabase, testAppDbConnection } from '@/actions/app-db';
 import { getConfig, saveConfig } from '@/actions/config';
 import { toast } from '@/hooks/use-toast';
 import type { User } from '@/lib/types';
-import { getUsers } from '@/actions/users';
+import { getUsers, updateUser } from '@/actions/users';
 
 type ConnectionStatus = 'Unknown' | 'Connected' | 'Failed';
 
@@ -213,6 +213,50 @@ export default function AdminPage() {
     setIsSaving(false);
   };
 
+  const handleSaveBindings = async (
+    updatedUsers: User[],
+    updatedQueueMappings: Record<string, string>
+  ) => {
+    setIsSaving(true);
+    const config = await getConfig();
+    const newConfig = {
+      ...config,
+      queueMappings: updatedQueueMappings
+    };
+
+    const userUpdatePromises = updatedUsers.map(user => {
+        // Find the original user to compare
+        const originalUser = users.find(u => u.id === user.id);
+        // Only update if the extension has changed
+        if (originalUser && originalUser.extension !== user.extension) {
+            return updateUser(user.id, {
+                name: user.name,
+                email: user.email,
+                role: user.role,
+                extension: user.extension || ''
+            });
+        }
+        return Promise.resolve();
+    });
+
+    try {
+        await Promise.all([
+            saveConfig(newConfig),
+            ...userUpdatePromises
+        ]);
+        setQueueMappings(updatedQueueMappings);
+        await fetchUsers(); // Refresh user data after updates
+        toast({ title: 'Связки сохранены', description: 'Все привязки успешно обновлены.' });
+
+    } catch (e) {
+        const error = e instanceof Error ? e.message : "An unknown error occurred";
+        toast({ variant: 'destructive', title: 'Ошибка сохранения', description: error });
+    } finally {
+        setIsSaving(false);
+    }
+  };
+
+
   const fetchUsers = useCallback(async () => {
     setIsFetchingUsers(true);
     try {
@@ -315,11 +359,12 @@ export default function AdminPage() {
           <UserManagement connection={amiConnection} users={users} fetchUsers={fetchUsers} isFetchingUsers={isFetchingUsers} />
         </TabsContent>
          <TabsContent value="mappings" className="mt-6">
-          <QueueManagement 
+          <BindingsManagement 
             amiConnection={amiConnection}
-            mappings={queueMappings}
-            onSave={handleSaveSettings}
-            onMappingsChange={setQueueMappings}
+            initialMappings={queueMappings}
+            users={users}
+            onSave={handleSaveBindings}
+            isSaving={isSaving}
           />
         </TabsContent>
       </Tabs>
