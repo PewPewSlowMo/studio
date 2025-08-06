@@ -1,6 +1,6 @@
 'use client';
 import { useState, useMemo, useCallback, useEffect } from 'react';
-import { Shield, Info, Network, Wifi, Database, Link as LinkIcon, Server } from 'lucide-react';
+import { Shield, Info, Wifi, Database, Link as LinkIcon, Server } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { UserManagement } from '@/components/admin/user-management';
@@ -40,6 +40,8 @@ export default function AdminPage() {
   const [cdrPassword, setCdrPassword] = useState('');
   const [cdrDatabase, setCdrDatabase] = useState('');
 
+  const [appDbPath, setAppDbPath] = useState('');
+
   const [queueMappings, setQueueMappings] = useState<Record<string, string>>({});
   
   // State for connection testing
@@ -65,6 +67,7 @@ export default function AdminPage() {
   const ariConnection = useMemo(() => ({ host: ariHost, port: ariPort, username: ariUsername, password: ariPassword }), [ariHost, ariPort, ariUsername, ariPassword]);
   const amiConnection = useMemo(() => ({ host: amiHost, port: amiPort, username: amiUsername, password: amiPassword }), [amiHost, amiPort, amiUsername, amiPassword]);
   const cdrConnection = useMemo(() => ({ host: cdrHost, port: cdrPort, username: cdrUsername, password: cdrPassword, database: cdrDatabase }), [cdrHost, cdrPort, cdrUsername, cdrPassword, cdrDatabase]);
+  const appDbConnection = useMemo(() => ({ path: appDbPath }), [appDbPath]);
 
   // Load config and perform initial healthcheck on mount
   useEffect(() => {
@@ -74,9 +77,6 @@ export default function AdminPage() {
       setIsTestingCdr(true);
       setIsTestingAppDb(true);
       
-      // Ensure DB is initialized before any other action
-      await initializeDatabase();
-
       const config = await getConfig();
       
       setAriHost(config.ari.host);
@@ -94,8 +94,14 @@ export default function AdminPage() {
       setCdrUsername(config.cdr.username);
       setCdrPassword(config.cdr.password);
       setCdrDatabase(config.cdr.database);
+      
+      setAppDbPath(config.app_db.path);
+      
       setQueueMappings(config.queueMappings || {});
       
+      // Ensure DB is initialized before any other action
+      await initializeDatabase();
+
       const [ariResult, amiResult, cdrResult, appDbResult] = await Promise.all([
         testAriConnection(config.ari),
         testAmiConnection(config.ami),
@@ -194,8 +200,10 @@ export default function AdminPage() {
       ari: ariConnection,
       ami: amiConnection,
       cdr: cdrConnection,
+      app_db: appDbConnection,
       queueMappings: queueMappings
     };
+    // @ts-ignore
     const result = await saveConfig(newConfig);
     if (result.success) {
       toast({ title: 'Настройки сохранены', description: 'Конфигурация успешно обновлена.' });
@@ -284,7 +292,7 @@ export default function AdminPage() {
                     title="База приложения (SQLite)"
                     status={appDbStatus}
                     port={appDbVersion ? `v${appDbVersion}` : '...'}
-                    debugInfo={DB_PATH}
+                    debugInfo={appDbPath}
                     onTest={handleTestAppDb}
                     isTesting={isTestingAppDb}
                     variant="success"
@@ -294,9 +302,11 @@ export default function AdminPage() {
                 ariConnection={ariConnection}
                 amiConnection={amiConnection}
                 cdrConnection={cdrConnection}
+                appDbPath={appDbPath}
                 onAriChange={{ setHost: setAriHost, setPort: setAriPort, setUsername: setAriUsername, setPassword: setAriPassword }}
                 onAmiChange={{ setHost: setAmiHost, setPort: setAmiPort, setUsername: setAmiUsername, setPassword: setAmiPassword }}
                 onCdrChange={{ setHost: setCdrHost, setPort: setCdrPort, setUsername: setCdrUsername, setPassword: setCdrPassword, setDatabase: setCdrDatabase }}
+                onAppDbChange={{ setPath: setAppDbPath }}
                 onSave={handleSaveSettings}
                 isSaving={isSaving}
             />
@@ -316,5 +326,3 @@ export default function AdminPage() {
     </div>
   );
 }
-
-const DB_PATH = 'data/app.db';

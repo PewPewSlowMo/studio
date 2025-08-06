@@ -5,9 +5,9 @@ import sqlite3 from 'sqlite3';
 import path from 'path';
 import fs from 'fs/promises';
 import type { User, CrmContact, Appeal } from '@/lib/types';
+import { getConfig } from './config';
 
 // The database file will be stored in the `data` directory.
-const DB_PATH = path.join(process.cwd(), 'data', 'app.db');
 const USERS_JSON_PATH = path.join(process.cwd(), 'data', 'users.json');
 const CRM_JSON_PATH = path.join(process.cwd(), 'data', 'crm.json');
 const APPEALS_JSON_PATH = path.join(process.cwd(), 'data', 'appeals.json');
@@ -18,8 +18,14 @@ const APPEALS_JSON_PATH = path.join(process.cwd(), 'data', 'appeals.json');
  * It will create the database file if it doesn't exist.
  */
 export async function getDbConnection() {
+  const config = await getConfig();
+  const dbPath = path.join(process.cwd(), config.app_db.path);
+  
+  // Ensure the directory exists before opening the database
+  await fs.mkdir(path.dirname(dbPath), { recursive: true });
+
   const db = await open({
-    filename: DB_PATH,
+    filename: dbPath,
     driver: sqlite3.Database,
   });
   // Enable WAL mode for better concurrency. This allows multiple readers and one writer.

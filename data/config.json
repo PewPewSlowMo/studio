@@ -19,10 +19,6 @@
     "database": "asteriskcdrdb"
   },
   "app_db": {
-    "host": "127.0.0.1",
-    "port": "3306",
-    "username": "app_user",
-    "password": "app_password",
-    "database": "call_center_db"
+    "path": "data/app.db"
   }
 }

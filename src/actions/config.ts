@@ -18,10 +18,15 @@ const DbConnectionSchema = ConnectionSchema.extend({
   database: z.string(),
 });
 
+const AppDbSchema = z.object({
+  path: z.string().min(1, 'Path is required'),
+});
+
 const ConfigSchema = z.object({
   ari: ConnectionSchema,
   ami: ConnectionSchema,
   cdr: DbConnectionSchema,
+  app_db: AppDbSchema,
   queueMappings: z.record(z.string()).optional(),
 });
 
@@ -47,6 +52,9 @@ const defaultConfig: AppConfig = {
     password: 'StrongPassword123!',
     database: 'asteriskcdrdb',
   },
+  app_db: {
+    path: 'data/app.db',
+  },
   queueMappings: {},
 };
 
@@ -70,7 +78,7 @@ export async function getConfig(): Promise<AppConfig> {
   }
 }
 
-export async function saveConfig(newConfig: Omit<AppConfig, 'app_db'>): Promise<{ success: boolean; error?: string }> {
+export async function saveConfig(newConfig: Omit<AppConfig, 'app_db'> & { app_db: { path: string } }): Promise<{ success: boolean; error?: string }> {
   try {
     // We need to fetch the existing config to not overwrite fields that are not part of the form, like queueMappings
     const existingConfig = await getConfig();

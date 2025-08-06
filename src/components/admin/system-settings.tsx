@@ -11,7 +11,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Wifi, Database, Loader2, Link as LinkIcon } from 'lucide-react';
+import { Wifi, Database, Loader2, Link as LinkIcon, Server } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 
 interface ConnectionProps {
@@ -36,25 +36,35 @@ interface OnDbChangeProps extends OnChangeProps {
     setDatabase: (database: string) => void;
 }
 
+interface OnAppDbChangeProps {
+    setPath: (path: string) => void;
+}
+
 interface SystemSettingsProps {
   ariConnection: ConnectionProps;
   amiConnection: ConnectionProps;
   cdrConnection: DbConnectionProps;
+  appDbPath: string;
   onAriChange: OnChangeProps;
   onAmiChange: OnChangeProps;
   onCdrChange: OnDbChangeProps;
+  onAppDbChange: OnAppDbChangeProps;
   onSave: () => Promise<void>;
   isSaving: boolean;
 }
 
-export function SystemSettings({ ariConnection, amiConnection, cdrConnection, onAriChange, onAmiChange, onCdrChange, onSave, isSaving }: SystemSettingsProps) {
+export function SystemSettings({ 
+    ariConnection, amiConnection, cdrConnection, appDbPath,
+    onAriChange, onAmiChange, onCdrChange, onAppDbChange, 
+    onSave, isSaving 
+}: SystemSettingsProps) {
 
   return (
     <Card>
       <CardHeader>
         <CardTitle>Конфигурация подключений</CardTitle>
         <CardDescription>
-        Настройки для подключения к Asterisk и базам данных. База данных приложения (SQLite) настраивается автоматически.
+        Настройки для подключения к Asterisk и базам данных.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-8">
@@ -149,6 +159,25 @@ export function SystemSettings({ ariConnection, amiConnection, cdrConnection, on
                 <div className="space-y-2 md:col-span-2">
                     <Label htmlFor="cdr-database">Имя базы данных</Label>
                     <Input id="cdr-database" value={cdrConnection.database} onChange={(e) => onCdrChange.setDatabase(e.target.value)} />
+                </div>
+            </div>
+        </div>
+
+        <Separator />
+
+         {/* App DB Settings */}
+        <div className="space-y-4">
+            <div className="flex items-center gap-4">
+                <Server className="h-8 w-8 text-muted-foreground" />
+                <div>
+                    <h3 className="text-lg font-semibold">База данных приложения (SQLite)</h3>
+                    <p className="text-sm text-muted-foreground">Путь к файлу базы данных SQLite для хранения пользователей, контактов и обращений.</p>
+                </div>
+            </div>
+            <div className="grid grid-cols-1 gap-6 pt-2">
+                <div className="space-y-2">
+                    <Label htmlFor="app-db-path">Путь к файлу</Label>
+                    <Input id="app-db-path" value={appDbPath} onChange={(e) => onAppDbChange.setPath(e.target.value)} />
                 </div>
             </div>
         </div>
