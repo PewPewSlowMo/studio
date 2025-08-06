@@ -8,9 +8,10 @@ interface AnalyticsKpiCardProps {
   description: string;
   trendValue: string;
   trendDirection: 'up' | 'down' | 'neutral';
+  isClickable?: boolean;
 }
 
-export function AnalyticsKpiCard({ title, value, description, trendValue, trendDirection }: AnalyticsKpiCardProps) {
+export function AnalyticsKpiCard({ title, value, description, trendValue, trendDirection, isClickable = false }: AnalyticsKpiCardProps) {
   const trendIcon = trendDirection === 'up' 
     ? <TrendingUp className="h-4 w-4 text-emerald-500" /> 
     : trendDirection === 'down' 
@@ -24,7 +25,7 @@ export function AnalyticsKpiCard({ title, value, description, trendValue, trendD
     : 'text-muted-foreground';
 
   return (
-    <Card>
+    <Card className={cn(isClickable && "cursor-pointer hover:bg-muted/50 transition-colors")}>
       <CardHeader className="pb-2">
         <CardTitle className="text-sm font-medium">{title}</CardTitle>
       </CardHeader>

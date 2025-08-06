@@ -2,19 +2,27 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { BarChart3, TrendingUp, TrendingDown, Minus, AlertTriangle } from 'lucide-react';
+import { BarChart3, TrendingUp, TrendingDown, Minus, AlertTriangle, User } from 'lucide-react';
 import { AnalyticsKpiCard } from '@/components/analytics/analytics-kpi-card';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { getConfig } from '@/actions/config';
 import { getCallHistory, type DateRangeParams } from '@/actions/cdr';
-import type { Call, User } from '@/lib/types';
+import type { Call, User as UserType } from '@/lib/types';
 import { OperatorPerformanceChart } from '@/components/analytics/operator-performance-chart';
 import { QueueDistributionChart } from '@/components/analytics/queue-distribution-chart';
 import { getUsers } from '@/actions/users';
 import { DateRangePicker } from '@/components/shared/date-range-picker';
 import { Skeleton } from '@/components/ui/skeleton';
 import { subDays, format, parseISO, isValid, differenceInDays } from 'date-fns';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Badge } from '@/components/ui/badge';
 
 const SLA_TARGET_SECONDS = 30;
 
@@ -33,13 +41,19 @@ function KpiCardSkeleton() {
     );
 }
 
+const formatTime = (seconds: number) => {
+    const minutes = Math.floor(seconds / 60);
+    const secs = Math.floor(seconds % 60);
+    return `${minutes}м ${secs.toString().padStart(2, '0')}с`;
+};
+
 export default function AnalyticsPage() {
     const searchParams = useSearchParams();
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [currentCalls, setCurrentCalls] = useState<Call[]>([]);
     const [previousCalls, setPreviousCalls] = useState<Call[]>([]);
-    const [users, setUsers] = useState<User[]>([]);
+    const [users, setUsers] = useState<UserType[]>([]);
 
     useEffect(() => {
         const fetchData = async () => {
@@ -126,6 +140,35 @@ export default function AnalyticsPage() {
         const previousKpis = calculateKpis(previousCalls);
 
         const userMap = new Map(users.filter(u => u.extension).map(u => [u.extension!, u.name]));
+        const operatorUsers = users.filter(u => u.role === 'operator' && u.extension);
+        
+        const operatorKpis = operatorUsers.map(user => {
+            const operatorCalls = currentCalls.filter(c => c.operatorExtension === user.extension);
+            const answeredOperatorCalls = operatorCalls.filter(c => c.status === 'ANSWERED' && c.waitTime !== undefined && c.billsec !== undefined);
+            const missedOperatorCalls = operatorCalls.filter(c => c.status !== 'ANSWERED');
+
+            const callsAnsweredWithinSla = answeredOperatorCalls.filter(c => c.waitTime! <= SLA_TARGET_SECONDS).length;
+            const sla = answeredOperatorCalls.length > 0 ? (callsAnsweredWithinSla / answeredOperatorCalls.length) * 100 : 0;
+
+            const totalWaitTime = answeredOperatorCalls.reduce((acc, c) => acc + c.waitTime!, 0);
+            const asa = answeredOperatorCalls.length > 0 ? totalWaitTime / answeredOperatorCalls.length : 0;
+
+            const totalHandleTime = answeredOperatorCalls.reduce((acc, c) => acc + c.billsec!, 0);
+            const aht = answeredOperatorCalls.length > 0 ? totalHandleTime / answeredOperatorCalls.length : 0;
+
+            const abandonmentRate = operatorCalls.length > 0 ? (missedOperatorCalls.length / operatorCalls.length) * 100 : 0;
+
+            return {
+                name: user.name,
+                sla,
+                asa,
+                aht,
+                abandonmentRate,
+                missedCalls: missedOperatorCalls.length,
+                totalCalls: operatorCalls.length,
+            }
+        });
+
         const answeredCallsForCharts = currentCalls.filter(c => c.status === 'ANSWERED' && c.billsec !== undefined);
         const operatorPerformanceData = answeredCallsForCharts.reduce((acc, call) => {
             if (call.operatorExtension) {
@@ -165,16 +208,12 @@ export default function AnalyticsPage() {
             missedCalls: currentKpis.missedCallsCount, 
             totalCalls: currentKpis.totalCalls, 
             operatorChartData, 
-            queueChartData 
+            queueChartData,
+            operatorKpis
         };
 
     }, [currentCalls, previousCalls, users]);
 
-    const formatTime = (seconds: number) => {
-        const minutes = Math.floor(seconds / 60);
-        const secs = Math.floor(seconds % 60);
-        return `${minutes}м ${secs.toString().padStart(2, '0')}с`;
-    };
 
     if (error) {
         return (
@@ -217,34 +256,109 @@ export default function AnalyticsPage() {
                 </div>
             ) : (
                 <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-                    <AnalyticsKpiCard 
-                        title="Уровень обслуживания (SLA)"
-                        value={`${analyticsData.serviceLevel.value.toFixed(1)}%`}
-                        description={`Отвечено за ${SLA_TARGET_SECONDS} сек.`}
-                        trendValue={analyticsData.serviceLevel.trendValue}
-                        trendDirection={analyticsData.serviceLevel.trendDirection}
-                    />
-                    <AnalyticsKpiCard 
-                        title="Среднее время ответа (ASA)"
-                        value={formatTime(analyticsData.averageSpeedOfAnswer.value)}
-                        description="Среднее время до ответа"
-                        trendValue={analyticsData.averageSpeedOfAnswer.trendValue}
-                        trendDirection={analyticsData.averageSpeedOfAnswer.trendDirection}
-                    />
-                    <AnalyticsKpiCard 
-                        title="Среднее время обработки (AHT)"
-                        value={formatTime(analyticsData.averageHandleTime.value)}
-                        description="Разговор + удержание"
-                        trendValue={analyticsData.averageHandleTime.trendValue}
-                        trendDirection={analyticsData.averageHandleTime.trendDirection}
-                    />
-                    <AnalyticsKpiCard 
-                        title="Процент потерянных"
-                        value={`${analyticsData.abandonmentRate.value.toFixed(1)}%`}
-                        description={`${analyticsData.missedCalls} из ${analyticsData.totalCalls} звонков`}
-                        trendValue={analyticsData.abandonmentRate.trendValue}
-                        trendDirection={analyticsData.abandonmentRate.trendDirection}
-                    />
+                    <Popover>
+                        <PopoverTrigger asChild>
+                           <div>
+                                <AnalyticsKpiCard 
+                                    title="Уровень обслуживания (SLA)"
+                                    value={`${analyticsData.serviceLevel.value.toFixed(1)}%`}
+                                    description={`Отвечено за ${SLA_TARGET_SECONDS} сек.`}
+                                    trendValue={analyticsData.serviceLevel.trendValue}
+                                    trendDirection={analyticsData.serviceLevel.trendDirection}
+                                    isClickable
+                                />
+                           </div>
+                        </PopoverTrigger>
+                         <PopoverContent className="w-80">
+                            <h4 className="font-medium leading-none mb-2">SLA по операторам</h4>
+                            <ScrollArea className="h-48">
+                                {analyticsData.operatorKpis.map(op => (
+                                    <div key={op.name} className="flex items-center justify-between p-2 rounded-md hover:bg-muted text-sm">
+                                        <span className="font-medium">{op.name}</span>
+                                        <Badge variant={op.sla > 80 ? "success" : "destructive"}>{op.sla.toFixed(1)}%</Badge>
+                                    </div>
+                                ))}
+                            </ScrollArea>
+                        </PopoverContent>
+                    </Popover>
+
+                     <Popover>
+                        <PopoverTrigger asChild>
+                            <div>
+                                <AnalyticsKpiCard 
+                                    title="Среднее время ответа (ASA)"
+                                    value={formatTime(analyticsData.averageSpeedOfAnswer.value)}
+                                    description="Среднее время до ответа"
+                                    trendValue={analyticsData.averageSpeedOfAnswer.trendValue}
+                                    trendDirection={analyticsData.averageSpeedOfAnswer.trendDirection}
+                                    isClickable
+                                />
+                            </div>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-80">
+                            <h4 className="font-medium leading-none mb-2">ASA по операторам</h4>
+                            <ScrollArea className="h-48">
+                                {analyticsData.operatorKpis.map(op => (
+                                    <div key={op.name} className="flex items-center justify-between p-2 rounded-md hover:bg-muted text-sm">
+                                        <span className="font-medium">{op.name}</span>
+                                        <span className="font-mono">{formatTime(op.asa)}</span>
+                                    </div>
+                                ))}
+                            </ScrollArea>
+                        </PopoverContent>
+                    </Popover>
+
+                    <Popover>
+                        <PopoverTrigger asChild>
+                            <div>
+                                <AnalyticsKpiCard 
+                                    title="Среднее время обработки (AHT)"
+                                    value={formatTime(analyticsData.averageHandleTime.value)}
+                                    description="Разговор + удержание"
+                                    trendValue={analyticsData.averageHandleTime.trendValue}
+                                    trendDirection={analyticsData.averageHandleTime.trendDirection}
+                                    isClickable
+                                />
+                            </div>
+                        </PopoverTrigger>
+                         <PopoverContent className="w-80">
+                            <h4 className="font-medium leading-none mb-2">AHT по операторам</h4>
+                            <ScrollArea className="h-48">
+                                {analyticsData.operatorKpis.map(op => (
+                                    <div key={op.name} className="flex items-center justify-between p-2 rounded-md hover:bg-muted text-sm">
+                                        <span className="font-medium">{op.name}</span>
+                                        <span className="font-mono">{formatTime(op.aht)}</span>
+                                    </div>
+                                ))}
+                            </ScrollArea>
+                        </PopoverContent>
+                    </Popover>
+
+                     <Popover>
+                        <PopoverTrigger asChild>
+                           <div>
+                                <AnalyticsKpiCard 
+                                    title="Процент потерянных"
+                                    value={`${analyticsData.abandonmentRate.value.toFixed(1)}%`}
+                                    description={`${analyticsData.missedCalls} из ${analyticsData.totalCalls} звонков`}
+                                    trendValue={analyticsData.abandonmentRate.trendValue}
+                                    trendDirection={analyticsData.abandonmentRate.trendDirection}
+                                    isClickable
+                                />
+                           </div>
+                        </PopoverTrigger>
+                         <PopoverContent className="w-80">
+                             <h4 className="font-medium leading-none mb-2">Потеряно по операторам</h4>
+                            <ScrollArea className="h-48">
+                                {analyticsData.operatorKpis.map(op => (
+                                    <div key={op.name} className="flex items-center justify-between p-2 rounded-md hover:bg-muted text-sm">
+                                        <span className="font-medium">{op.name}</span>
+                                        <span className="font-mono">{op.abandonmentRate.toFixed(1)}% ({op.missedCalls})</span>
+                                    </div>
+                                ))}
+                            </ScrollArea>
+                        </PopoverContent>
+                    </Popover>
                 </div>
             )}
             

@@ -132,7 +132,7 @@ export function OperatorReportTable({ data, isLoading, onOperatorClick, selected
                         <SortableHeader sortKey="firstCallTime">Время работы</SortableHeader>
                         <SortableHeader sortKey="answeredIncomingCount">Принято</SortableHeader>
                         <SortableHeader sortKey="outgoingCount">Исходящие</SortableHeader>
-                        <SortableHeader sortKey="missedCallsPercentage">Пропущено (%)</SortableHeader>
+                        <SortableHeader sortKey="missedCallsPercentage">Пропущено</SortableHeader>
                         <SortableHeader sortKey="avgTalkTime">Ср. разговор</SortableHeader>
                         <SortableHeader sortKey="avgWaitTime">Ср. ожидание</SortableHeader>
                         <SortableHeader sortKey="satisfactionScore">Оценка</SortableHeader>
@@ -155,7 +155,7 @@ export function OperatorReportTable({ data, isLoading, onOperatorClick, selected
                                 <TableCell>{op.outgoingCount}</TableCell>
                                 <TableCell>
                                     <Badge variant={op.missedCallsPercentage > 10 ? 'destructive' : 'secondary'}>
-                                        {op.missedCallsPercentage.toFixed(1)}%
+                                        {op.missedCallsPercentage.toFixed(1)}% ({op.missedCallsCount})
                                     </Badge>
                                 </TableCell>
                                 <TableCell>{formatTime(op.avgTalkTime)}</TableCell>

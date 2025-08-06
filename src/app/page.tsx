@@ -20,7 +20,7 @@ import { getConfig } from '@/actions/config';
 import { getCallHistory, type DateRangeParams } from '@/actions/cdr';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Skeleton } from '@/components/ui/skeleton';
-import { format, parseISO, isValid, subHours, subDays } from 'date-fns';
+import { format, parseISO, isValid, subHours, startOfToday } from 'date-fns';
 import type { Call, User, AsteriskEndpoint, AsteriskQueue, CallState } from '@/lib/types';
 import { getOperatorState } from '@/actions/asterisk';
 import { initializeDatabase } from '@/actions/app-db';
@@ -60,7 +60,7 @@ export default function DashboardPage() {
         
         const config = await getConfig();
         const dateRange: DateRangeParams = { 
-            from: subDays(new Date(), 1).toISOString(), 
+            from: startOfToday().toISOString(), 
             to: new Date().toISOString() 
         };
 
@@ -126,24 +126,24 @@ export default function DashboardPage() {
     
     const userMap = new Map(users.filter((u) => u.extension).map((u) => [u.extension!, u]));
 
-    const callVolumeData = Array.from({ length: 24 }, (_, i) => {
-      const d = new Date();
-      d.setHours(d.getHours() - i);
+    const now = new Date();
+    const callVolumeData = Array.from({ length: now.getHours() + 1 }, (_, i) => {
       return {
-        hour: format(new Date(d.getFullYear(), d.getMonth(), d.getDate(), d.getHours()), 'HH:00'),
+        hour: format(new Date(now.getFullYear(), now.getMonth(), now.getDate(), i), 'HH:00'),
         calls: 0,
       };
-    }).reverse();
-
+    });
+    
     const hourlyMap = new Map(callVolumeData.map((d) => [d.hour, d]));
+    
     calls.forEach((call) => {
-      const callDate = parseISO(call.startTime);
-      if (isValid(callDate)) {
-        const callHour = format(callDate, 'HH:00');
-        if (hourlyMap.has(callHour)) {
-          hourlyMap.get(callHour)!.calls++;
+        const callDate = parseISO(call.startTime);
+        if (isValid(callDate) && callDate >= startOfToday()) {
+            const callHour = format(callDate, 'HH:00');
+            if (hourlyMap.has(callHour)) {
+                hourlyMap.get(callHour)!.calls++;
+            }
         }
-      }
     });
 
     const operatorsOnline = endpoints.filter((e) => e.state !== 'unavailable' && e.state !== 'invalid').length;

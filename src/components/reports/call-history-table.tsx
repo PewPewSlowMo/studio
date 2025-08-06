@@ -22,7 +22,7 @@ import { CallRowDetails } from './call-row-details';
 
 const statusMap: Record<string, string> = {
     ANSWERED: 'Отвечен',
-    'NO ANSWER': 'Без ответа',
+    'NO ANSWER': 'Пропущен',
     BUSY: 'Занято',
     FAILED: 'Ошибка',
 };

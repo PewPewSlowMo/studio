@@ -82,8 +82,8 @@ export default function ReportsPage() {
             const callsResult = await getCallHistory(config.cdr, params);
             if (callsResult.success && callsResult.data) {
                 const userMap = new Map(users.map(u => [u.extension, u.name]));
+                // Show ALL calls for the operator (answered and not answered)
                 const enrichedCalls = callsResult.data
-                    .filter(c => c.status === 'ANSWERED')
                     .map(c => ({ ...c, operatorName: userMap.get(c.operatorExtension!) }));
                 setOperatorCalls(enrichedCalls);
             } else {
@@ -113,7 +113,8 @@ export default function ReportsPage() {
             
             const totalCallsHandled = answeredIncomingCalls.length + outgoingCalls.length;
             const missedCallsCount = operatorCalls.filter(c => c.operatorExtension === operator.extension && c.status !== 'ANSWERED').length;
-            const missedCallsPercentage = totalCallsHandled + missedCallsCount > 0 ? (missedCallsCount / (totalCallsHandled + missedCallsCount)) * 100 : 0;
+            const totalIncoming = answeredIncomingCalls.length + missedCallsCount;
+            const missedCallsPercentage = totalIncoming > 0 ? (missedCallsCount / totalIncoming) * 100 : 0;
             
             const totalTalkTime = answeredIncomingCalls.reduce((acc, c) => acc + (c.billsec || 0), 0);
             const avgTalkTime = answeredIncomingCalls.length > 0 ? totalTalkTime / answeredIncomingCalls.length : 0;
@@ -133,6 +134,7 @@ export default function ReportsPage() {
                 answeredIncomingCount: answeredIncomingCalls.length,
                 outgoingCount: outgoingCalls.length,
                 missedCallsPercentage: missedCallsPercentage,
+                missedCallsCount: missedCallsCount,
                 avgTalkTime: avgTalkTime,
                 avgWaitTime: avgWaitTime,
                 satisfactionScore: 'N/A', 
@@ -191,7 +193,7 @@ export default function ReportsPage() {
                     />
                      {selectedOperator && (
                         <div className="mt-6 p-4 border-t">
-                            <h3 className="text-lg font-semibold mb-2">Принятые звонки: {selectedOperator.name}</h3>
+                            <h3 className="text-lg font-semibold mb-2">Звонки оператора: {selectedOperator.name}</h3>
                             <CallHistoryTable 
                                 calls={operatorCalls}
                                 isLoading={isLoadingOperatorCalls}

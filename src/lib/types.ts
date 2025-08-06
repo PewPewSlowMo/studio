@@ -8,8 +8,8 @@ export interface User {
   role: UserRole;
   groupId?: string;
   isActive: boolean;
-  createdAt: Date; // Changed to Date for SQL
-  extension?: string | null; // Allow null for non-operators
+  createdAt: string; 
+  extension?: string | null; 
   password?: string;
 }
 
@@ -81,6 +81,7 @@ export interface OperatorReportData {
     answeredIncomingCount: number;
     outgoingCount: number;
     missedCallsPercentage: number;
+    missedCallsCount: number;
     avgTalkTime: number;
     avgWaitTime: number;
     satisfactionScore: string;
