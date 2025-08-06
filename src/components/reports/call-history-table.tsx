@@ -16,7 +16,7 @@ import { format, parseISO, isValid } from 'date-fns';
 import { Skeleton } from '../ui/skeleton';
 import { cn } from '@/lib/utils';
 import { ru } from 'date-fns/locale';
-import { ArrowDown, ArrowUp } from 'lucide-react';
+import { ArrowDown, ArrowUp, Star } from 'lucide-react';
 import { Button } from '../ui/button';
 import { CallRowDetails } from './call-row-details';
 
@@ -116,6 +116,7 @@ export function CallHistoryTable({ calls, isLoading, user }: { calls: EnrichedOp
           <TableHead>Статус</TableHead>
           <TableHead>Очередь</TableHead>
           <TableHead>Результат</TableHead>
+          <TableHead>Оценка</TableHead>
           <TableHead>Разговор</TableHead>
         </TableRow>
       </TableHeader>
@@ -127,6 +128,7 @@ export function CallHistoryTable({ calls, isLoading, user }: { calls: EnrichedOp
             <TableCell><Skeleton className="h-6 w-20 rounded-full" /></TableCell>
             <TableCell><Skeleton className="h-4 w-24" /></TableCell>
             <TableCell><Skeleton className="h-4 w-32" /></TableCell>
+            <TableCell><Skeleton className="h-4 w-12" /></TableCell>
             <TableCell><Skeleton className="h-4 w-12" /></TableCell>
           </TableRow>
         ))}
@@ -154,6 +156,7 @@ export function CallHistoryTable({ calls, isLoading, user }: { calls: EnrichedOp
                   <SortableHeader sortKey="status">Статус</SortableHeader>
                   <SortableHeader sortKey="queueName">Очередь</SortableHeader>
                   <SortableHeader sortKey="resolution">Результат</SortableHeader>
+                  <SortableHeader sortKey="satisfaction">Оценка</SortableHeader>
                   <SortableHeader sortKey="billsec" className="text-right">Разговор (сек)</SortableHeader>
                 </TableRow>
               </TableHeader>
@@ -180,11 +183,21 @@ export function CallHistoryTable({ calls, isLoading, user }: { calls: EnrichedOp
                             </TableCell>
                            <TableCell>{call.queueName}</TableCell>
                             <TableCell className="capitalize">{call.resolution}</TableCell>
+                            <TableCell>
+                                {call.satisfaction ? (
+                                    <div className="flex items-center gap-1">
+                                    <Star className="h-4 w-4 text-yellow-400 fill-yellow-400" />
+                                    <span>{call.satisfaction}</span>
+                                    </div>
+                                ) : (
+                                    <span>-</span>
+                                )}
+                            </TableCell>
                             <TableCell className="text-right">{call.billsec ?? '-'}</TableCell>
                         </TableRow>
                         {activeRowId === call.id && (
                             <TableRow>
-                                <TableCell colSpan={6} className="p-0">
+                                <TableCell colSpan={7} className="p-0">
                                     <CallRowDetails call={call} user={user} isCrmEditable={false} />
                                 </TableCell>
                             </TableRow>
@@ -193,7 +206,7 @@ export function CallHistoryTable({ calls, isLoading, user }: { calls: EnrichedOp
                   ))
                 ) : (
                   <TableRow>
-                    <TableCell colSpan={6} className="h-24 text-center">
+                    <TableCell colSpan={7} className="h-24 text-center">
                       Нет данных о звонках за выбранный период.
                     </TableCell>
                   </TableRow>
