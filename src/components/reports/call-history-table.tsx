@@ -20,6 +20,12 @@ import { ArrowDown, ArrowUp } from 'lucide-react';
 import { Button } from '../ui/button';
 import { CallRowDetails } from './call-row-details';
 
+export type EnrichedOperatorCall = Call & {
+    operatorName?: string;
+    queueName?: string;
+    resolution?: string;
+};
+
 const statusMap: Record<string, string> = {
     ANSWERED: 'Отвечен',
     'NO ANSWER': 'Пропущен',
@@ -27,9 +33,9 @@ const statusMap: Record<string, string> = {
     FAILED: 'Ошибка',
 };
 
-type SortKey = keyof Call;
+type SortKey = keyof EnrichedOperatorCall;
 
-export function CallHistoryTable({ calls, isLoading, user }: { calls: Call[], isLoading: boolean, user: User | null }) {
+export function CallHistoryTable({ calls, isLoading, user }: { calls: EnrichedOperatorCall[], isLoading: boolean, user: User | null }) {
   const [filter, setFilter] = React.useState('');
   const [sortConfig, setSortConfig] = React.useState<{ key: SortKey; direction: 'ascending' | 'descending' } | null>({ key: 'startTime', direction: 'descending' });
   const [activeRowId, setActiveRowId] = React.useState<string | null>(null);
@@ -43,21 +49,27 @@ export function CallHistoryTable({ calls, isLoading, user }: { calls: Call[], is
     if (filter) {
         filtered = calls.filter(
           (call) =>
-            call.callerNumber.includes(filter) ||
-            (call.operatorName &&
-              call.operatorName.toLowerCase().includes(filter.toLowerCase()))
+            call.callerNumber.includes(filter)
         );
     }
     
     if (sortConfig !== null) {
       filtered.sort((a, b) => {
-        if (a[sortConfig.key] < b[sortConfig.key]) {
-          return sortConfig.direction === 'ascending' ? -1 : 1;
+        const aValue = a[sortConfig.key];
+        const bValue = b[sortConfig.key];
+        if (aValue === undefined || aValue === null) return 1;
+        if (bValue === undefined || bValue === null) return -1;
+        
+        let comparison = 0;
+        if (typeof aValue === 'string' && typeof bValue === 'string') {
+            comparison = aValue.localeCompare(bValue);
+        } else if (typeof aValue === 'number' && typeof bValue === 'number') {
+            comparison = aValue - bValue;
+        } else {
+             comparison = String(aValue).localeCompare(String(bValue));
         }
-        if (a[sortConfig.key] > b[sortConfig.key]) {
-          return sortConfig.direction === 'ascending' ? 1 : -1;
-        }
-        return 0;
+
+        return sortConfig.direction === 'ascending' ? comparison : -comparison;
       });
     }
 
@@ -100,19 +112,21 @@ export function CallHistoryTable({ calls, isLoading, user }: { calls: Call[], is
       <TableHeader>
         <TableRow>
           <TableHead>Звонящий</TableHead>
-          <TableHead>Оператор</TableHead>
+          <TableHead>Время</TableHead>
           <TableHead>Статус</TableHead>
-          <TableHead>Время начала</TableHead>
-          <TableHead>Разговор (сек)</TableHead>
+          <TableHead>Очередь</TableHead>
+          <TableHead>Результат</TableHead>
+          <TableHead>Разговор</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
         {[...Array(5)].map((_, i) => (
           <TableRow key={i}>
             <TableCell><Skeleton className="h-4 w-24" /></TableCell>
-            <TableCell><Skeleton className="h-4 w-32" /></TableCell>
-            <TableCell><Skeleton className="h-6 w-20 rounded-full" /></TableCell>
             <TableCell><Skeleton className="h-4 w-40" /></TableCell>
+            <TableCell><Skeleton className="h-6 w-20 rounded-full" /></TableCell>
+            <TableCell><Skeleton className="h-4 w-24" /></TableCell>
+            <TableCell><Skeleton className="h-4 w-32" /></TableCell>
             <TableCell><Skeleton className="h-4 w-12" /></TableCell>
           </TableRow>
         ))}
@@ -124,7 +138,7 @@ export function CallHistoryTable({ calls, isLoading, user }: { calls: Call[], is
     <div>
       <div className="flex justify-between items-center mb-4">
         <Input
-          placeholder="Фильтр по номеру или оператору..."
+          placeholder="Фильтр по номеру..."
           value={filter}
           onChange={(e) => setFilter(e.target.value)}
           className="max-w-sm"
@@ -136,9 +150,10 @@ export function CallHistoryTable({ calls, isLoading, user }: { calls: Call[], is
               <TableHeader>
                 <TableRow>
                   <SortableHeader sortKey="callerNumber">Звонящий</SortableHeader>
-                  <SortableHeader sortKey="operatorName">Оператор</SortableHeader>
+                  <SortableHeader sortKey="startTime">Время</SortableHeader>
                   <SortableHeader sortKey="status">Статус</SortableHeader>
-                  <SortableHeader sortKey="startTime">Время начала</SortableHeader>
+                  <SortableHeader sortKey="queueName">Очередь</SortableHeader>
+                  <SortableHeader sortKey="resolution">Результат</SortableHeader>
                   <SortableHeader sortKey="billsec" className="text-right">Разговор (сек)</SortableHeader>
                 </TableRow>
               </TableHeader>
@@ -151,7 +166,9 @@ export function CallHistoryTable({ calls, isLoading, user }: { calls: Call[], is
                             className="cursor-pointer hover:bg-muted"
                         >
                             <TableCell className="font-medium">{call.callerNumber}</TableCell>
-                            <TableCell>{call.operatorName || 'N/A'}</TableCell>
+                             <TableCell>
+                                {formatDate(call.startTime)}
+                            </TableCell>
                             <TableCell>
                                 <Badge
                                 variant={
@@ -161,14 +178,13 @@ export function CallHistoryTable({ calls, isLoading, user }: { calls: Call[], is
                                 {statusMap[call.status] || call.status}
                                 </Badge>
                             </TableCell>
-                            <TableCell>
-                                {formatDate(call.startTime)}
-                            </TableCell>
+                           <TableCell>{call.queueName}</TableCell>
+                            <TableCell className="capitalize">{call.resolution}</TableCell>
                             <TableCell className="text-right">{call.billsec ?? 'N/A'}</TableCell>
                         </TableRow>
                         {activeRowId === call.id && (
                             <TableRow>
-                                <TableCell colSpan={5} className="p-0">
+                                <TableCell colSpan={6} className="p-0">
                                     <CallRowDetails call={call} user={user} isCrmEditable={false} />
                                 </TableCell>
                             </TableRow>
@@ -177,7 +193,7 @@ export function CallHistoryTable({ calls, isLoading, user }: { calls: Call[], is
                   ))
                 ) : (
                   <TableRow>
-                    <TableCell colSpan={5} className="h-24 text-center">
+                    <TableCell colSpan={6} className="h-24 text-center">
                       Нет данных о звонках за выбранный период.
                     </TableCell>
                   </TableRow>

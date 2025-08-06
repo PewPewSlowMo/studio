@@ -1,19 +1,36 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useTransition } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Users, AlertTriangle, Download } from 'lucide-react';
-import { getCallHistory, type DateRangeParams } from '@/actions/cdr';
+import { Users, AlertTriangle, Download, Loader2 } from 'lucide-react';
+import { getCallHistory, type DateRangeParams, type GetCallHistoryParams } from '@/actions/cdr';
 import { getUsers } from '@/actions/users';
+import { getAppeals } from '@/actions/appeals';
 import { getConfig } from '@/actions/config';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import type { Call, User } from '@/lib/types';
+import type { Call, User, Appeal } from '@/lib/types';
 import { DateRangePicker } from '@/components/shared/date-range-picker';
 import { subDays, format, parseISO, isValid } from 'date-fns';
 import { OperatorReportTable, type OperatorReportData } from '@/components/reports/operator-report-table';
 import { Button } from '@/components/ui/button';
-import { CallHistoryTable } from '@/components/reports/call-history-table';
+import { CallHistoryTable, type EnrichedOperatorCall } from '@/components/reports/call-history-table';
+import { exportOperatorReport } from '@/actions/export';
+import { useToast } from '@/hooks/use-toast';
+
+
+const findAppealByFlexibleId = (appeals: Appeal[], callId: string): Appeal | undefined => {
+    let appeal = appeals.find(a => a.callId === callId);
+    if (appeal) return appeal;
+
+    if (callId.includes('.')) {
+        const callIdBase = callId.substring(0, callId.lastIndexOf('.'));
+        appeal = appeals.find(a => a.callId.startsWith(callIdBase));
+        if (appeal) return appeal;
+    }
+    
+    return undefined;
+};
 
 export default function ReportsPage() {
     const searchParams = useSearchParams();
@@ -21,10 +38,13 @@ export default function ReportsPage() {
     const [error, setError] = useState<string | null>(null);
     const [calls, setCalls] = useState<Call[]>([]);
     const [users, setUsers] = useState<User[]>([]);
+    const [appeals, setAppeals] = useState<Appeal[]>([]);
 
     const [selectedOperator, setSelectedOperator] = useState<User | null>(null);
-    const [operatorCalls, setOperatorCalls] = useState<Call[]>([]);
+    const [operatorCalls, setOperatorCalls] = useState<EnrichedOperatorCall[]>([]);
     const [isLoadingOperatorCalls, setIsLoadingOperatorCalls] = useState(false);
+    const [isExporting, startExportTransition] = useTransition();
+    const { toast } = useToast();
     
     const dateRange = useMemo(() => {
         const toParam = searchParams.get('to');
@@ -40,9 +60,10 @@ export default function ReportsPage() {
             setError(null);
             try {
                 const config = await getConfig();
-                const [callsResult, usersResult] = await Promise.all([
+                const [callsResult, usersResult, appealsResult] = await Promise.all([
                     getCallHistory(config.cdr, dateRange),
                     getUsers(),
+                    getAppeals(),
                 ]);
 
                 if (!callsResult.success) {
@@ -50,6 +71,7 @@ export default function ReportsPage() {
                 }
                 setCalls(callsResult.data || []);
                 setUsers(usersResult);
+                setAppeals(appealsResult);
             } catch (e) {
                 setError(e instanceof Error ? e.message : 'An unknown error occurred');
             } finally {
@@ -64,7 +86,6 @@ export default function ReportsPage() {
         if (!user) return;
         
         if (selectedOperator?.id === operatorId) {
-            // If the same operator is clicked, collapse the view
             setSelectedOperator(null);
             setOperatorCalls([]);
             return;
@@ -82,9 +103,16 @@ export default function ReportsPage() {
             const callsResult = await getCallHistory(config.cdr, params);
             if (callsResult.success && callsResult.data) {
                 const userMap = new Map(users.map(u => [u.extension, u.name]));
-                // Show ALL calls for the operator (answered and not answered)
                 const enrichedCalls = callsResult.data
-                    .map(c => ({ ...c, operatorName: userMap.get(c.operatorExtension!) }));
+                    .map((call): EnrichedOperatorCall => {
+                        const appeal = findAppealByFlexibleId(appeals, call.id);
+                        return { 
+                            ...call, 
+                            operatorName: userMap.get(call.operatorExtension!),
+                            queueName: call.queue || 'N/A',
+                            resolution: appeal?.resolution || 'N/A'
+                        };
+                    });
                 setOperatorCalls(enrichedCalls);
             } else {
                 setError(callsResult.error || 'Failed to fetch calls for this operator.');
@@ -96,6 +124,26 @@ export default function ReportsPage() {
         } finally {
             setIsLoadingOperatorCalls(false);
         }
+    };
+    
+    const handleExport = () => {
+        startExportTransition(async () => {
+            const result = await exportOperatorReport(dateRange);
+            if (result.success && result.data) {
+                const blob = new Blob([result.data], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `operator_report_${dateRange.from}_${dateRange.to}.xlsx`;
+                document.body.appendChild(a);
+                a.click();
+                window.URL.revokeObjectURL(url);
+                a.remove();
+                 toast({ title: "Экспорт завершен", description: "Файл отчета успешно создан." });
+            } else {
+                toast({ variant: 'destructive', title: "Ошибка экспорта", description: result.error });
+            }
+        });
     };
 
     const operatorReportData = useMemo(() => {
@@ -111,7 +159,6 @@ export default function ReportsPage() {
             const answeredIncomingCalls = operatorCalls.filter(c => c.status === 'ANSWERED' && c.operatorExtension === operator.extension);
             const outgoingCalls = operatorCalls.filter(c => c.isOutgoing && c.callerNumber === operator.extension);
             
-            const totalCallsHandled = answeredIncomingCalls.length + outgoingCalls.length;
             const missedCallsCount = operatorCalls.filter(c => c.operatorExtension === operator.extension && c.status !== 'ANSWERED').length;
             const totalIncoming = answeredIncomingCalls.length + missedCallsCount;
             const missedCallsPercentage = totalIncoming > 0 ? (missedCallsCount / totalIncoming) * 100 : 0;
@@ -166,8 +213,9 @@ export default function ReportsPage() {
                 </div>
                 <div className="flex items-center gap-2">
                     <DateRangePicker />
-                     <Button variant="outline">
-                        <Download className="mr-2 h-4 w-4" /> CSV
+                     <Button variant="outline" onClick={handleExport} disabled={isExporting}>
+                        {isExporting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Download className="mr-2 h-4 w-4" />}
+                        {isExporting ? 'Экспорт...' : 'Экспорт в Excel'}
                     </Button>
                 </div>
             </div>
