@@ -128,7 +128,7 @@ export async function testAriConnection(
     if (response.ok) {
         const data = await response.json();
         const systemInfo = data.system_info;
-        if (systemInfo) {
+        if (systemInfo && systemInfo.version) {
           return { success: true, data: { version: systemInfo.version } };
         }
         return { success: true, data: { version: 'Unknown (Connected)' } };

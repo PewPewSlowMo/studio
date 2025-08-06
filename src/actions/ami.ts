@@ -1,3 +1,4 @@
+
 'use server';
 
 import { z } from 'zod';
@@ -134,7 +135,7 @@ export async function testAmiConnection(
       action,
       200
     );
-    // Find the first event that has the Asterisk version.
+    // Find an event that has the Asterisk version. This might be in a 'CoreStatus' or similar event.
     const statusEvent = events.find(e => e.asteriskversion);
     if (statusEvent) {
       return { success: true, data: { version: statusEvent.asteriskversion } };
