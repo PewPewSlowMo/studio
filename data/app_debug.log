@@ -107949,3 +107949,97 @@ Requesting URL: http://92.46.62.34:8088/ari/asterisk/info
   }
 }
 
+[2025-08-10 14:16:32.089] [AMI_ACTION]
+{
+  "level": "INFO",
+  "message": "Executing AMI action",
+  "action": {
+    "Action": "PJSIPShowEndpoints"
+  }
+}
+
+[2025-08-10 14:16:33.897] [AMI_ACTION]
+{
+  "level": "INFO",
+  "message": "Executing AMI action",
+  "action": {
+    "Action": "PJSIPShowEndpoints"
+  }
+}
+
+[2025-08-10 14:16:52.091] [AMI_ACTION]
+{
+  "level": "ERROR",
+  "message": "AMI command timed out after 20 seconds.",
+  "action": {
+    "Action": "PJSIPShowEndpoints",
+    "actionid": "1754835392091"
+  }
+}
+
+[2025-08-10 14:16:52.451] [AMI_ACTION]
+{
+  "level": "INFO",
+  "message": "Executing AMI action",
+  "action": {
+    "Action": "QueueStatus"
+  }
+}
+
+[2025-08-10 14:16:53.897] [AMI_ACTION]
+{
+  "level": "ERROR",
+  "message": "AMI command timed out after 20 seconds.",
+  "action": {
+    "Action": "PJSIPShowEndpoints",
+    "actionid": "1754835393898"
+  }
+}
+
+[2025-08-10 14:16:54.364] [AMI_ACTION]
+{
+  "level": "INFO",
+  "message": "Executing AMI action",
+  "action": {
+    "Action": "QueueStatus"
+  }
+}
+
+[2025-08-10 14:17:12.453] [AMI_ACTION]
+{
+  "level": "ERROR",
+  "message": "AMI command timed out after 20 seconds.",
+  "action": {
+    "Action": "QueueStatus",
+    "actionid": "1754835412452"
+  }
+}
+
+[2025-08-10 14:17:14.367] [AMI_ACTION]
+{
+  "level": "ERROR",
+  "message": "AMI command timed out after 20 seconds.",
+  "action": {
+    "Action": "QueueStatus",
+    "actionid": "1754835414365"
+  }
+}
+
+[2025-08-10 14:17:23.679] [AMI_ACTION]
+{
+  "level": "INFO",
+  "message": "Executing AMI action",
+  "action": {
+    "Action": "PJSIPShowEndpoints"
+  }
+}
+
+[2025-08-10 14:17:26.029] [AMI_ACTION]
+{
+  "level": "INFO",
+  "message": "Executing AMI action",
+  "action": {
+    "Action": "PJSIPShowEndpoints"
+  }
+}
+
