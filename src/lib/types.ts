@@ -77,11 +77,13 @@ export interface QueueReportData {
 
 export interface OperatorReportData {
     operatorId: string;
+    operatorExtension: string;
     operatorName: string;
     answeredCount: number;
     outgoingCount: number;
     missedCount: number;
     avgTalkTime: number;
+    avgSatisfaction: number;
 }
 
 

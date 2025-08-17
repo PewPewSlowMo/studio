@@ -3,7 +3,7 @@
 import { useState, useEffect, useMemo, useTransition } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Users, AlertTriangle, Download, Loader2, PhoneIncoming, PhoneOutgoing, PhoneMissed } from 'lucide-react';
+import { Users, AlertTriangle, Download, Loader2 } from 'lucide-react';
 import { getCallHistory, type DateRangeParams, type GetCallHistoryParams } from '@/actions/cdr';
 import { getUsers } from '@/actions/users';
 import { getAppeals } from '@/actions/appeals';
@@ -33,7 +33,7 @@ const findAppealByFlexibleId = (appeals: Appeal[], callId: string): Appeal | und
 };
 
 type ActiveDetails = {
-    operatorId: string;
+    operatorExtension: string;
     callType: 'answered' | 'outgoing' | 'missed';
 } | null;
 
@@ -109,16 +109,13 @@ export default function ReportsPage() {
                 return;
             }
             
-            const operator = users.find(u => u.id === activeDetails.operatorId);
-            if (!operator?.extension) return;
-
             setIsLoadingDetails(true);
             try {
                 const config = await getConfig();
                 const params: GetCallHistoryParams = {
                     from: dateRange.from,
                     to: dateRange.to,
-                    operatorExtension: operator.extension,
+                    operatorExtension: activeDetails.operatorExtension,
                     callType: activeDetails.callType,
                     page,
                     limit
@@ -153,11 +150,11 @@ export default function ReportsPage() {
         fetchDetailedCalls();
     }, [activeDetails, dateRange, page, limit, users, appeals]);
 
-    const handleStatClick = (operatorId: string, callType: 'answered' | 'outgoing' | 'missed') => {
-        if (activeDetails?.operatorId === operatorId && activeDetails?.callType === callType) {
+    const handleStatClick = (operatorExtension: string, callType: 'answered' | 'outgoing' | 'missed') => {
+        if (activeDetails?.operatorExtension === operatorExtension && activeDetails?.callType === callType) {
             setActiveDetails(null); // Toggle off if the same stat is clicked again
         } else {
-            setActiveDetails({ operatorId, callType });
+            setActiveDetails({ operatorExtension, callType });
         }
     };
     
@@ -188,7 +185,7 @@ export default function ReportsPage() {
         });
     };
 
-    const operatorReportData = useMemo(() => {
+    const operatorReportData: OperatorReportData[] = useMemo(() => {
         const operators = users.filter(u => u.role === 'operator' && u.extension);
         
         return operators.map(operator => {
@@ -201,22 +198,31 @@ export default function ReportsPage() {
             const totalTalkTime = answeredIncomingCalls.reduce((acc, c) => acc + (c.billsec || 0), 0);
             const avgTalkTime = answeredIncomingCalls.length > 0 ? totalTalkTime / answeredIncomingCalls.length : 0;
             
+            const satisfactionScores = answeredIncomingCalls
+                .map(c => c.satisfaction ? parseInt(c.satisfaction, 10) : NaN)
+                .filter(score => !isNaN(score));
+
+            const avgSatisfaction = satisfactionScores.length > 0
+                ? satisfactionScores.reduce((a, b) => a + b, 0) / satisfactionScores.length
+                : 0;
+
             return {
                 operatorId: operator.id,
+                operatorExtension: operator.extension!,
                 operatorName: operator.name,
                 answeredCount: answeredIncomingCalls.length,
                 outgoingCount: outgoingCalls.length,
                 missedCount: missedCalls.length,
                 avgTalkTime: avgTalkTime,
+                avgSatisfaction,
             };
-        }).filter((data): data is OperatorReportData => data !== null)
-          .sort((a,b) => b.answeredCount - a.answeredCount);
+        }).sort((a,b) => b.answeredCount - a.answeredCount);
 
     }, [calls, users]);
     
     const getDetailTitle = () => {
         if (!activeDetails) return '';
-        const operator = users.find(u => u.id === activeDetails.operatorId);
+        const operator = users.find(u => u.extension === activeDetails.operatorExtension);
         const name = operator?.name || '';
         switch(activeDetails.callType) {
             case 'answered': return `Принятые звонки: ${name}`;

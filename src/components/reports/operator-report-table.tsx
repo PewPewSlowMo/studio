@@ -13,24 +13,26 @@ import type { User } from '@/lib/types';
 import { format } from 'date-fns';
 import { ru } from 'date-fns/locale';
 import { Skeleton } from '../ui/skeleton';
-import { ArrowDown, ArrowUp, Phone, PhoneIncoming, PhoneMissed, PhoneOutgoing } from 'lucide-react';
+import { ArrowDown, ArrowUp, Phone, PhoneIncoming, PhoneMissed, PhoneOutgoing, Star } from 'lucide-react';
 import { Button } from '../ui/button';
 import { cn } from '@/lib/utils';
 import type { ActiveDetails } from '@/app/reports/page';
 
 export interface OperatorReportData {
     operatorId: string;
+    operatorExtension: string;
     operatorName: string;
     answeredCount: number;
     outgoingCount: number;
     missedCount: number;
     avgTalkTime: number;
+    avgSatisfaction: number;
 }
 
 interface OperatorReportTableProps {
     data: OperatorReportData[];
     isLoading: boolean;
-    onStatClick: (operatorId: string, callType: 'answered' | 'outgoing' | 'missed') => void;
+    onStatClick: (operatorExtension: string, callType: 'answered' | 'outgoing' | 'missed') => void;
     activeDetails: ActiveDetails;
 }
 
@@ -52,6 +54,7 @@ const TableSkeleton = () => (
                 <TableHead className="text-center">Исходящие</TableHead>
                 <TableHead className="text-center">Пропущено</TableHead>
                 <TableHead className="text-center">Ср. время разговора</TableHead>
+                <TableHead className="text-center">Ср. оценка</TableHead>
             </TableRow>
         </TableHeader>
         <TableBody>
@@ -62,6 +65,7 @@ const TableSkeleton = () => (
                     <TableCell><Skeleton className="h-4 w-12 mx-auto" /></TableCell>
                     <TableCell><Skeleton className="h-4 w-12 mx-auto" /></TableCell>
                     <TableCell><Skeleton className="h-4 w-16 mx-auto" /></TableCell>
+                    <TableCell><Skeleton className="h-4 w-16 mx-auto" /></TableCell>
                 </TableRow>
             ))}
         </TableBody>
@@ -70,7 +74,7 @@ const TableSkeleton = () => (
 
 const StatCell = ({ 
     count, 
-    operatorId, 
+    operatorExtension, 
     type, 
     onStatClick,
     isActive,
@@ -78,7 +82,7 @@ const StatCell = ({
     className
 }: { 
     count: number, 
-    operatorId: string, 
+    operatorExtension: string, 
     type: 'answered' | 'outgoing' | 'missed', 
     onStatClick: Function,
     isActive: boolean,
@@ -95,7 +99,7 @@ const StatCell = ({
             className={cn("font-semibold", className)}
             onClick={(e) => {
                 e.stopPropagation();
-                onStatClick(operatorId, type);
+                onStatClick(operatorExtension, type);
             }}
         >
             <Icon className="mr-2 h-4 w-4"/>
@@ -163,6 +167,7 @@ export function OperatorReportTable({ data, isLoading, onStatClick, activeDetail
                         <SortableHeader sortKey="outgoingCount" className="text-center">Исходящие</SortableHeader>
                         <SortableHeader sortKey="missedCount" className="text-center">Пропущено</SortableHeader>
                         <SortableHeader sortKey="avgTalkTime" className="text-center">Ср. время разговора</SortableHeader>
+                        <SortableHeader sortKey="avgSatisfaction" className="text-center">Ср. оценка</SortableHeader>
                     </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -176,10 +181,10 @@ export function OperatorReportTable({ data, isLoading, onStatClick, activeDetail
                                 <TableCell className="text-center">
                                     <StatCell 
                                         count={op.answeredCount} 
-                                        operatorId={op.operatorId} 
+                                        operatorExtension={op.operatorExtension} 
                                         type="answered"
                                         onStatClick={onStatClick}
-                                        isActive={activeDetails?.operatorId === op.operatorId && activeDetails?.callType === 'answered'}
+                                        isActive={activeDetails?.operatorExtension === op.operatorExtension && activeDetails?.callType === 'answered'}
                                         icon={PhoneIncoming}
                                         className='text-green-600 hover:text-green-700'
                                     />
@@ -187,10 +192,10 @@ export function OperatorReportTable({ data, isLoading, onStatClick, activeDetail
                                 <TableCell className="text-center">
                                      <StatCell 
                                         count={op.outgoingCount} 
-                                        operatorId={op.operatorId} 
+                                        operatorExtension={op.operatorExtension} 
                                         type="outgoing"
                                         onStatClick={onStatClick}
-                                        isActive={activeDetails?.operatorId === op.operatorId && activeDetails?.callType === 'outgoing'}
+                                        isActive={activeDetails?.operatorExtension === op.operatorExtension && activeDetails?.callType === 'outgoing'}
                                         icon={PhoneOutgoing}
                                         className='text-blue-600 hover:text-blue-700'
                                     />
@@ -198,20 +203,30 @@ export function OperatorReportTable({ data, isLoading, onStatClick, activeDetail
                                 <TableCell className="text-center">
                                      <StatCell 
                                         count={op.missedCount} 
-                                        operatorId={op.operatorId} 
+                                        operatorExtension={op.operatorExtension} 
                                         type="missed"
                                         onStatClick={onStatClick}
-                                        isActive={activeDetails?.operatorId === op.operatorId && activeDetails?.callType === 'missed'}
+                                        isActive={activeDetails?.operatorExtension === op.operatorExtension && activeDetails?.callType === 'missed'}
                                         icon={PhoneMissed}
                                         className='text-red-600 hover:text-red-700'
                                     />
                                 </TableCell>
                                 <TableCell className="text-center font-mono">{formatTime(op.avgTalkTime)}</TableCell>
+                                <TableCell className="text-center">
+                                    {op.avgSatisfaction > 0 ? (
+                                        <div className="flex items-center justify-center gap-1 font-semibold">
+                                            <Star className="h-4 w-4 text-yellow-400 fill-yellow-400"/>
+                                            {op.avgSatisfaction.toFixed(2)}
+                                        </div>
+                                    ) : (
+                                        <span className="text-muted-foreground">-</span>
+                                    )}
+                                </TableCell>
                             </TableRow>
                         ))
                     ) : (
                         <TableRow>
-                            <TableCell colSpan={5} className="h-24 text-center">
+                            <TableCell colSpan={6} className="h-24 text-center">
                                 Нет данных для отображения за выбранный период.
                             </TableCell>
                         </TableRow>
