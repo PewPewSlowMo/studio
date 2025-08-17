@@ -120,10 +120,10 @@ export async function testAriConnection(
   connection: AriConnection
 ): Promise<{ success: boolean; data?: any; error?: string }> {
   try {
-    const response = await fetchFromAri(connection, 'asterisk/info');
+    const response = await fetchFromAri(connection, 'asterisk');
     if (response.ok) {
         const data = await response.json();
-        const systemInfo = data.system;
+        const systemInfo = data.system_info;
         if (systemInfo && systemInfo.version) {
           return { success: true, data: { version: systemInfo.version } };
         }
