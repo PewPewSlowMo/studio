@@ -1,3 +1,4 @@
+
 'use server';
 
 import { z } from 'zod';
@@ -105,7 +106,6 @@ export async function getCallHistory(connection: CdrConnection, params: GetCallH
         let whereClauses: string[] = [];
         const queryParams: any[] = [];
         
-        // Date range is always required
         const fromDate = new Date(params.from);
         fromDate.setHours(0, 0, 0, 0);
         const toDate = new Date(params.to);
@@ -113,27 +113,11 @@ export async function getCallHistory(connection: CdrConnection, params: GetCallH
         whereClauses.push(`calldate BETWEEN ? AND ?`);
         queryParams.push(fromDate, toDate);
         
-        // This is the core logic to handle call statistics correctly, avoiding duplicates from queue calls.
-        // It selects the final, answered leg of a call if it exists, otherwise it falls back to other records.
-        const baseQuery = `
-            SELECT * FROM cdr
-            WHERE uniqueid IN (
-                SELECT t.uniqueid FROM (
-                    SELECT 
-                        uniqueid,
-                        -- Prioritize the answered call that is NOT a queue call itself
-                        ROW_NUMBER() OVER(PARTITION BY linkedid ORDER BY (disposition = 'ANSWERED' AND dcontext != 'ext-queues') DESC, calldate DESC) as rn
-                    FROM cdr
-                ) t
-                WHERE t.rn = 1
-            )
-        `;
-
+        const operatorExtensionClause = `( (dcontext = 'from-internal' AND src = ?) OR (dstchannel LIKE ?) )`;
         if (params.operatorExtension) {
-            // These sub-queries select the correct `linkedid`s for the operator first, then the main query selects the final call leg.
-            switch (params.callType) {
+             switch (params.callType) {
                 case 'answered':
-                    whereClauses.push(`linkedid IN (SELECT linkedid FROM cdr WHERE dstchannel LIKE ? AND disposition = 'ANSWERED')`);
+                    whereClauses.push(`dstchannel LIKE ? AND disposition = 'ANSWERED'`);
                     queryParams.push(`%/${params.operatorExtension}%`);
                     break;
                 case 'outgoing':
@@ -141,44 +125,59 @@ export async function getCallHistory(connection: CdrConnection, params: GetCallH
                     queryParams.push(params.operatorExtension);
                     break;
                 case 'missed':
-                     // Find all call groups (linkedid) where this operator was supposed to answer but didn't
-                    whereClauses.push(`linkedid IN (SELECT linkedid FROM cdr WHERE dstchannel LIKE ? AND disposition != 'ANSWERED')`);
-                    queryParams.push(`%/${params.operatorExtension}%`);
-                     // And ensure that no one else in that group answered it either
-                    whereClauses.push(`disposition != 'ANSWERED'`);
+                    whereClauses.push(`dstchannel LIKE ? AND disposition != 'ANSWERED'`);
+                     queryParams.push(`%/${params.operatorExtension}%`);
                     break;
                 default:
-                    whereClauses.push(`( (dcontext = 'from-internal' AND src = ?) OR (linkedid IN (SELECT linkedid FROM cdr WHERE dstchannel LIKE ?)) )`);
+                    whereClauses.push(operatorExtensionClause);
                     queryParams.push(params.operatorExtension, `%/${params.operatorExtension}%`);
                     break;
             }
         }
         
-        const whereSql = whereClauses.length > 0 ? `AND ${whereClauses.join(' AND ')}` : '';
-        
-        const finalQuery = `${baseQuery} ${whereSql}`;
+        const whereSql = whereClauses.length > 0 ? `WHERE ${whereClauses.join(' AND ')}` : '';
 
-        // Count query
-        const countSql = `SELECT COUNT(*) as total FROM (${finalQuery}) as subquery`;
-        const [countRows] = await dbConnection.execute(countSql, queryParams);
-        const total = (countRows as any)[0].total;
-
-        // Data query
-        const dataSelect = `SELECT 
-                calldate, clid, src, dst, dcontext, channel, dstchannel, 
-                lastapp, lastdata, duration, billsec, disposition, uniqueid, linkedid, userfield, recordingfile`;
+        // Step 1: Get all unique linkedids that match the criteria
+        const linkedIdQuery = `SELECT DISTINCT linkedid FROM cdr ${whereSql}`;
+        const [linkedIdRows] = await dbConnection.execute(linkedIdQuery, queryParams);
+        const linkedIds = (linkedIdRows as any[]).map(row => row.linkedid);
         
-        let dataSql = `${dataSelect} FROM (${finalQuery}) as final_subquery ORDER BY calldate DESC`;
-        
-        if (!params.fetchAll && params.limit && params.page) {
-            dataSql += ` LIMIT ? OFFSET ?`;
-            queryParams.push(params.limit, (params.page - 1) * params.limit);
+        if (linkedIds.length === 0) {
+            return { success: true, data: [], total: 0 };
         }
-        
-        const [rows] = await dbConnection.execute(dataSql, queryParams);
-        const calls = (rows as any[]).map(mapRowToCall);
 
-        return { success: true, data: calls, total };
+        // Step 2: For each linkedid, fetch the "best" record.
+        // The "best" record is the one that was answered by an operator (not a queue).
+        // If none were answered, we'll get the latest entry for that call group.
+        const callPromises = linkedIds.map(linkedId => {
+            const singleCallQuery = `
+                SELECT * FROM cdr 
+                WHERE linkedid = ? 
+                ORDER BY (disposition = 'ANSWERED' AND dcontext != 'ext-queues') DESC, calldate DESC 
+                LIMIT 1`;
+            return dbConnection.execute(singleCallQuery, [linkedId]);
+        });
+        
+        const callResults = await Promise.all(callPromises);
+        const calls = callResults
+            .map(res => (res[0] as any[])[0])
+            .filter(Boolean)
+            .map(mapRowToCall);
+            
+        // Because we filter after fetching, we need to sort again.
+        calls.sort((a, b) => new Date(b.startTime).getTime() - new Date(a.startTime).getTime());
+        
+        const total = calls.length;
+
+        // Apply pagination
+        let paginatedCalls = calls;
+        if (!params.fetchAll && params.limit && params.page) {
+            const start = (params.page - 1) * params.limit;
+            const end = start + params.limit;
+            paginatedCalls = calls.slice(start, end);
+        }
+
+        return { success: true, data: paginatedCalls, total };
 
     } catch (e) {
         const message = e instanceof Error ? e.message : 'An unknown error occurred.';
@@ -213,9 +212,6 @@ export async function getCallById(connection: CdrConnection, callId: string): Pr
         
         const primaryCall = primaryResults[0];
 
-        // If the primary call record already has a recording file, use it.
-        // Otherwise, it means this was likely an operator's leg of the call, so we find the "parent" queue call record
-        // using the linkedid to get the recording file.
         if (primaryCall.recordingfile && primaryCall.recordingfile.length > 0) {
             const call: Call = mapRowToCall(primaryCall);
             return { success: true, data: call };
@@ -226,15 +222,12 @@ export async function getCallById(connection: CdrConnection, callId: string): Pr
              const parentResults = parentRows as any[];
 
              if (parentResults.length > 0) {
-                // We found the parent with the recording file.
-                // We'll use the parent's recording file but the primary call's details.
                 const parentCall = parentResults[0];
                 const enrichedCall = { ...primaryCall, recordingfile: parentCall.recordingfile };
                 const call: Call = mapRowToCall(enrichedCall);
                 return { success: true, data: call };
              } else {
                  console.warn(`[CDR] Could not find a parent record with a recording for linkedid ${primaryCall.linkedid}`);
-                 // Fallback to returning the original call data without a recording.
                  const call: Call = mapRowToCall(primaryCall);
                  return { success: true, data: call };
              }
@@ -273,7 +266,6 @@ export async function getMissedCalls(connection: CdrConnection, params: DateRang
 
         const whereSql = `WHERE ${whereClauses.join(' AND ')}`;
         
-        // This query finds all unique call groups (by linkedid) where no call was answered.
         const baseQuery = `
             SELECT linkedid
             FROM cdr
@@ -282,12 +274,10 @@ export async function getMissedCalls(connection: CdrConnection, params: DateRang
             HAVING SUM(CASE WHEN disposition = 'ANSWERED' THEN 1 ELSE 0 END) = 0
         `;
 
-        // Count query
         const countSql = `SELECT COUNT(*) as total FROM (${baseQuery}) as subquery`;
         const [countRows] = await dbConnection.execute(countSql, sqlParams);
         const total = (countRows as any)[0].total;
         
-        // Data query: Get the first entry for each of those missed call groups
         let sql = `
             SELECT t1.*
             FROM cdr t1
@@ -300,13 +290,14 @@ export async function getMissedCalls(connection: CdrConnection, params: DateRang
             ORDER BY t1.calldate DESC
         `;
         
+        const finalParams = [...sqlParams, ...sqlParams];
+
         if (params.limit && params.page) {
             sql += ` LIMIT ? OFFSET ?`;
-            // Add params for the outer query and the subquery
-            sqlParams.push(params.limit, (params.page - 1) * params.limit);
+            finalParams.push(params.limit, (params.page - 1) * params.limit);
         }
         
-        const [rows] = await dbConnection.execute(sql, sqlParams);
+        const [rows] = await dbConnection.execute(sql, finalParams);
         const calls = (rows as any[]).map(mapRowToCall);
 
         return { success: true, data: calls, total };
@@ -321,3 +312,5 @@ export async function getMissedCalls(connection: CdrConnection, params: DateRang
         }
     }
 }
+
+    
