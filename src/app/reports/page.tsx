@@ -3,7 +3,7 @@
 import { useState, useEffect, useMemo, useTransition } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Users, AlertTriangle, Download, Loader2 } from 'lucide-react';
+import { Users, AlertTriangle, Download, Loader2, PhoneIncoming, PhoneOutgoing, PhoneMissed } from 'lucide-react';
 import { getCallHistory, type DateRangeParams, type GetCallHistoryParams } from '@/actions/cdr';
 import { getUsers } from '@/actions/users';
 import { getAppeals } from '@/actions/appeals';
@@ -17,7 +17,7 @@ import { Button } from '@/components/ui/button';
 import { CallHistoryTable, type EnrichedOperatorCall } from '@/components/reports/call-history-table';
 import { exportOperatorReport } from '@/actions/export';
 import { useToast } from '@/hooks/use-toast';
-
+import { CallHistoryPlaceholder } from '@/components/reports/call-history-placeholder';
 
 const findAppealByFlexibleId = (appeals: Appeal[], callId: string): Appeal | undefined => {
     let appeal = appeals.find(a => a.callId === callId);
@@ -32,6 +32,11 @@ const findAppealByFlexibleId = (appeals: Appeal[], callId: string): Appeal | und
     return undefined;
 };
 
+type ActiveDetails = {
+    operatorId: string;
+    callType: 'answered' | 'outgoing' | 'missed';
+} | null;
+
 export default function ReportsPage() {
     const searchParams = useSearchParams();
     const [isLoading, setIsLoading] = useState(true);
@@ -40,15 +45,15 @@ export default function ReportsPage() {
     const [users, setUsers] = useState<User[]>([]);
     const [appeals, setAppeals] = useState<Appeal[]>([]);
 
-    const [selectedOperator, setSelectedOperator] = useState<User | null>(null);
-    const [operatorCalls, setOperatorCalls] = useState<EnrichedOperatorCall[]>([]);
-    const [isLoadingOperatorCalls, setIsLoadingOperatorCalls] = useState(false);
+    const [activeDetails, setActiveDetails] = useState<ActiveDetails>(null);
+    const [detailedCalls, setDetailedCalls] = useState<EnrichedOperatorCall[]>([]);
+    const [isLoadingDetails, setIsLoadingDetails] = useState(false);
     const [isExporting, startExportTransition] = useTransition();
     const { toast } = useToast();
 
     const [page, setPage] = useState(1);
     const [limit] = useState(10);
-    const [totalOperatorCalls, setTotalOperatorCalls] = useState(0);
+    const [totalDetailedCalls, setTotalDetailedCalls] = useState(0);
 
     const dateRange = useMemo(() => {
         const toParam = searchParams.get('to');
@@ -58,10 +63,16 @@ export default function ReportsPage() {
         return { from: format(from, 'yyyy-MM-dd'), to: format(to, 'yyyy-MM-dd') };
     }, [searchParams]);
     
-    // Reset page when operator changes
+    // Reset page and details when date range changes
     useEffect(() => {
         setPage(1);
-    }, [selectedOperator]);
+        setActiveDetails(null);
+    }, [dateRange]);
+    
+    // Reset page when active details (operator/type) change
+    useEffect(() => {
+        setPage(1);
+    }, [activeDetails]);
 
     useEffect(() => {
         const fetchData = async () => {
@@ -71,7 +82,7 @@ export default function ReportsPage() {
                 const config = await getConfig();
                 // Fetch all data for the summary table without pagination
                 const [callsResult, usersResult, appealsResult] = await Promise.all([
-                    getCallHistory(config.cdr, dateRange),
+                    getCallHistory(config.cdr, { ...dateRange, fetchAll: true }),
                     getUsers(),
                     getAppeals(),
                 ]);
@@ -92,18 +103,23 @@ export default function ReportsPage() {
     }, [dateRange]);
 
     useEffect(() => {
-        const fetchOperatorCalls = async () => {
-            if (!selectedOperator?.extension) {
-                setOperatorCalls([]);
+        const fetchDetailedCalls = async () => {
+            if (!activeDetails) {
+                setDetailedCalls([]);
                 return;
-            };
-            setIsLoadingOperatorCalls(true);
+            }
+            
+            const operator = users.find(u => u.id === activeDetails.operatorId);
+            if (!operator?.extension) return;
+
+            setIsLoadingDetails(true);
             try {
                 const config = await getConfig();
                 const params: GetCallHistoryParams = {
                     from: dateRange.from,
                     to: dateRange.to,
-                    operatorExtension: selectedOperator.extension,
+                    operatorExtension: operator.extension,
+                    callType: activeDetails.callType,
                     page,
                     limit
                 };
@@ -120,31 +136,28 @@ export default function ReportsPage() {
                                 resolution: appeal?.resolution || '-'
                             };
                         });
-                    setOperatorCalls(enrichedCalls);
-                    setTotalOperatorCalls(callsResult.total || 0);
+                    setDetailedCalls(enrichedCalls);
+                    setTotalDetailedCalls(callsResult.total || 0);
                 } else {
                     setError(callsResult.error || 'Failed to fetch calls for this operator.');
-                    setOperatorCalls([]);
+                    setDetailedCalls([]);
                 }
             } catch (e) {
                 setError(e instanceof Error ? e.message : 'An unknown error occurred.');
-                setOperatorCalls([]);
+                setDetailedCalls([]);
             } finally {
-                setIsLoadingOperatorCalls(false);
+                setIsLoadingDetails(false);
             }
         };
 
-        fetchOperatorCalls();
-    }, [selectedOperator, dateRange, page, limit, users, appeals]);
+        fetchDetailedCalls();
+    }, [activeDetails, dateRange, page, limit, users, appeals]);
 
-    const handleOperatorClick = async (operatorId: string) => {
-        const user = users.find(u => u.id === operatorId);
-        if (!user) return;
-        
-        if (selectedOperator?.id === operatorId) {
-            setSelectedOperator(null);
+    const handleStatClick = (operatorId: string, callType: 'answered' | 'outgoing' | 'missed') => {
+        if (activeDetails?.operatorId === operatorId && activeDetails?.callType === callType) {
+            setActiveDetails(null); // Toggle off if the same stat is clicked again
         } else {
-            setSelectedOperator(user);
+            setActiveDetails({ operatorId, callType });
         }
     };
     
@@ -152,7 +165,6 @@ export default function ReportsPage() {
         startExportTransition(async () => {
             const result = await exportOperatorReport(dateRange);
             if (result.success && result.data) {
-                // Decode Base64 and create a Blob
                 const byteCharacters = atob(result.data);
                 const byteNumbers = new Array(byteCharacters.length);
                 for (let i = 0; i < byteCharacters.length; i++) {
@@ -182,53 +194,37 @@ export default function ReportsPage() {
         return operators.map(operator => {
             const operatorCalls = calls.filter(c => c.operatorExtension === operator.extension || c.callerNumber === operator.extension);
 
-            if (operatorCalls.length === 0) {
-                return null;
-            }
-            
-            const answeredIncomingCalls = operatorCalls.filter(c => c.status === 'ANSWERED' && c.operatorExtension === operator.extension);
-            const outgoingCalls = operatorCalls.filter(c => c.isOutgoing && c.callerNumber === operator.extension);
-            
-            const missedCallsCount = operatorCalls.filter(c => c.operatorExtension === operator.extension && c.status !== 'ANSWERED').length;
-            const totalIncoming = answeredIncomingCalls.length + missedCallsCount;
-            const missedCallsPercentage = totalIncoming > 0 ? (missedCallsCount / totalIncoming) * 100 : 0;
+            const answeredIncomingCalls = operatorCalls.filter(c => !c.isOutgoing && c.status === 'ANSWERED');
+            const outgoingCalls = operatorCalls.filter(c => c.isOutgoing);
+            const missedCalls = operatorCalls.filter(c => !c.isOutgoing && c.status !== 'ANSWERED');
             
             const totalTalkTime = answeredIncomingCalls.reduce((acc, c) => acc + (c.billsec || 0), 0);
             const avgTalkTime = answeredIncomingCalls.length > 0 ? totalTalkTime / answeredIncomingCalls.length : 0;
             
-            const totalWaitTime = answeredIncomingCalls.reduce((acc, c) => acc + (c.waitTime || 0), 0);
-            const avgWaitTime = answeredIncomingCalls.length > 0 ? totalWaitTime / answeredIncomingCalls.length : 0;
-
-            const callTimestamps = operatorCalls.map(c => parseISO(c.startTime).getTime());
-            const firstCallTime = callTimestamps.length > 0 ? new Date(Math.min(...callTimestamps)) : null;
-            const lastCallTime = callTimestamps.length > 0 ? new Date(Math.max(...callTimestamps)) : null;
-
-            const satisfactionScores = answeredIncomingCalls
-                .map(c => c.satisfaction ? parseInt(c.satisfaction, 10) : NaN)
-                .filter(s => !isNaN(s));
-            
-            const avgSatisfaction = satisfactionScores.length > 0 
-                ? satisfactionScores.reduce((a, b) => a + b, 0) / satisfactionScores.length
-                : 0;
-
-            
             return {
                 operatorId: operator.id,
                 operatorName: operator.name,
-                firstCallTime: firstCallTime ? firstCallTime.toISOString() : null,
-                lastCallTime: lastCallTime ? lastCallTime.toISOString() : null,
-                answeredIncomingCount: answeredIncomingCalls.length,
+                answeredCount: answeredIncomingCalls.length,
                 outgoingCount: outgoingCalls.length,
-                missedCallsPercentage: missedCallsPercentage,
-                missedCallsCount: missedCallsCount,
+                missedCount: missedCalls.length,
                 avgTalkTime: avgTalkTime,
-                avgWaitTime: avgWaitTime,
-                satisfactionScore: avgSatisfaction,
-                transferredToSupervisorCount: 0, 
             };
-        }).filter((data): data is OperatorReportData => data !== null);
+        }).filter((data): data is OperatorReportData => data !== null)
+          .sort((a,b) => b.answeredCount - a.answeredCount);
 
-    }, [calls, users, appeals]);
+    }, [calls, users]);
+    
+    const getDetailTitle = () => {
+        if (!activeDetails) return '';
+        const operator = users.find(u => u.id === activeDetails.operatorId);
+        const name = operator?.name || '';
+        switch(activeDetails.callType) {
+            case 'answered': return `Принятые звонки: ${name}`;
+            case 'outgoing': return `Исходящие звонки: ${name}`;
+            case 'missed': return `Пропущенные звонки: ${name}`;
+            default: return '';
+        }
+    }
 
     if (error) {
         return (
@@ -266,7 +262,7 @@ export default function ReportsPage() {
                         <div>
                             <CardTitle>Эффективность операторов</CardTitle>
                             <CardDescription>
-                               Ключевые показатели для каждого оператора за выбранный период. Нажмите на строку для просмотра звонков.
+                               Ключевые показатели для каждого оператора за выбранный период. Нажмите на цифру для просмотра звонков.
                             </CardDescription>
                         </div>
                     </div>
@@ -275,23 +271,26 @@ export default function ReportsPage() {
                    <OperatorReportTable 
                         data={operatorReportData} 
                         isLoading={isLoading} 
-                        onOperatorClick={handleOperatorClick}
-                        selectedOperatorId={selectedOperator?.id || null}
+                        onStatClick={handleStatClick}
+                        activeDetails={activeDetails}
                     />
-                     {selectedOperator && (
-                        <div className="mt-6 p-4 border-t">
-                            <h3 className="text-lg font-semibold mb-2">Звонки оператора: {selectedOperator.name}</h3>
-                            <CallHistoryTable 
-                                calls={operatorCalls}
-                                isLoading={isLoadingOperatorCalls}
-                                user={selectedOperator}
-                                page={page}
-                                limit={limit}
-                                total={totalOperatorCalls}
-                                onPageChange={setPage}
-                            />
-                        </div>
-                    )}
+                </CardContent>
+            </Card>
+
+             <Card className={!activeDetails ? 'hidden' : ''}>
+                <CardHeader>
+                    <CardTitle>{getDetailTitle()}</CardTitle>
+                </CardHeader>
+                <CardContent>
+                    <CallHistoryTable 
+                        calls={detailedCalls}
+                        isLoading={isLoadingDetails}
+                        page={page}
+                        limit={limit}
+                        total={totalDetailedCalls}
+                        onPageChange={setPage}
+                        callType={activeDetails?.callType || 'answered'}
+                    />
                 </CardContent>
             </Card>
         </div>

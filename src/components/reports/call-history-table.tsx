@@ -9,17 +9,17 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { Input } from '@/components/ui/input';
 import type { Call, User } from '@/lib/types';
 import { Badge } from '@/components/ui/badge';
 import { format, parseISO, isValid } from 'date-fns';
 import { Skeleton } from '../ui/skeleton';
 import { cn } from '@/lib/utils';
 import { ru } from 'date-fns/locale';
-import { ArrowDown, ArrowUp, Star } from 'lucide-react';
+import { ArrowDown, ArrowUp, Phone, PhoneForwarded } from 'lucide-react';
 import { Button } from '../ui/button';
 import { CallRowDetails } from './call-row-details';
 import { Pagination, PaginationContent, PaginationItem, PaginationNext, PaginationPrevious } from '../ui/pagination';
+import { CallHistoryPlaceholder } from './call-history-placeholder';
 
 export type EnrichedOperatorCall = Call & {
     operatorName?: string;
@@ -36,16 +36,23 @@ const statusMap: Record<string, string> = {
 
 type SortKey = keyof EnrichedOperatorCall;
 
-export function CallHistoryTable({ calls, isLoading, user, page, limit, total, onPageChange }: { 
+export function CallHistoryTable({ 
+    calls, 
+    isLoading, 
+    page, 
+    limit, 
+    total, 
+    onPageChange,
+    callType
+}: { 
     calls: EnrichedOperatorCall[], 
     isLoading: boolean, 
-    user: User | null,
     page: number,
     limit: number,
     total: number,
     onPageChange: (page: number) => void;
+    callType: 'answered' | 'outgoing' | 'missed';
 }) {
-  const [filter, setFilter] = React.useState('');
   const [sortConfig, setSortConfig] = React.useState<{ key: SortKey; direction: 'ascending' | 'descending' } | null>({ key: 'startTime', direction: 'descending' });
   const [activeRowId, setActiveRowId] = React.useState<string | null>(null);
 
@@ -53,17 +60,10 @@ export function CallHistoryTable({ calls, isLoading, user, page, limit, total, o
     setActiveRowId(prevId => (prevId === callId ? null : callId));
   };
   
-  const filteredAndSortedCalls = React.useMemo(() => {
-    let filtered = calls;
-    if (filter) {
-        filtered = calls.filter(
-          (call) =>
-            call.callerNumber.includes(filter)
-        );
-    }
-    
+  const sortedCalls = React.useMemo(() => {
+    let sortableData = [...calls];
     if (sortConfig !== null) {
-      filtered.sort((a, b) => {
+      sortableData.sort((a, b) => {
         const aValue = a[sortConfig.key];
         const bValue = b[sortConfig.key];
         if (aValue === undefined || aValue === null) return 1;
@@ -81,10 +81,8 @@ export function CallHistoryTable({ calls, isLoading, user, page, limit, total, o
         return sortConfig.direction === 'ascending' ? comparison : -comparison;
       });
     }
-
-    return filtered;
-
-  }, [calls, filter, sortConfig]);
+    return sortableData;
+  }, [calls, sortConfig]);
 
   const requestSort = (key: SortKey) => {
     let direction: 'ascending' | 'descending' = 'ascending';
@@ -110,76 +108,44 @@ export function CallHistoryTable({ calls, isLoading, user, page, limit, total, o
     </TableHead>
   );
 
-
   const formatDate = (dateString: string) => {
     const date = parseISO(dateString);
     return isValid(date) ? format(date, 'Pp', { locale: ru }) : 'Неверная дата';
   };
   
-  const TableSkeleton = () => (
-     <Table>
-      <TableHeader>
-        <TableRow>
-          <TableHead>Звонящий</TableHead>
-          <TableHead>Время</TableHead>
-          <TableHead>Статус</TableHead>
-          <TableHead>Очередь</TableHead>
-          <TableHead>Результат</TableHead>
-          <TableHead>Оценка</TableHead>
-          <TableHead>Разговор</TableHead>
-        </TableRow>
-      </TableHeader>
-      <TableBody>
-        {[...Array(5)].map((_, i) => (
-          <TableRow key={i}>
-            <TableCell><Skeleton className="h-4 w-24" /></TableCell>
-            <TableCell><Skeleton className="h-4 w-40" /></TableCell>
-            <TableCell><Skeleton className="h-6 w-20 rounded-full" /></TableCell>
-            <TableCell><Skeleton className="h-4 w-24" /></TableCell>
-            <TableCell><Skeleton className="h-4 w-32" /></TableCell>
-            <TableCell><Skeleton className="h-4 w-12" /></TableCell>
-            <TableCell><Skeleton className="h-4 w-12" /></TableCell>
-          </TableRow>
-        ))}
-      </TableBody>
-    </Table>
-  );
+  if (isLoading) {
+    return <CallHistoryPlaceholder />
+  }
 
   const totalPages = Math.ceil(total / limit);
 
   return (
     <div>
-      <div className="flex justify-between items-center mb-4">
-        <Input
-          placeholder="Фильтр по номеру..."
-          value={filter}
-          onChange={(e) => setFilter(e.target.value)}
-          className="max-w-sm"
-        />
-      </div>
       <div className="rounded-md border">
-        {isLoading ? <TableSkeleton /> : (
             <Table>
               <TableHeader>
                 <TableRow>
-                  <SortableHeader sortKey="callerNumber">Звонящий</SortableHeader>
+                  <SortableHeader sortKey={callType === 'outgoing' ? 'calledNumber' : 'callerNumber'}>
+                    <div className='flex items-center gap-2'>
+                        {callType === 'outgoing' ? <PhoneForwarded/> : <Phone/>}
+                        <span>{callType === 'outgoing' ? 'Кому звонил' : 'Кто звонил'}</span>
+                    </div>
+                  </SortableHeader>
                   <SortableHeader sortKey="startTime">Время</SortableHeader>
                   <SortableHeader sortKey="status">Статус</SortableHeader>
                   <SortableHeader sortKey="queueName">Очередь</SortableHeader>
-                  <SortableHeader sortKey="resolution">Результат</SortableHeader>
-                  <SortableHeader sortKey="satisfaction">Оценка</SortableHeader>
                   <SortableHeader sortKey="billsec" className="text-right">Разговор (сек)</SortableHeader>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredAndSortedCalls.length > 0 ? (
-                  filteredAndSortedCalls.map((call) => (
+                {sortedCalls.length > 0 ? (
+                  sortedCalls.map((call) => (
                     <React.Fragment key={`${call.id}-${call.startTime}`}>
                         <TableRow 
                             onClick={() => handleRowClick(call.id)}
                             className="cursor-pointer hover:bg-muted"
                         >
-                            <TableCell className="font-medium">{call.callerNumber}</TableCell>
+                            <TableCell className="font-medium">{callType === 'outgoing' ? call.calledNumber : call.callerNumber}</TableCell>
                              <TableCell>
                                 {formatDate(call.startTime)}
                             </TableCell>
@@ -193,23 +159,12 @@ export function CallHistoryTable({ calls, isLoading, user, page, limit, total, o
                                 </Badge>
                             </TableCell>
                            <TableCell>{call.queueName}</TableCell>
-                            <TableCell className="capitalize">{call.resolution}</TableCell>
-                            <TableCell>
-                                {call.satisfaction ? (
-                                    <div className="flex items-center gap-1">
-                                    <Star className="h-4 w-4 text-yellow-400 fill-yellow-400" />
-                                    <span>{call.satisfaction}</span>
-                                    </div>
-                                ) : (
-                                    <span>-</span>
-                                )}
-                            </TableCell>
                             <TableCell className="text-right">{call.billsec ?? '-'}</TableCell>
                         </TableRow>
                         {activeRowId === call.id && (
                             <TableRow>
                                 <TableCell colSpan={7} className="p-0">
-                                    <CallRowDetails call={call} user={user} isCrmEditable={false} />
+                                    <CallRowDetails call={call} user={null} isCrmEditable={false} />
                                 </TableCell>
                             </TableRow>
                         )}
@@ -217,14 +172,13 @@ export function CallHistoryTable({ calls, isLoading, user, page, limit, total, o
                   ))
                 ) : (
                   <TableRow>
-                    <TableCell colSpan={7} className="h-24 text-center">
-                      Нет данных о звонках за выбранный период.
+                    <TableCell colSpan={5} className="h-24 text-center">
+                      Нет звонков этого типа за выбранный период.
                     </TableCell>
                   </TableRow>
                 )}
               </TableBody>
             </Table>
-        )}
       </div>
        {total > limit && (
             <div className="flex items-center justify-between space-x-2 py-4">

@@ -9,20 +9,29 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import type { OperatorReportData } from '@/lib/types';
-import { format, parseISO, isValid } from 'date-fns';
+import type { User } from '@/lib/types';
+import { format } from 'date-fns';
 import { ru } from 'date-fns/locale';
 import { Skeleton } from '../ui/skeleton';
-import { ArrowDown, ArrowUp, Star } from 'lucide-react';
+import { ArrowDown, ArrowUp, Phone, PhoneIncoming, PhoneMissed, PhoneOutgoing } from 'lucide-react';
 import { Button } from '../ui/button';
-import { Badge } from '../ui/badge';
 import { cn } from '@/lib/utils';
+import type { ActiveDetails } from '@/app/reports/page';
+
+export interface OperatorReportData {
+    operatorId: string;
+    operatorName: string;
+    answeredCount: number;
+    outgoingCount: number;
+    missedCount: number;
+    avgTalkTime: number;
+}
 
 interface OperatorReportTableProps {
     data: OperatorReportData[];
     isLoading: boolean;
-    onOperatorClick: (operatorId: string) => void;
-    selectedOperatorId: string | null;
+    onStatClick: (operatorId: string, callType: 'answered' | 'outgoing' | 'missed') => void;
+    activeDetails: ActiveDetails;
 }
 
 type SortKey = keyof OperatorReportData;
@@ -34,48 +43,69 @@ const formatTime = (seconds: number) => {
     return `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
 };
 
-const formatDateTime = (dateString: string | null) => {
-    if (!dateString) return '–';
-    const date = parseISO(dateString);
-    return isValid(date) ? format(date, 'HH:mm:ss', { locale: ru }) : '–';
-};
-
 const TableSkeleton = () => (
     <Table>
         <TableHeader>
             <TableRow>
                 <TableHead>Оператор</TableHead>
-                <TableHead>Время работы</TableHead>
-                <TableHead>Принято</TableHead>
-                <TableHead>Исходящие</TableHead>
-                <TableHead>Пропущено (%)</TableHead>
-                <TableHead>Ср. разговор</TableHead>
-                <TableHead>Ср. ожидание</TableHead>
-                <TableHead>Ср. оценка</TableHead>
-                <TableHead>Переводы</TableHead>
+                <TableHead className="text-center">Принято</TableHead>
+                <TableHead className="text-center">Исходящие</TableHead>
+                <TableHead className="text-center">Пропущено</TableHead>
+                <TableHead className="text-center">Ср. время разговора</TableHead>
             </TableRow>
         </TableHeader>
         <TableBody>
             {[...Array(5)].map((_, i) => (
                 <TableRow key={i}>
                     <TableCell><Skeleton className="h-4 w-32" /></TableCell>
-                    <TableCell><Skeleton className="h-4 w-24" /></TableCell>
-                    <TableCell><Skeleton className="h-4 w-12" /></TableCell>
-                    <TableCell><Skeleton className="h-4 w-12" /></TableCell>
-                    <TableCell><Skeleton className="h-4 w-16" /></TableCell>
-                    <TableCell><Skeleton className="h-4 w-16" /></TableCell>
-                    <TableCell><Skeleton className="h-4 w-16" /></TableCell>
-                    <TableCell><Skeleton className="h-4 w-12" /></TableCell>
-                    <TableCell><Skeleton className="h-4 w-12" /></TableCell>
+                    <TableCell><Skeleton className="h-4 w-12 mx-auto" /></TableCell>
+                    <TableCell><Skeleton className="h-4 w-12 mx-auto" /></TableCell>
+                    <TableCell><Skeleton className="h-4 w-12 mx-auto" /></TableCell>
+                    <TableCell><Skeleton className="h-4 w-16 mx-auto" /></TableCell>
                 </TableRow>
             ))}
         </TableBody>
     </Table>
 );
 
+const StatCell = ({ 
+    count, 
+    operatorId, 
+    type, 
+    onStatClick,
+    isActive,
+    icon: Icon,
+    className
+}: { 
+    count: number, 
+    operatorId: string, 
+    type: 'answered' | 'outgoing' | 'missed', 
+    onStatClick: Function,
+    isActive: boolean,
+    icon: React.ElementType,
+    className?: string
+}) => {
+    if (count === 0) {
+        return <span className="text-muted-foreground">-</span>;
+    }
+    return (
+        <Button 
+            variant={isActive ? "secondary" : "ghost"}
+            size="sm"
+            className={cn("font-semibold", className)}
+            onClick={(e) => {
+                e.stopPropagation();
+                onStatClick(operatorId, type);
+            }}
+        >
+            <Icon className="mr-2 h-4 w-4"/>
+            {count}
+        </Button>
+    )
+};
 
-export function OperatorReportTable({ data, isLoading, onOperatorClick, selectedOperatorId }: OperatorReportTableProps) {
-    const [sortConfig, setSortConfig] = React.useState<{ key: SortKey; direction: 'ascending' | 'descending' }>({ key: 'operatorName', direction: 'ascending' });
+export function OperatorReportTable({ data, isLoading, onStatClick, activeDetails }: OperatorReportTableProps) {
+    const [sortConfig, setSortConfig] = React.useState<{ key: SortKey; direction: 'ascending' | 'descending' }>({ key: 'answeredCount', direction: 'descending' });
 
     const sortedData = React.useMemo(() => {
         let sortableData = [...data];
@@ -129,14 +159,10 @@ export function OperatorReportTable({ data, isLoading, onOperatorClick, selected
                 <TableHeader>
                     <TableRow>
                         <SortableHeader sortKey="operatorName">Оператор</SortableHeader>
-                        <SortableHeader sortKey="firstCallTime">Время работы</SortableHeader>
-                        <SortableHeader sortKey="answeredIncomingCount">Принято</SortableHeader>
-                        <SortableHeader sortKey="outgoingCount">Исходящие</SortableHeader>
-                        <SortableHeader sortKey="missedCallsPercentage">Пропущено</SortableHeader>
-                        <SortableHeader sortKey="avgTalkTime">Ср. разговор</SortableHeader>
-                        <SortableHeader sortKey="avgWaitTime">Ср. ожидание</SortableHeader>
-                        <SortableHeader sortKey="satisfactionScore">Ср. оценка</SortableHeader>
-                        <SortableHeader sortKey="transferredToSupervisorCount">Переводы</SortableHeader>
+                        <SortableHeader sortKey="answeredCount" className="text-center">Принято</SortableHeader>
+                        <SortableHeader sortKey="outgoingCount" className="text-center">Исходящие</SortableHeader>
+                        <SortableHeader sortKey="missedCount" className="text-center">Пропущено</SortableHeader>
+                        <SortableHeader sortKey="avgTalkTime" className="text-center">Ср. время разговора</SortableHeader>
                     </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -144,34 +170,48 @@ export function OperatorReportTable({ data, isLoading, onOperatorClick, selected
                         sortedData.map((op) => (
                             <TableRow 
                                 key={op.operatorId}
-                                onClick={() => onOperatorClick(op.operatorId)}
-                                className={cn("cursor-pointer", selectedOperatorId === op.operatorId && "bg-muted hover:bg-muted/90")}
+                                className="cursor-pointer"
                             >
                                 <TableCell className="font-medium">{op.operatorName}</TableCell>
-                                <TableCell>{formatDateTime(op.firstCallTime)} - {formatDateTime(op.lastCallTime)}</TableCell>
-                                <TableCell>
-                                    {op.answeredIncomingCount}
+                                <TableCell className="text-center">
+                                    <StatCell 
+                                        count={op.answeredCount} 
+                                        operatorId={op.operatorId} 
+                                        type="answered"
+                                        onStatClick={onStatClick}
+                                        isActive={activeDetails?.operatorId === op.operatorId && activeDetails?.callType === 'answered'}
+                                        icon={PhoneIncoming}
+                                        className='text-green-600 hover:text-green-700'
+                                    />
                                 </TableCell>
-                                <TableCell>{op.outgoingCount}</TableCell>
-                                <TableCell>
-                                    <Badge variant={op.missedCallsPercentage > 10 ? 'destructive' : 'secondary'}>
-                                        {op.missedCallsPercentage.toFixed(1)}% ({op.missedCallsCount})
-                                    </Badge>
+                                <TableCell className="text-center">
+                                     <StatCell 
+                                        count={op.outgoingCount} 
+                                        operatorId={op.operatorId} 
+                                        type="outgoing"
+                                        onStatClick={onStatClick}
+                                        isActive={activeDetails?.operatorId === op.operatorId && activeDetails?.callType === 'outgoing'}
+                                        icon={PhoneOutgoing}
+                                        className='text-blue-600 hover:text-blue-700'
+                                    />
                                 </TableCell>
-                                <TableCell>{formatTime(op.avgTalkTime)}</TableCell>
-                                <TableCell>{formatTime(op.avgWaitTime)}</TableCell>
-                                <TableCell>
-                                    <div className="flex items-center gap-1">
-                                       <Star className={cn("h-4 w-4", op.satisfactionScore > 0 ? "text-yellow-400 fill-yellow-400" : "text-muted-foreground")} />
-                                       <span>{op.satisfactionScore > 0 ? op.satisfactionScore.toFixed(2) : '-'}</span>
-                                    </div>
+                                <TableCell className="text-center">
+                                     <StatCell 
+                                        count={op.missedCount} 
+                                        operatorId={op.operatorId} 
+                                        type="missed"
+                                        onStatClick={onStatClick}
+                                        isActive={activeDetails?.operatorId === op.operatorId && activeDetails?.callType === 'missed'}
+                                        icon={PhoneMissed}
+                                        className='text-red-600 hover:text-red-700'
+                                    />
                                 </TableCell>
-                                <TableCell>{op.transferredToSupervisorCount}</TableCell>
+                                <TableCell className="text-center font-mono">{formatTime(op.avgTalkTime)}</TableCell>
                             </TableRow>
                         ))
                     ) : (
                         <TableRow>
-                            <TableCell colSpan={9} className="h-24 text-center">
+                            <TableCell colSpan={5} className="h-24 text-center">
                                 Нет данных для отображения за выбранный период.
                             </TableCell>
                         </TableRow>

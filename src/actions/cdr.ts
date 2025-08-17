@@ -22,6 +22,8 @@ export interface DateRangeParams {
 
 export interface GetCallHistoryParams extends DateRangeParams {
     operatorExtension?: string;
+    callType?: 'answered' | 'outgoing' | 'missed';
+    fetchAll?: boolean;
     page?: number;
     limit?: number;
 }
@@ -74,7 +76,6 @@ function mapRowToCall(row: any): Call {
         }
     }
 
-
     return {
         id: row.uniqueid,
         linkedId: row.linkedid,
@@ -98,49 +99,59 @@ export async function getCallHistory(connection: CdrConnection, params: GetCallH
     try {
         dbConnection = await createCdrConnection(connection);
         
-        const sqlParams: any[] = [];
-        const countParams: any[] = [];
-        let whereClauses: string[] = [];
-
-        if (params.from && params.to) {
-            whereClauses.push(`calldate BETWEEN ? AND ?`);
-            const fromDate = new Date(params.from);
-            fromDate.setHours(0, 0, 0, 0);
-
-            const toDate = new Date(params.to);
-            toDate.setHours(23, 59, 59, 999);
-            
-            sqlParams.push(fromDate, toDate);
-            countParams.push(fromDate, toDate);
-        } else {
-             whereClauses.push(`calldate >= NOW() - INTERVAL 1 DAY`);
-        }
-
+        const whereClauses: string[] = [];
+        const queryParams: any[] = [];
+        
+        // Date range is always required
+        const fromDate = new Date(params.from);
+        fromDate.setHours(0, 0, 0, 0);
+        const toDate = new Date(params.to);
+        toDate.setHours(23, 59, 59, 999);
+        whereClauses.push(`calldate BETWEEN ? AND ?`);
+        queryParams.push(fromDate, toDate);
+        
         if (params.operatorExtension) {
-             whereClauses.push(`((dcontext = 'from-internal' AND src = ?) OR (SUBSTRING_INDEX(SUBSTRING_INDEX(dstchannel, '/', 2), '/', -1) = ?))`);
-             sqlParams.push(params.operatorExtension, params.operatorExtension);
-             countParams.push(params.operatorExtension, params.operatorExtension);
+            switch (params.callType) {
+                case 'answered':
+                    whereClauses.push(`SUBSTRING_INDEX(SUBSTRING_INDEX(dstchannel, '/', 2), '/', -1) = ? AND disposition = 'ANSWERED'`);
+                    queryParams.push(params.operatorExtension);
+                    break;
+                case 'outgoing':
+                    whereClauses.push(`dcontext = 'from-internal' AND src = ?`);
+                    queryParams.push(params.operatorExtension);
+                    break;
+                case 'missed':
+                    whereClauses.push(`SUBSTRING_INDEX(SUBSTRING_INDEX(dstchannel, '/', 2), '/', -1) = ? AND disposition != 'ANSWERED'`);
+                    queryParams.push(params.operatorExtension);
+                    break;
+                // Default case if callType is not provided but extension is
+                default:
+                    whereClauses.push(`( (dcontext = 'from-internal' AND src = ?) OR (SUBSTRING_INDEX(SUBSTRING_INDEX(dstchannel, '/', 2), '/', -1) = ?) )`);
+                    queryParams.push(params.operatorExtension, params.operatorExtension);
+                    break;
+            }
         }
         
         const whereSql = whereClauses.length > 0 ? `WHERE ${whereClauses.join(' AND ')}` : '';
         
         // Count query
         const countSql = `SELECT COUNT(*) as total FROM cdr ${whereSql}`;
-        const [countRows] = await dbConnection.execute(countSql, countParams);
+        const [countRows] = await dbConnection.execute(countSql, queryParams);
         const total = (countRows as any)[0].total;
 
         // Data query
-        let sql = `SELECT 
+        const dataSelect = `SELECT 
                 calldate, clid, src, dst, dcontext, channel, dstchannel, 
-                lastapp, lastdata, duration, billsec, disposition, uniqueid, linkedid, userfield, recordingfile
-             FROM cdr ${whereSql} ORDER BY calldate DESC`;
+                lastapp, lastdata, duration, billsec, disposition, uniqueid, linkedid, userfield, recordingfile`;
         
-        if (params.limit && params.page) {
-            sql += ` LIMIT ? OFFSET ?`;
-            sqlParams.push(params.limit, (params.page - 1) * params.limit);
+        let dataSql = `${dataSelect} FROM cdr ${whereSql} ORDER BY calldate DESC`;
+        
+        if (!params.fetchAll && params.limit && params.page) {
+            dataSql += ` LIMIT ? OFFSET ?`;
+            queryParams.push(params.limit, (params.page - 1) * params.limit);
         }
         
-        const [rows] = await dbConnection.execute(sql, sqlParams);
+        const [rows] = await dbConnection.execute(dataSql, queryParams);
         const calls = (rows as any[]).map(mapRowToCall);
 
         return { success: true, data: calls, total };

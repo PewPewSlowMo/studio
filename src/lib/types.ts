@@ -1,4 +1,5 @@
 
+
 export type UserRole = 'admin' | 'manager' | 'supervisor' | 'operator';
 
 export interface User {
@@ -77,16 +78,10 @@ export interface QueueReportData {
 export interface OperatorReportData {
     operatorId: string;
     operatorName: string;
-    firstCallTime: string | null;
-    lastCallTime: string | null;
-    answeredIncomingCount: number;
+    answeredCount: number;
     outgoingCount: number;
-    missedCallsPercentage: number;
-    missedCallsCount: number;
+    missedCount: number;
     avgTalkTime: number;
-    avgWaitTime: number;
-    satisfactionScore: number;
-    transferredToSupervisorCount: number;
 }
 
 

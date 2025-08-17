@@ -110077,3 +110077,51 @@ Requesting URL: http://92.46.62.34:8088/ari/asterisk/info
   }
 }
 
+[2025-08-17 16:33:16.001] [AMI_ACTION]
+{
+  "level": "ERROR",
+  "message": "AMI command timed out after 20 seconds.",
+  "action": {
+    "Action": "CoreSettings",
+    "actionid": "1755448376001"
+  }
+}
+
+[2025-08-17 16:33:27.208] [AMI_ACTION]
+{
+  "level": "INFO",
+  "message": "Executing AMI action",
+  "action": {
+    "Action": "CoreSettings"
+  }
+}
+
+[2025-08-17 16:33:47.222] [AMI_ACTION]
+{
+  "level": "ERROR",
+  "message": "AMI command timed out after 20 seconds.",
+  "action": {
+    "Action": "CoreSettings",
+    "actionid": "1755448407208"
+  }
+}
+
+[2025-08-17 16:37:43.862] [AMI_ACTION]
+{
+  "level": "INFO",
+  "message": "Executing AMI action",
+  "action": {
+    "Action": "CoreSettings"
+  }
+}
+
+[2025-08-17 16:38:03.862] [AMI_ACTION]
+{
+  "level": "ERROR",
+  "message": "AMI command timed out after 20 seconds.",
+  "action": {
+    "Action": "CoreSettings",
+    "actionid": "1755448663864"
+  }
+}
+
