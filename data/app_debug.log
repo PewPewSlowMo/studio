@@ -110038,3 +110038,42 @@ Requesting URL: http://92.46.62.34:8088/ari/asterisk/info
   }
 }
 
+[2025-08-17 15:27:29.073] [AMI_ACTION]
+{
+  "level": "ERROR",
+  "message": "AMI command timed out after 20 seconds.",
+  "action": {
+    "Action": "CoreSettings",
+    "actionid": "1755444429071"
+  }
+}
+
+[2025-08-17 15:27:40.815] [ARI Fetch (GET)]
+{
+  "level": "ERROR",
+  "message": "ARI Request Failed",
+  "url": "http://92.46.62.34:8088/ari/asterisk",
+  "status": 404,
+  "statusText": "Not Found",
+  "body": "<!DOCTYPE HTML PUBLIC \"-//IETF//DTD HTML 2.0//EN\">\r\n<html><head>\r\n<title>404 Not Found</title>\r\n</head><body>\r\n<h1>Not Found</h1>\r\n<p>The requested URL was not found on this server.</p>\r\n<hr />\r\n<address>Asterisk/18.16.0</address>\r\n</body></html>\r\n"
+}
+
+[2025-08-17 15:27:41.150] [AMI_ACTION]
+{
+  "level": "INFO",
+  "message": "Executing AMI action",
+  "action": {
+    "Action": "CoreSettings"
+  }
+}
+
+[2025-08-17 15:28:01.162] [AMI_ACTION]
+{
+  "level": "ERROR",
+  "message": "AMI command timed out after 20 seconds.",
+  "action": {
+    "Action": "CoreSettings",
+    "actionid": "1755444461150"
+  }
+}
+
