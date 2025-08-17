@@ -59,7 +59,7 @@ export default function MissedCallsPage() {
                 const fromParam = searchParams.get('from');
 
                 const to = toParam && isValid(parseISO(toParam)) ? parseISO(toParam) : new Date();
-                const from = fromParam && isValid(parseISO(fromParam)) ? parseISO(fromParam) : subDays(to, 6); // Default to last 7 days
+                const from = fromParam && isValid(parseISO(fromParam)) ? parseISO(fromParam) : subDays(new Date(), 6);
                 const dateRange: DateRangeParams = { from: format(from, 'yyyy-MM-dd'), to: format(to, 'yyyy-MM-dd') };
 
                 const config = await getConfig();

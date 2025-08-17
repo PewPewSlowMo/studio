@@ -59,7 +59,7 @@ export default function ReportsPage() {
         const toParam = searchParams.get('to');
         const fromParam = searchParams.get('from');
         const to = toParam && isValid(parseISO(toParam)) ? parseISO(toParam) : new Date();
-        const from = fromParam && isValid(parseISO(fromParam)) ? parseISO(fromParam) : subDays(to, 6);
+        const from = fromParam && isValid(parseISO(fromParam)) ? parseISO(fromParam) : subDays(new Date(), 6);
         return { from: format(from, 'yyyy-MM-dd'), to: format(to, 'yyyy-MM-dd') };
     }, [searchParams]);
     
