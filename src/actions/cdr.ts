@@ -113,21 +113,21 @@ export async function getCallHistory(connection: CdrConnection, params: GetCallH
         if (params.operatorExtension) {
             switch (params.callType) {
                 case 'answered':
-                    whereClauses.push(`SUBSTRING_INDEX(SUBSTRING_INDEX(dstchannel, '/', 2), '/', -1) = ? AND disposition = 'ANSWERED'`);
-                    queryParams.push(params.operatorExtension);
+                    whereClauses.push(`dstchannel LIKE ? AND disposition = 'ANSWERED'`);
+                    queryParams.push(`%/${params.operatorExtension}%`);
                     break;
                 case 'outgoing':
                     whereClauses.push(`dcontext = 'from-internal' AND src = ?`);
                     queryParams.push(params.operatorExtension);
                     break;
                 case 'missed':
-                    whereClauses.push(`SUBSTRING_INDEX(SUBSTRING_INDEX(dstchannel, '/', 2), '/', -1) = ? AND disposition != 'ANSWERED'`);
-                    queryParams.push(params.operatorExtension);
+                    whereClauses.push(`dstchannel LIKE ? AND disposition != 'ANSWERED'`);
+                    queryParams.push(`%/${params.operatorExtension}%`);
                     break;
-                // Default case if callType is not provided but extension is
+                // Default case if callType is not provided but extension is (used for operator's general history)
                 default:
-                    whereClauses.push(`( (dcontext = 'from-internal' AND src = ?) OR (SUBSTRING_INDEX(SUBSTRING_INDEX(dstchannel, '/', 2), '/', -1) = ?) )`);
-                    queryParams.push(params.operatorExtension, params.operatorExtension);
+                    whereClauses.push(`( (dcontext = 'from-internal' AND src = ?) OR (dstchannel LIKE ?) )`);
+                    queryParams.push(params.operatorExtension, `%/${params.operatorExtension}%`);
                     break;
             }
         }

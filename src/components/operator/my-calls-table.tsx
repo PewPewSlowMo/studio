@@ -172,8 +172,8 @@ export function MyCallsTable({ calls, isLoading, user, page, limit, total, onPag
             </TableHeader>
             <TableBody>
                 {sortedCalls.length > 0 ? (
-                sortedCalls.map((call) => (
-                    <React.Fragment key={`${call.id}-${call.startTime}`}>
+                sortedCalls.map((call, index) => (
+                    <React.Fragment key={`${call.id}-${call.startTime}-${index}`}>
                         <TableRow onClick={() => handleRowClick(call.id)} className="cursor-pointer">
                             <TableCell className="font-medium">
                                 <div className="flex items-center gap-2">

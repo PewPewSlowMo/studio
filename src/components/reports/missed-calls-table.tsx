@@ -97,8 +97,8 @@ export function MissedCallsTable({ calls, isLoading, page, limit, total, onPageC
                     </TableHeader>
                     <TableBody>
                         {calls.length > 0 ? (
-                            calls.map((call) => (
-                                <TableRow key={call.id + call.startTime}>
+                            calls.map((call, index) => (
+                                <TableRow key={`${call.id}-${call.startTime}-${index}`}>
                                     <TableCell className="font-medium">
                                         <div className="flex items-center gap-2 text-destructive">
                                             <PhoneMissed className="h-4 w-4" />
