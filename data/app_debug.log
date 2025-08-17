@@ -110220,3 +110220,41 @@ Requesting URL: http://92.46.62.34:8088/ari/asterisk/info
   }
 }
 
+[2025-08-17 17:43:51.629] [AMI_ACTION]
+{
+  "level": "INFO",
+  "message": "Executing AMI action",
+  "action": {
+    "Action": "QueueStatus"
+  }
+}
+
+[2025-08-17 17:44:11.642] [AMI_ACTION]
+{
+  "level": "ERROR",
+  "message": "AMI command timed out after 20 seconds.",
+  "action": {
+    "Action": "QueueStatus",
+    "actionid": "1755452631631"
+  }
+}
+
+[2025-08-17 17:44:22.730] [AMI_ACTION]
+{
+  "level": "INFO",
+  "message": "Executing AMI action",
+  "action": {
+    "Action": "QueueStatus"
+  }
+}
+
+[2025-08-17 17:44:42.743] [AMI_ACTION]
+{
+  "level": "ERROR",
+  "message": "AMI command timed out after 20 seconds.",
+  "action": {
+    "Action": "QueueStatus",
+    "actionid": "1755452662734"
+  }
+}
+
