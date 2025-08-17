@@ -14,6 +14,7 @@ import { format, parseISO, isValid } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { PhoneMissed, Calendar } from 'lucide-react';
 import { Skeleton } from '../ui/skeleton';
+import { Pagination, PaginationContent, PaginationItem, PaginationNext, PaginationPrevious } from '../ui/pagination';
 
 function formatTime(seconds: number | undefined) {
     if (seconds === undefined || seconds === null) return '-';
@@ -29,7 +30,16 @@ const reasonVariantMap: Record<string, 'destructive' | 'secondary' | 'default'> 
     'Системная ошибка': 'default',
 };
 
-export function MissedCallsTable({ calls, isLoading }: { calls: Call[], isLoading: boolean }) {
+interface MissedCallsTableProps {
+    calls: Call[];
+    isLoading: boolean;
+    page: number;
+    limit: number;
+    total: number;
+    onPageChange: (page: number) => void;
+}
+
+export function MissedCallsTable({ calls, isLoading, page, limit, total, onPageChange }: MissedCallsTableProps) {
   const [isClient, setIsClient] = React.useState(false);
 
   React.useEffect(() => {
@@ -56,7 +66,7 @@ export function MissedCallsTable({ calls, isLoading }: { calls: Call[], isLoadin
         </TableRow>
       </TableHeader>
       <TableBody>
-        {[...Array(5)].map((_, i) => (
+        {[...Array(10)].map((_, i) => (
           <TableRow key={i}>
             <TableCell><Skeleton className="h-4 w-28" /></TableCell>
             <TableCell><Skeleton className="h-6 w-24 rounded-full" /></TableCell>
@@ -69,63 +79,84 @@ export function MissedCallsTable({ calls, isLoading }: { calls: Call[], isLoadin
     </Table>
   );
 
+  const totalPages = Math.ceil(total / limit);
+
   return (
-    <div className="rounded-md border">
-        {isLoading ? <TableSkeleton /> : (
-             <Table>
-                <TableHeader>
-                    <TableRow>
-                        <TableHead>Номер телефона</TableHead>
-                        <TableHead>Очередь</TableHead>
-                        <TableHead>Дата и время</TableHead>
-                        <TableHead className="text-center">Время ожидания</TableHead>
-                        <TableHead>Причина</TableHead>
-                    </TableRow>
-                </TableHeader>
-                <TableBody>
-                    {calls.length > 0 ? (
-                        calls.map((call) => (
-                            <TableRow key={call.id + call.startTime}>
-                                <TableCell className="font-medium">
-                                    <div className="flex items-center gap-2 text-destructive">
-                                        <PhoneMissed className="h-4 w-4" />
-                                        <span>{call.callerNumber}</span>
-                                    </div>
-                                </TableCell>
-                                <TableCell>
-                                    <Badge variant="outline">{call.queue || '-'}</Badge>
-                                </TableCell>
-                                <TableCell>
-                                    <div className="flex items-center gap-2 text-muted-foreground">
-                                        <Calendar className="h-4 w-4" />
-                                        <span>{formatDate(call.startTime)}</span>
-                                    </div>
-                                </TableCell>
-                                <TableCell>
-                                    <div className={cn(
-                                        'font-mono p-1 rounded text-center w-16 mx-auto', 
-                                        (call.waitTime || 0) > 180 ? 'bg-destructive text-destructive-foreground' : ''
-                                    )}>
-                                        {formatTime(call.waitTime)}
-                                    </div>
-                                </TableCell>
-                                <TableCell>
-                                    <Badge variant={reasonVariantMap[call.reason!] || 'default'}>
-                                        {call.reason}
-                                    </Badge>
+    <>
+        <div className="rounded-md border">
+            {isLoading ? <TableSkeleton /> : (
+                <Table>
+                    <TableHeader>
+                        <TableRow>
+                            <TableHead>Номер телефона</TableHead>
+                            <TableHead>Очередь</TableHead>
+                            <TableHead>Дата и время</TableHead>
+                            <TableHead className="text-center">Время ожидания</TableHead>
+                            <TableHead>Причина</TableHead>
+                        </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                        {calls.length > 0 ? (
+                            calls.map((call) => (
+                                <TableRow key={call.id + call.startTime}>
+                                    <TableCell className="font-medium">
+                                        <div className="flex items-center gap-2 text-destructive">
+                                            <PhoneMissed className="h-4 w-4" />
+                                            <span>{call.callerNumber}</span>
+                                        </div>
+                                    </TableCell>
+                                    <TableCell>
+                                        <Badge variant="outline">{call.queue || '-'}</Badge>
+                                    </TableCell>
+                                    <TableCell>
+                                        <div className="flex items-center gap-2 text-muted-foreground">
+                                            <Calendar className="h-4 w-4" />
+                                            <span>{formatDate(call.startTime)}</span>
+                                        </div>
+                                    </TableCell>
+                                    <TableCell>
+                                        <div className={cn(
+                                            'font-mono p-1 rounded text-center w-16 mx-auto', 
+                                            (call.waitTime || 0) > 180 ? 'bg-destructive text-destructive-foreground' : ''
+                                        )}>
+                                            {formatTime(call.waitTime)}
+                                        </div>
+                                    </TableCell>
+                                    <TableCell>
+                                        <Badge variant={reasonVariantMap[call.reason!] || 'default'}>
+                                            {call.reason}
+                                        </Badge>
+                                    </TableCell>
+                                </TableRow>
+                            ))
+                        ) : (
+                            <TableRow>
+                                <TableCell colSpan={5} className="h-24 text-center">
+                                    Пропущенные звонки за выбранный период не найдены.
                                 </TableCell>
                             </TableRow>
-                        ))
-                    ) : (
-                        <TableRow>
-                            <TableCell colSpan={5} className="h-24 text-center">
-                                Пропущенные звонки за выбранный период не найдены.
-                            </TableCell>
-                        </TableRow>
-                    )}
-                </TableBody>
-            </Table>
+                        )}
+                    </TableBody>
+                </Table>
+            )}
+        </div>
+         {total > limit && (
+            <div className="flex items-center justify-between space-x-2 py-4">
+                 <div className="text-sm text-muted-foreground">
+                    Страница {page} из {totalPages}
+                </div>
+                <Pagination>
+                    <PaginationContent>
+                    <PaginationItem>
+                        <PaginationPrevious onClick={() => onPageChange(page - 1)} className={cn(page <= 1 && "pointer-events-none opacity-50")} />
+                    </PaginationItem>
+                    <PaginationItem>
+                        <PaginationNext onClick={() => onPageChange(page + 1)} className={cn(page >= totalPages && "pointer-events-none opacity-50")} />
+                    </PaginationItem>
+                    </PaginationContent>
+                </Pagination>
+            </div>
         )}
-    </div>
+    </>
   );
 }

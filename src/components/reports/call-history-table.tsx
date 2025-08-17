@@ -19,6 +19,7 @@ import { ru } from 'date-fns/locale';
 import { ArrowDown, ArrowUp, Star } from 'lucide-react';
 import { Button } from '../ui/button';
 import { CallRowDetails } from './call-row-details';
+import { Pagination, PaginationContent, PaginationItem, PaginationNext, PaginationPrevious } from '../ui/pagination';
 
 export type EnrichedOperatorCall = Call & {
     operatorName?: string;
@@ -35,7 +36,15 @@ const statusMap: Record<string, string> = {
 
 type SortKey = keyof EnrichedOperatorCall;
 
-export function CallHistoryTable({ calls, isLoading, user }: { calls: EnrichedOperatorCall[], isLoading: boolean, user: User | null }) {
+export function CallHistoryTable({ calls, isLoading, user, page, limit, total, onPageChange }: { 
+    calls: EnrichedOperatorCall[], 
+    isLoading: boolean, 
+    user: User | null,
+    page: number,
+    limit: number,
+    total: number,
+    onPageChange: (page: number) => void;
+}) {
   const [filter, setFilter] = React.useState('');
   const [sortConfig, setSortConfig] = React.useState<{ key: SortKey; direction: 'ascending' | 'descending' } | null>({ key: 'startTime', direction: 'descending' });
   const [activeRowId, setActiveRowId] = React.useState<string | null>(null);
@@ -136,6 +145,8 @@ export function CallHistoryTable({ calls, isLoading, user }: { calls: EnrichedOp
     </Table>
   );
 
+  const totalPages = Math.ceil(total / limit);
+
   return (
     <div>
       <div className="flex justify-between items-center mb-4">
@@ -215,6 +226,23 @@ export function CallHistoryTable({ calls, isLoading, user }: { calls: EnrichedOp
             </Table>
         )}
       </div>
+       {total > limit && (
+            <div className="flex items-center justify-between space-x-2 py-4">
+                 <div className="text-sm text-muted-foreground">
+                    Страница {page} из {totalPages}
+                </div>
+                <Pagination>
+                    <PaginationContent>
+                    <PaginationItem>
+                        <PaginationPrevious onClick={() => onPageChange(page - 1)} className={cn(page <= 1 && "pointer-events-none opacity-50")} />
+                    </PaginationItem>
+                    <PaginationItem>
+                        <PaginationNext onClick={() => onPageChange(page + 1)} className={cn(page >= totalPages && "pointer-events-none opacity-50")} />
+                    </PaginationItem>
+                    </PaginationContent>
+                </Pagination>
+            </div>
+        )}
     </div>
   );
 }

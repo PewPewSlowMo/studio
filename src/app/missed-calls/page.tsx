@@ -41,6 +41,14 @@ export default function MissedCallsPage() {
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [calls, setCalls] = useState<Call[]>([]);
+    const [page, setPage] = useState(1);
+    const [limit] = useState(20);
+    const [totalCalls, setTotalCalls] = useState(0);
+
+    // Reset page to 1 when search params (date range) change
+    useEffect(() => {
+        setPage(1);
+    }, [searchParams]);
     
     useEffect(() => {
         const fetchData = async () => {
@@ -55,12 +63,13 @@ export default function MissedCallsPage() {
                 const dateRange: DateRangeParams = { from: format(from, 'yyyy-MM-dd'), to: format(to, 'yyyy-MM-dd') };
 
                 const config = await getConfig();
-                const missedCallsResult = await getMissedCalls(config.cdr, dateRange);
+                const missedCallsResult = await getMissedCalls(config.cdr, { ...dateRange, page, limit });
 
                 if (!missedCallsResult.success) {
                     throw new Error(missedCallsResult.error || 'Failed to fetch missed calls');
                 }
                 setCalls(missedCallsResult.data || []);
+                setTotalCalls(missedCallsResult.total || 0);
             } catch (e) {
                 setError(e instanceof Error ? e.message : 'An unknown error occurred');
             } finally {
@@ -69,7 +78,7 @@ export default function MissedCallsPage() {
         };
 
         fetchData();
-    }, [searchParams]);
+    }, [searchParams, page, limit]);
 
     const analyticsData = useMemo(() => {
         const callsWithReason = calls.map(call => ({
@@ -77,9 +86,10 @@ export default function MissedCallsPage() {
             reason: getMissedReason(call)
         }));
 
-        const totalMissed = calls.length;
+        const totalMissed = totalCalls; // Use total from state now
         const totalWaitTime = calls.reduce((acc, call) => acc + (call.waitTime || 0), 0);
-        const averageWaitTime = totalMissed > 0 ? totalWaitTime / totalMissed : 0;
+        // Note: these averages are for the *current page*, not all calls.
+        const averageWaitTime = calls.length > 0 ? totalWaitTime / calls.length : 0;
         const maxWaitTime = Math.max(0, ...calls.map(call => call.waitTime || 0));
 
         const reasonCounts = callsWithReason.reduce((acc, call) => {
@@ -92,7 +102,7 @@ export default function MissedCallsPage() {
             : '-';
         
         return { callsWithReason, totalMissed, averageWaitTime, maxWaitTime, mainReason };
-    }, [calls]);
+    }, [calls, totalCalls]);
     
     const formatTime = (seconds: number) => {
         const minutes = Math.floor(seconds / 60);
@@ -128,7 +138,7 @@ export default function MissedCallsPage() {
                 </div>
             </div>
 
-            {isLoading ? (
+            {isLoading && totalCalls === 0 ? (
                 <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
                     <KpiCardSkeleton />
                     <KpiCardSkeleton />
@@ -148,11 +158,18 @@ export default function MissedCallsPage() {
                 <CardHeader>
                     <CardTitle>Детальный список пропущенных звонков</CardTitle>
                     <CardDescription>
-                        {isLoading ? 'Загрузка...' : `Показано ${analyticsData.callsWithReason.length} из ${analyticsData.callsWithReason.length} пропущенных звонков`}
+                        {isLoading ? 'Загрузка...' : `Показано ${calls.length} из ${totalCalls} пропущенных звонков`}
                     </CardDescription>
                 </CardHeader>
                 <CardContent>
-                    <MissedCallsTable calls={analyticsData.callsWithReason} isLoading={isLoading} />
+                    <MissedCallsTable 
+                        calls={analyticsData.callsWithReason} 
+                        isLoading={isLoading} 
+                        page={page}
+                        limit={limit}
+                        total={totalCalls}
+                        onPageChange={setPage}
+                    />
                 </CardContent>
             </Card>
         </div>

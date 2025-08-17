@@ -45,7 +45,11 @@ export default function ReportsPage() {
     const [isLoadingOperatorCalls, setIsLoadingOperatorCalls] = useState(false);
     const [isExporting, startExportTransition] = useTransition();
     const { toast } = useToast();
-    
+
+    const [page, setPage] = useState(1);
+    const [limit] = useState(10);
+    const [totalOperatorCalls, setTotalOperatorCalls] = useState(0);
+
     const dateRange = useMemo(() => {
         const toParam = searchParams.get('to');
         const fromParam = searchParams.get('from');
@@ -53,6 +57,11 @@ export default function ReportsPage() {
         const from = fromParam && isValid(parseISO(fromParam)) ? parseISO(fromParam) : subDays(to, 6);
         return { from: format(from, 'yyyy-MM-dd'), to: format(to, 'yyyy-MM-dd') };
     }, [searchParams]);
+    
+    // Reset page when operator changes
+    useEffect(() => {
+        setPage(1);
+    }, [selectedOperator]);
 
     useEffect(() => {
         const fetchData = async () => {
@@ -60,6 +69,7 @@ export default function ReportsPage() {
             setError(null);
             try {
                 const config = await getConfig();
+                // Fetch all data for the summary table without pagination
                 const [callsResult, usersResult, appealsResult] = await Promise.all([
                     getCallHistory(config.cdr, dateRange),
                     getUsers(),
@@ -81,48 +91,60 @@ export default function ReportsPage() {
         fetchData();
     }, [dateRange]);
 
+    useEffect(() => {
+        const fetchOperatorCalls = async () => {
+            if (!selectedOperator?.extension) {
+                setOperatorCalls([]);
+                return;
+            };
+            setIsLoadingOperatorCalls(true);
+            try {
+                const config = await getConfig();
+                const params: GetCallHistoryParams = {
+                    from: dateRange.from,
+                    to: dateRange.to,
+                    operatorExtension: selectedOperator.extension,
+                    page,
+                    limit
+                };
+                const callsResult = await getCallHistory(config.cdr, params);
+                if (callsResult.success && callsResult.data) {
+                    const userMap = new Map(users.map(u => [u.extension, u.name]));
+                    const enrichedCalls = callsResult.data
+                        .map((call): EnrichedOperatorCall => {
+                            const appeal = findAppealByFlexibleId(appeals, call.id);
+                            return { 
+                                ...call, 
+                                operatorName: userMap.get(call.operatorExtension!),
+                                queueName: call.queue || '-',
+                                resolution: appeal?.resolution || '-'
+                            };
+                        });
+                    setOperatorCalls(enrichedCalls);
+                    setTotalOperatorCalls(callsResult.total || 0);
+                } else {
+                    setError(callsResult.error || 'Failed to fetch calls for this operator.');
+                    setOperatorCalls([]);
+                }
+            } catch (e) {
+                setError(e instanceof Error ? e.message : 'An unknown error occurred.');
+                setOperatorCalls([]);
+            } finally {
+                setIsLoadingOperatorCalls(false);
+            }
+        };
+
+        fetchOperatorCalls();
+    }, [selectedOperator, dateRange, page, limit, users, appeals]);
+
     const handleOperatorClick = async (operatorId: string) => {
         const user = users.find(u => u.id === operatorId);
         if (!user) return;
         
         if (selectedOperator?.id === operatorId) {
             setSelectedOperator(null);
-            setOperatorCalls([]);
-            return;
-        }
-
-        setSelectedOperator(user);
-        setIsLoadingOperatorCalls(true);
-        try {
-            const config = await getConfig();
-            const params: GetCallHistoryParams = {
-                from: dateRange.from,
-                to: dateRange.to,
-                operatorExtension: user.extension!,
-            };
-            const callsResult = await getCallHistory(config.cdr, params);
-            if (callsResult.success && callsResult.data) {
-                const userMap = new Map(users.map(u => [u.extension, u.name]));
-                const enrichedCalls = callsResult.data
-                    .map((call): EnrichedOperatorCall => {
-                        const appeal = findAppealByFlexibleId(appeals, call.id);
-                        return { 
-                            ...call, 
-                            operatorName: userMap.get(call.operatorExtension!),
-                            queueName: call.queue || '-',
-                            resolution: appeal?.resolution || '-'
-                        };
-                    });
-                setOperatorCalls(enrichedCalls);
-            } else {
-                setError(callsResult.error || 'Failed to fetch calls for this operator.');
-                setOperatorCalls([]);
-            }
-        } catch (e) {
-            setError(e instanceof Error ? e.message : 'An unknown error occurred.');
-            setOperatorCalls([]);
-        } finally {
-            setIsLoadingOperatorCalls(false);
+        } else {
+            setSelectedOperator(user);
         }
     };
     
@@ -263,6 +285,10 @@ export default function ReportsPage() {
                                 calls={operatorCalls}
                                 isLoading={isLoadingOperatorCalls}
                                 user={selectedOperator}
+                                page={page}
+                                limit={limit}
+                                total={totalOperatorCalls}
+                                onPageChange={setPage}
                             />
                         </div>
                     )}

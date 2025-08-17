@@ -12,6 +12,7 @@ import { AlertTriangle, Loader2 } from 'lucide-react';
 import { DateRangePicker } from '@/components/shared/date-range-picker';
 import { subDays, format, parseISO, isValid } from 'date-fns';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { useToast } from '@/hooks/use-toast';
 
 export type EnrichedCall = Call & {
     callerName?: string;
@@ -40,10 +41,14 @@ const findAppealByFlexibleId = (appeals: Appeal[], callId: string): Appeal | und
 
 export default function MyCallsPage() {
     const searchParams = useSearchParams();
+    const { toast } = useToast();
     const [user, setUser] = useState<User | null>(null);
     const [calls, setCalls] = useState<EnrichedCall[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [page, setPage] = useState(1);
+    const [limit] = useState(15);
+    const [totalCalls, setTotalCalls] = useState(0);
 
     useEffect(() => {
         const storedUser = localStorage.getItem('loggedInUser');
@@ -51,8 +56,14 @@ export default function MyCallsPage() {
             setUser(JSON.parse(storedUser));
         } else {
             setError('Пользователь не авторизован.');
+            setIsLoading(false);
         }
     }, []);
+    
+    // Reset page to 1 when search params change
+    useEffect(() => {
+        setPage(1);
+    }, [searchParams]);
 
     useEffect(() => {
         if (!user) return;
@@ -75,7 +86,7 @@ export default function MyCallsPage() {
 
                 const config = await getConfig();
                 const [callsResult, contacts, appeals] = await Promise.all([
-                    getCallHistory(config.cdr, dateRange),
+                    getCallHistory(config.cdr, { ...dateRange, operatorExtension: user.extension, page, limit }),
                     getContacts(),
                     getAppeals()
                 ]);
@@ -87,7 +98,6 @@ export default function MyCallsPage() {
                 const contactMap = new Map(contacts.map(c => [c.phoneNumber, c.name]));
                 
                 const userCalls = callsResult.data
-                    .filter(call => call.operatorExtension === user.extension)
                     .map((call): EnrichedCall => {
                         const appeal = findAppealByFlexibleId(appeals, call.id);
                         return {
@@ -101,16 +111,23 @@ export default function MyCallsPage() {
                     });
 
                 setCalls(userCalls);
+                setTotalCalls(callsResult.total || 0);
 
             } catch (e) {
-                setError(e instanceof Error ? e.message : 'Произошла неизвестная ошибка.');
+                const message = e instanceof Error ? e.message : 'Произошла неизвестная ошибка.';
+                setError(message);
+                 toast({
+                    variant: 'destructive',
+                    title: 'Ошибка загрузки звонков',
+                    description: message,
+                });
             } finally {
                 setIsLoading(false);
             }
         };
 
         fetchAndEnrichCalls();
-    }, [user, searchParams]);
+    }, [user, searchParams, page, limit, toast]);
     
     if (!user && !error) {
         return (
@@ -144,7 +161,15 @@ export default function MyCallsPage() {
                 </div>
             </CardHeader>
             <CardContent>
-                <MyCallsTable calls={calls} isLoading={isLoading} user={user} />
+                <MyCallsTable 
+                    calls={calls} 
+                    isLoading={isLoading} 
+                    user={user} 
+                    page={page}
+                    limit={limit}
+                    total={totalCalls}
+                    onPageChange={setPage}
+                />
             </CardContent>
         </Card>
     );

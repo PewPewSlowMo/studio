@@ -22,6 +22,8 @@ export interface DateRangeParams {
 
 export interface GetCallHistoryParams extends DateRangeParams {
     operatorExtension?: string;
+    page?: number;
+    limit?: number;
 }
 
 async function createCdrConnection(connection: CdrConnection) {
@@ -91,12 +93,13 @@ function mapRowToCall(row: any): Call {
     }
 }
 
-export async function getCallHistory(connection: CdrConnection, params: GetCallHistoryParams): Promise<{ success: boolean; data?: Call[], error?: string }> {
+export async function getCallHistory(connection: CdrConnection, params: GetCallHistoryParams): Promise<{ success: boolean; data?: Call[], total?: number, error?: string }> {
     let dbConnection;
     try {
         dbConnection = await createCdrConnection(connection);
         
         const sqlParams: any[] = [];
+        const countParams: any[] = [];
         let whereClauses: string[] = [];
 
         if (params.from && params.to) {
@@ -108,32 +111,39 @@ export async function getCallHistory(connection: CdrConnection, params: GetCallH
             toDate.setHours(23, 59, 59, 999);
             
             sqlParams.push(fromDate, toDate);
+            countParams.push(fromDate, toDate);
         } else {
              whereClauses.push(`calldate >= NOW() - INTERVAL 1 DAY`);
         }
 
         if (params.operatorExtension) {
-             // More performant query: using equals on src for outgoing, and equals on dstchannel for incoming.
              whereClauses.push(`((dcontext = 'from-internal' AND src = ?) OR (SUBSTRING_INDEX(SUBSTRING_INDEX(dstchannel, '/', 2), '/', -1) = ?))`);
              sqlParams.push(params.operatorExtension, params.operatorExtension);
+             countParams.push(params.operatorExtension, params.operatorExtension);
         }
         
+        const whereSql = whereClauses.length > 0 ? `WHERE ${whereClauses.join(' AND ')}` : '';
+        
+        // Count query
+        const countSql = `SELECT COUNT(*) as total FROM cdr ${whereSql}`;
+        const [countRows] = await dbConnection.execute(countSql, countParams);
+        const total = (countRows as any)[0].total;
+
+        // Data query
         let sql = `SELECT 
                 calldate, clid, src, dst, dcontext, channel, dstchannel, 
                 lastapp, lastdata, duration, billsec, disposition, uniqueid, linkedid, userfield, recordingfile
-             FROM cdr`;
+             FROM cdr ${whereSql} ORDER BY calldate DESC`;
         
-        if (whereClauses.length > 0) {
-            sql += ` WHERE ${whereClauses.join(' AND ')}`;
+        if (params.limit && params.page) {
+            sql += ` LIMIT ? OFFSET ?`;
+            sqlParams.push(params.limit, (params.page - 1) * params.limit);
         }
-
-        sql += ` ORDER BY calldate DESC`;
         
         const [rows] = await dbConnection.execute(sql, sqlParams);
-
         const calls = (rows as any[]).map(mapRowToCall);
 
-        return { success: true, data: calls };
+        return { success: true, data: calls, total };
 
     } catch (e) {
         const message = e instanceof Error ? e.message : 'An unknown error occurred.';
@@ -191,39 +201,46 @@ export async function getCallById(connection: CdrConnection, callId: string): Pr
     }
 }
 
-export async function getMissedCalls(connection: CdrConnection, dateRange?: DateRangeParams): Promise<{ success: boolean; data?: Call[], error?: string }> {
+export async function getMissedCalls(connection: CdrConnection, params: DateRangeParams & { page?: number, limit?: number }): Promise<{ success: boolean; data?: Call[], total?: number, error?: string }> {
     let dbConnection;
     try {
         dbConnection = await createCdrConnection(connection);
         
+        const whereClauses: string[] = [`disposition != 'ANSWERED'`];
+        const sqlParams: any[] = [];
+
+        if (params.from && params.to) {
+            whereClauses.push(`calldate BETWEEN ? AND ?`);
+            const fromDate = new Date(params.from);
+            fromDate.setHours(0, 0, 0, 0);
+
+            const toDate = new Date(params.to);
+            toDate.setHours(23, 59, 59, 999);
+            sqlParams.push(fromDate, toDate);
+        } else {
+             whereClauses.push(`calldate >= NOW() - INTERVAL 1 DAY`);
+        }
+
+        const whereSql = `WHERE ${whereClauses.join(' AND ')}`;
+        
+        const countSql = `SELECT COUNT(*) as total FROM cdr ${whereSql}`;
+        const [countRows] = await dbConnection.execute(countSql, sqlParams);
+        const total = (countRows as any)[0].total;
+        
         let sql = `SELECT 
                 calldate, clid, src, dst, dcontext, channel, dstchannel, 
                 lastapp, lastdata, duration, billsec, disposition, uniqueid, linkedid, userfield, recordingfile
-             FROM cdr 
-             WHERE disposition != 'ANSWERED'`;
+             FROM cdr ${whereSql} ORDER BY calldate DESC`;
         
-        const params: any[] = [];
-        
-        if (dateRange?.from && dateRange?.to) {
-            sql += ` AND calldate BETWEEN ? AND ?`;
-             const fromDate = new Date(dateRange.from);
-            fromDate.setHours(0, 0, 0, 0);
-
-            const toDate = new Date(dateRange.to);
-            toDate.setHours(23, 59, 59, 999);
-
-            params.push(fromDate, toDate);
-        } else {
-             sql += ` AND calldate >= NOW() - INTERVAL 1 DAY`;
+        if (params.limit && params.page) {
+            sql += ` LIMIT ? OFFSET ?`;
+            sqlParams.push(params.limit, (params.page - 1) * params.limit);
         }
         
-        sql += ` ORDER BY calldate DESC`;
-
-        const [rows] = await dbConnection.execute(sql, params);
-
+        const [rows] = await dbConnection.execute(sql, sqlParams);
         const calls = (rows as any[]).map(mapRowToCall);
 
-        return { success: true, data: calls };
+        return { success: true, data: calls, total };
 
     } catch (e) {
         const message = e instanceof Error ? e.message : 'An unknown error occurred.';
