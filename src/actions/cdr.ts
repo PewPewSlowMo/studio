@@ -64,7 +64,6 @@ export async function testCdrConnection(
 }
 
 function mapRowToCall(row: any): Call {
-    // Regex to extract the extension number (e.g., '0100') from a channel string like 'PJSIP/0100-000002d8' or 'Local/0003@from-queue-...'
     const operatorExtMatch = row.dstchannel?.match(/(?:PJSIP|SIP|Local)\/(\d+)/);
     const operatorExtension = operatorExtMatch ? operatorExtMatch[1] : undefined;
     const waitTime = row.duration - row.billsec;
@@ -76,8 +75,7 @@ function mapRowToCall(row: any): Call {
             satisfaction = voteMatch[1];
         }
     }
-
-    // Determine the correct queue number. If the call comes from 'ext-queues', the destination number ('dst') is the queue number.
+    
     const queue = row.dcontext === 'ext-queues' ? row.dst : row.dcontext;
 
     return {
@@ -86,11 +84,11 @@ function mapRowToCall(row: any): Call {
         callerNumber: row.src,
         calledNumber: row.dst,
         operatorExtension: operatorExtension,
-        status: row.disposition, // 'ANSWERED', 'NO ANSWER', 'BUSY'
+        status: row.disposition,
         startTime: row.calldate.toISOString(),
-        duration: row.duration, // Full duration from dial to hangup
-        billsec: row.billsec, // Talk time
-        waitTime: waitTime >= 0 ? waitTime : 0, // wait time before answer
+        duration: row.duration,
+        billsec: row.billsec,
+        waitTime: waitTime >= 0 ? waitTime : 0,
         queue: queue,
         isOutgoing: row.dcontext === 'from-internal',
         satisfaction: satisfaction,
@@ -113,7 +111,6 @@ export async function getCallHistory(connection: CdrConnection, params: GetCallH
         whereClauses.push(`calldate BETWEEN ? AND ?`);
         queryParams.push(fromDate, toDate);
         
-        const operatorExtensionClause = `( (dcontext = 'from-internal' AND src = ?) OR (dstchannel LIKE ?) )`;
         if (params.operatorExtension) {
              switch (params.callType) {
                 case 'answered':
@@ -126,9 +123,10 @@ export async function getCallHistory(connection: CdrConnection, params: GetCallH
                     break;
                 case 'missed':
                     whereClauses.push(`dstchannel LIKE ? AND disposition != 'ANSWERED'`);
-                     queryParams.push(`%/${params.operatorExtension}%`);
+                    queryParams.push(`%/${params.operatorExtension}%`);
                     break;
                 default:
+                    const operatorExtensionClause = `( (dcontext = 'from-internal' AND src = ?) OR (dstchannel LIKE ?) )`;
                     whereClauses.push(operatorExtensionClause);
                     queryParams.push(params.operatorExtension, `%/${params.operatorExtension}%`);
                     break;
@@ -153,7 +151,10 @@ export async function getCallHistory(connection: CdrConnection, params: GetCallH
             const singleCallQuery = `
                 SELECT * FROM cdr 
                 WHERE linkedid = ? 
-                ORDER BY (disposition = 'ANSWERED' AND dcontext != 'ext-queues') DESC, calldate DESC 
+                ORDER BY 
+                    (disposition = 'ANSWERED' AND dstchannel LIKE 'PJSIP/%') DESC, 
+                    (disposition = 'ANSWERED') DESC,
+                    calldate DESC 
                 LIMIT 1`;
             return dbConnection.execute(singleCallQuery, [linkedId]);
         });
@@ -195,47 +196,53 @@ export async function getCallById(connection: CdrConnection, callId: string): Pr
     try {
         dbConnection = await createCdrConnection(connection);
         
-        const baseQuery = `SELECT 
-            calldate, clid, src, dst, dcontext, channel, dstchannel, 
-            lastapp, lastdata, duration, billsec, disposition, uniqueid, linkedid, userfield, recordingfile
-            FROM cdr`;
+        const baseQuery = `SELECT * FROM cdr`;
 
-        // First, find the primary call record (either by uniqueid or linkedid)
-        const primaryCallSql = `${baseQuery} WHERE uniqueid = ? OR linkedid = ? LIMIT 1`;
-        const [primaryRows] = await dbConnection.execute(primaryCallSql, [callId, callId]);
-        const primaryResults = primaryRows as any[];
+        // Find the primary call record based on the uniqueid.
+        // It could be the record with the file, or a record linked to it.
+        const primaryCallSql = `${baseQuery} WHERE uniqueid = ? OR uniqueid LIKE ? LIMIT 1`;
+        const callIdBase = callId.split('.')[0];
+        const [primaryRows] = await dbConnection.execute(primaryCallSql, [callId, `${callIdBase}.%`]);
         
-        if (primaryResults.length === 0) {
+        if ((primaryRows as any[]).length === 0) {
             console.warn(`[CDR] Call not found for ID: ${callId}.`);
             return { success: false, error: 'Call not found' };
         }
         
-        const primaryCall = primaryResults[0];
+        const primaryCall = (primaryRows as any[])[0];
+        const linkedId = primaryCall.linkedid;
 
-        if (primaryCall.recordingfile && primaryCall.recordingfile.length > 0) {
-            const call: Call = mapRowToCall(primaryCall);
-            return { success: true, data: call };
-        } else {
-             console.log(`[CDR] No recording on primary record ${callId}. Searching for parent with linkedid ${primaryCall.linkedid}...`);
-             const parentCallSql = `${baseQuery} WHERE linkedid = ? AND recordingfile IS NOT NULL AND recordingfile != '' LIMIT 1`;
-             const [parentRows] = await dbConnection.execute(parentCallSql, [primaryCall.linkedid]);
-             const parentResults = parentRows as any[];
+        // Now find the best record within that entire call (using linkedid)
+        // We prioritize a record that is answered and has a recording file.
+        const bestRecordSql = `${baseQuery} 
+            WHERE linkedid = ? 
+            ORDER BY 
+                (disposition = 'ANSWERED' AND recordingfile IS NOT NULL AND recordingfile != '') DESC,
+                (recordingfile IS NOT NULL AND recordingfile != '') DESC,
+                (disposition = 'ANSWERED') DESC,
+                calldate ASC
+            LIMIT 1`;
 
-             if (parentResults.length > 0) {
-                const parentCall = parentResults[0];
-                const enrichedCall = { ...primaryCall, recordingfile: parentCall.recordingfile };
-                const call: Call = mapRowToCall(enrichedCall);
-                return { success: true, data: call };
-             } else {
-                 console.warn(`[CDR] Could not find a parent record with a recording for linkedid ${primaryCall.linkedid}`);
-                 const call: Call = mapRowToCall(primaryCall);
-                 return { success: true, data: call };
-             }
+        const [bestRecordRows] = await dbConnection.execute(bestRecordSql, [linkedId]);
+        
+        if ((bestRecordRows as any[]).length > 0) {
+            const bestRecord = (bestRecordRows as any[])[0];
+            // We use the data from the best record, but keep the original operator's answered record data if available
+            // to ensure we have the correct operator details.
+             const finalRecord = {
+                ...bestRecord, // Base with recording file
+                ...primaryCall, // Overwrite with specific operator data
+                recordingfile: bestRecord.recordingfile, // Ensure recording file is from the best record
+            };
+            return { success: true, data: mapRowToCall(finalRecord) };
         }
+        
+        // Fallback to primary call if no better record is found
+        return { success: true, data: mapRowToCall(primaryCall) };
 
     } catch (e) {
         const message = e instanceof Error ? e.message : 'An unknown error occurred.';
-        console.error('getCallById failed:', message);
+        console.error('getCallById failed for callId', callId, ':', message);
         return { success: false, error: message };
     } finally {
         if (dbConnection) {
