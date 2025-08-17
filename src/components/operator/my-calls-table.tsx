@@ -96,7 +96,7 @@ export function MyCallsTable({ calls, isLoading, user, page, limit, total, onPag
 
     const getSortIcon = (key: SortKey) => {
         if (!sortConfig || sortConfig.key !== key) {
-            return <div className="w-4 h-4 opacity-0" />;
+            return <div className="w-4 h-4" />;
         }
         return sortConfig.direction === 'ascending' ? <ArrowUp className="h-4 w-4" /> : <ArrowDown className="h-4 w-4" />;
     };
@@ -173,7 +173,7 @@ export function MyCallsTable({ calls, isLoading, user, page, limit, total, onPag
             <TableBody>
                 {sortedCalls.length > 0 ? (
                 sortedCalls.map((call) => (
-                    <React.Fragment key={call.id}>
+                    <React.Fragment key={`${call.id}-${call.startTime}`}>
                         <TableRow onClick={() => handleRowClick(call.id)} className="cursor-pointer">
                             <TableCell className="font-medium">
                                 <div className="flex items-center gap-2">

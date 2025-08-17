@@ -174,7 +174,7 @@ export function CallHistoryTable({ calls, isLoading, user, page, limit, total, o
               <TableBody>
                 {filteredAndSortedCalls.length > 0 ? (
                   filteredAndSortedCalls.map((call) => (
-                    <React.Fragment key={call.id}>
+                    <React.Fragment key={`${call.id}-${call.startTime}`}>
                         <TableRow 
                             onClick={() => handleRowClick(call.id)}
                             className="cursor-pointer hover:bg-muted"
