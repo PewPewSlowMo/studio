@@ -113,8 +113,9 @@ export async function getCallHistory(connection: CdrConnection, params: GetCallH
         }
 
         if (params.operatorExtension) {
-            whereClauses.push(`(dstchannel LIKE ? OR (dcontext = 'from-internal' AND src = ?))`);
-            sqlParams.push(`%/${params.operatorExtension}%`, params.operatorExtension);
+             // More performant query: using equals on src for outgoing, and equals on dstchannel for incoming.
+             whereClauses.push(`((dcontext = 'from-internal' AND src = ?) OR (SUBSTRING_INDEX(SUBSTRING_INDEX(dstchannel, '/', 2), '/', -1) = ?))`);
+             sqlParams.push(params.operatorExtension, params.operatorExtension);
         }
         
         let sql = `SELECT 

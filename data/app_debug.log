@@ -109921,3 +109921,110 @@ Requesting URL: http://92.46.62.34:8088/ari/asterisk/info
   }
 }
 
+[2025-08-17 14:47:18.114] [AMI_ACTION]
+{
+  "level": "ERROR",
+  "message": "AMI command timed out after 20 seconds.",
+  "action": {
+    "Action": "PJSIPShowEndpoints",
+    "actionid": "1755442018119"
+  }
+}
+
+[2025-08-17 14:47:20.880] [AMI_ACTION]
+{
+  "level": "INFO",
+  "message": "Executing AMI action",
+  "action": {
+    "Action": "PJSIPShowEndpoints"
+  }
+}
+
+[2025-08-17 14:47:40.884] [AMI_ACTION]
+{
+  "level": "ERROR",
+  "message": "AMI command timed out after 20 seconds.",
+  "action": {
+    "Action": "PJSIPShowEndpoints",
+    "actionid": "1755442040883"
+  }
+}
+
+[2025-08-17 14:47:41.234] [AMI_ACTION]
+{
+  "level": "INFO",
+  "message": "Executing AMI action",
+  "action": {
+    "Action": "QueueStatus"
+  }
+}
+
+[2025-08-17 14:48:01.239] [AMI_ACTION]
+{
+  "level": "ERROR",
+  "message": "AMI command timed out after 20 seconds.",
+  "action": {
+    "Action": "QueueStatus",
+    "actionid": "1755442061235"
+  }
+}
+
+[2025-08-17 14:48:12.221] [AMI_ACTION]
+{
+  "level": "INFO",
+  "message": "Executing AMI action",
+  "action": {
+    "Action": "PJSIPShowEndpoints"
+  }
+}
+
+[2025-08-17 14:48:32.235] [AMI_ACTION]
+{
+  "level": "ERROR",
+  "message": "AMI command timed out after 20 seconds.",
+  "action": {
+    "Action": "PJSIPShowEndpoints",
+    "actionid": "1755442092222"
+  }
+}
+
+[2025-08-17 14:48:32.542] [AMI_ACTION]
+{
+  "level": "INFO",
+  "message": "Executing AMI action",
+  "action": {
+    "Action": "QueueStatus"
+  }
+}
+
+[2025-08-17 14:48:52.547] [AMI_ACTION]
+{
+  "level": "ERROR",
+  "message": "AMI command timed out after 20 seconds.",
+  "action": {
+    "Action": "QueueStatus",
+    "actionid": "1755442112542"
+  }
+}
+
+[2025-08-17 14:49:39.015] [ARI Fetch (GET)]
+Requesting URL: http://92.46.62.34:8088/ari/asterisk/info
+
+[2025-08-17 14:49:39.489] [ARI Fetch (GET)]
+{
+  "level": "ERROR",
+  "url": "http://92.46.62.34:8088/ari/asterisk/info",
+  "status": 404,
+  "statusText": "Not Found",
+  "body": "<!DOCTYPE HTML PUBLIC \"-//IETF//DTD HTML 2.0//EN\">\r\n<html><head>\r\n<title>404 Not Found</title>\r\n</head><body>\r\n<h1>Not Found</h1>\r\n<p>The requested URL was not found on this server.</p>\r\n<hr />\r\n<address>Asterisk/18.16.0</address>\r\n</body></html>\r\n"
+}
+
+[2025-08-17 14:49:39.966] [AMI_ACTION]
+{
+  "level": "INFO",
+  "message": "Executing AMI action",
+  "action": {
+    "Action": "CoreSettings"
+  }
+}
+

@@ -91,23 +91,26 @@ export default function DashboardPage() {
   }, []);
   
   useEffect(() => {
-    if (!data?.users || !data.users.length) return;
+    if (!data?.endpoints || !data.users.length) return;
   
     const pollStates = async () => {
       try {
-        const operatorExtensions = data.users
-          .filter(u => u.role === 'operator' && u.extension)
-          .map(u => u.extension!);
-  
-        const statePromises = operatorExtensions.map(ext => 
-          getOperatorState(ext).then(res => 
-            res.success && res.data ? { ...res.data, extension: ext } as CallState & { extension: string } : null
-          )
-        );
-        const results = await Promise.all(statePromises);
-        const activeStatuses = ['on-call', 'ringing', 'busy', 'in use'];
-        const activeChannels = results.filter(r => r && activeStatuses.includes(r.endpointState)) as (CallState & { extension: string })[];
-        setLiveChannels(activeChannels as CallState[]);
+        const config = await getConfig();
+        const endpointsResult = await getAmiEndpoints(config.ami);
+        if (endpointsResult.success && endpointsResult.data) {
+          setData(prevData => prevData ? { ...prevData, endpoints: endpointsResult.data! } : null);
+
+          // Find channels in use and enrich them
+          const activeEndpoints = endpointsResult.data.filter(e => e.state === 'in use' || e.state === 'ringing');
+          const channelPromises = activeEndpoints.map(e => getOperatorState(e.resource));
+          const channelResults = await Promise.all(channelPromises);
+          
+          const activeChannels = channelResults
+            .filter(res => res.success && res.data)
+            .map(res => res.data!);
+          
+          setLiveChannels(activeChannels);
+        }
         
       } catch (error) {
         console.error("Error polling operator states:", error);

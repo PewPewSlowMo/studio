@@ -23,7 +23,6 @@ async function fetchFromAri(connection: AriConnection, path: string, options: Re
   const url = `http://${host}:${port}/ari/${path}`;
   
   const logContext = `ARI Fetch (${options.method || 'GET'})`;
-  await writeToLog(logContext, `Requesting URL: ${url}`);
 
   const auth = Buffer.from(`${username}:${password}`).toString('base64');
   const defaultOptions: RequestInit = {
@@ -41,16 +40,11 @@ async function fetchFromAri(connection: AriConnection, path: string, options: Re
         const errorBody = await response.text();
         await writeToLog(logContext, {
             level: 'ERROR',
+            message: 'ARI Request Failed',
             url: url,
             status: response.status,
             statusText: response.statusText,
             body: errorBody
-        });
-    } else {
-         await writeToLog(logContext, {
-            level: 'INFO',
-            url: url,
-            status: response.status
         });
     }
 
