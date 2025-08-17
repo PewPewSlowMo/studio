@@ -37,7 +37,9 @@ async function fetchFromAri(connection: AriConnection, path: string, options: Re
     const response = await fetch(url, { ...options, ...defaultOptions });
     
     if (!response.ok) {
-        const errorBody = await response.text();
+        // Clone the response to be able to read the body in two places (logging and caller)
+        const responseForLogging = response.clone();
+        const errorBody = await responseForLogging.text();
         await writeToLog(logContext, {
             level: 'ERROR',
             message: 'ARI Request Failed',
@@ -121,12 +123,13 @@ export async function testAriConnection(
     const response = await fetchFromAri(connection, 'asterisk/info');
     if (response.ok) {
         const data = await response.json();
-        const systemInfo = data.system; // Corrected from system_info
+        const systemInfo = data.system;
         if (systemInfo && systemInfo.version) {
           return { success: true, data: { version: systemInfo.version } };
         }
         return { success: true, data: { version: 'Unknown (Connected)' } };
     }
+    // The response body can now be safely read here because fetchFromAri clones it for its internal logging.
     const errorBody = await response.text();
     const errorMessage = `Connection failed with status ${response.status}: ${errorBody}`;
     return { success: false, error: errorMessage };
